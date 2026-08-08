@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-0.1.9-6557e8?style=flat-square" alt="Version 0.1.9">
+    <img src="https://img.shields.io/badge/version-0.1.10-6557e8?style=flat-square" alt="Version 0.1.10">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -109,8 +109,10 @@ Download the `.deb` from the [latest release](https://github.com/ehstbr/PyNextCl
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.9_all.deb
+sudo apt install ./pynextcloud-sync_0.1.10_all.deb
 ```
+
+During an interactive upgrade started with `sudo apt install`, the package asks a running PyNextCloud Sync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
 
 The package depends on `nextcloud-desktop-cmd`, Python 3, GTK 4, Libadwaita, PyGObject, libsoup, libsecret, GdkPixbuf, and GNOME Keyring. On GNOME, tray icons normally require an AppIndicator/StatusNotifier extension; synchronization continues even when no tray host is available.
 
@@ -130,8 +132,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.9.zip
-cd PyNextCloud-Sync-0.1.9
+unzip PyNextCloud-Sync-0.1.10.zip
+cd PyNextCloud-Sync-0.1.10
 ./run.sh
 ```
 
@@ -178,7 +180,7 @@ Patterns containing `/`, `\`, or `..` are rejected. Version 1 does not support f
 - Daily logs: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
 - Account secret: GNOME Keyring or another compatible Secret Service provider
 
-Logs remain local, use one file per day, and are retained for 30 days by default. Sensitive values are redacted from application-owned log messages. The app does not ask for or store the desktop login password; GNOME may show its own prompt when the keyring needs to be unlocked.
+Logs remain local, use one file per day, and are retained for 30 days by default. Sensitive values are redacted from application-owned log messages. If biometric desktop login leaves the Login keyring locked, GNOME shows its native unlock prompt before synchronization. The desktop password is handled only by GNOME; PyNextCloud Sync does not receive or store it. Canceling the prompt leaves the app waiting for an explicit **Unlock Password Keyring** request instead of repeatedly prompting or reporting invalid Nextcloud credentials.
 
 ## Development and tests
 
@@ -201,7 +203,7 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `0.1.9` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `0.1.10` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 

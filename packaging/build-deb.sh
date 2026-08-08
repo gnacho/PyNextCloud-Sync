@@ -84,6 +84,7 @@ install -m 0644 "$project_root/packaging/debian/copyright" "$doc_dir/copyright"
 gzip -9nc "$project_root/CHANGELOG.md" > "$doc_dir/changelog.gz"
 gzip -9nc "$project_root/packaging/debian/changelog" > "$doc_dir/changelog.Debian.gz"
 
+install -m 0755 "$project_root/packaging/debian/preinst" "$package_root/DEBIAN/preinst"
 install -m 0755 "$project_root/packaging/debian/postinst" "$package_root/DEBIAN/postinst"
 install -m 0755 "$project_root/packaging/debian/postrm" "$package_root/DEBIAN/postrm"
 

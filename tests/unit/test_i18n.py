@@ -92,6 +92,27 @@ class I18nTests(unittest.TestCase):
             ],
         )
 
+    def test_biometric_keyring_release_note_is_translated(self) -> None:
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "LANGUAGE": "pt_BR",
+                "PYNEXTCLOUD_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
+                "PYTHONPATH": str(PROJECT_ROOT / "src"),
+            }
+        )
+        translated = subprocess.check_output(
+            [
+                sys.executable,
+                "-c",
+                "from pynextcloud_sync.util.i18n import _; "
+                "print(_('Added the native GNOME Keyring unlock prompt required after biometric desktop login.'))",
+            ],
+            env=environment,
+            text=True,
+        ).strip()
+        self.assertIn("login biométrico", translated)
+
 
 if __name__ == "__main__":
     unittest.main()

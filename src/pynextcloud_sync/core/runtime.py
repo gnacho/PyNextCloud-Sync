@@ -247,7 +247,13 @@ class RuntimeController:
             self.notify_failure(result)
 
     def sync_now(self) -> None:
+        unlock_attempt = self.scheduler.keyring_locked
         self.scheduler.request(Trigger.MANUAL)
+        if unlock_attempt and self.config.data["sync"].get("remote_push_enabled", True):
+            self._configure_push(
+                self.config.data["sync"],
+                self._push_signature,
+            )
 
     def set_paused(self, paused: bool) -> None:
         self.scheduler.set_user_paused(paused)

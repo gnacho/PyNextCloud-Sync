@@ -180,6 +180,34 @@ class SchedulerTests(unittest.TestCase):
         self.assertFalse(FakeGLib.callbacks)
         self.assertTrue(engine.cancelled)
 
+    def test_locked_keyring_defers_automatic_triggers_until_manual_unlock(self) -> None:
+        module = load_scheduler_module()
+        credentials = FakeCredentials()
+        engine = FakeEngine()
+        state = StateController(AppState.IDLE_OK)
+        scheduler = module.SyncScheduler(
+            self._config(), credentials, engine, state, FakeLogger()
+        )
+
+        scheduler.request(Trigger.STARTUP)
+        FakeGLib.run_source(scheduler._start_source)
+        credentials.callbacks[0](None, module.KeyringLockedError("cancelled"))
+
+        self.assertTrue(scheduler.keyring_locked)
+        self.assertEqual(state.snapshot.state, AppState.KEYRING_LOCKED)
+
+        scheduler.request(Trigger.LOCAL_INOTIFY)
+        scheduler.request(Trigger.REMOTE_INTERVAL)
+        self.assertEqual(len(credentials.callbacks), 1)
+        self.assertTrue(scheduler.queue)
+
+        scheduler.request(Trigger.MANUAL)
+        self.assertEqual(len(credentials.callbacks), 2)
+        credentials.callbacks[1]("secret", None)
+
+        self.assertFalse(scheduler.keyring_locked)
+        self.assertEqual(len(engine.runs), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

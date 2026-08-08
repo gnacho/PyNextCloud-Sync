@@ -53,6 +53,21 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.10"),
+            [
+                _("Added the native GNOME Keyring unlock prompt required after biometric desktop login."),
+                _("Canceled unlocks now remain separate from invalid Nextcloud credentials without repeated automatic prompts."),
+                _("File synchronization and notify_push resume together after the keyring is unlocked."),
+                _("Interactive Debian upgrades now gracefully stop and restart a running application."),
+            ],
+        ),
+        (
+            _("Version 0.1.9"),
+            [
+                _("Published the corrected website, source, issue, and changelog links under the canonical repository."),
+            ],
+        ),
+        (
             _("Version 0.1.8"),
             [
                 _("Added native Files sidebar and desktop shortcuts for the synchronized folder."),

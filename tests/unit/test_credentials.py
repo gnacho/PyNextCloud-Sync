@@ -18,20 +18,78 @@ class FakeSchema:
         return name, flags, attributes
 
 
+class FakeSecretValue:
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def get_text(self) -> str:
+        return self.value
+
+
+class FakeSecretItem:
+    def __init__(self, key: tuple[str, str]) -> None:
+        self.key = key
+
+    def get_locked(self) -> bool:
+        return FakeSecret.locked
+
+    def get_secret(self):
+        if FakeSecret.locked:
+            return None
+        value = FakeSecret.saved.get(self.key)
+        return FakeSecretValue(value) if value is not None else None
+
+
+class FakeSecretService:
+    @staticmethod
+    def get_sync(flags, _cancellable):
+        FakeSecret.service_flags.append(flags)
+        if FakeSecret.failure:
+            raise FakeSecret.failure
+        return FakeSecretService()
+
+    def search_sync(self, _schema, attributes, flags, _cancellable):
+        FakeSecret.operations.append(("search", attributes))
+        FakeSecret.search_flags.append(flags)
+        if FakeSecret.failure:
+            raise FakeSecret.failure
+        key = (attributes["server"], attributes["username"])
+        if key not in FakeSecret.saved:
+            return []
+        if FakeSecret.locked and flags & FakeSecret.SearchFlags.UNLOCK:
+            FakeSecret.unlock_attempts += 1
+            if not FakeSecret.unlock_cancelled:
+                FakeSecret.locked = False
+        return [FakeSecretItem(key)]
+
+
 class FakeSecret:
     Schema = FakeSchema
     SchemaFlags = types.SimpleNamespace(NONE=0)
     SchemaAttributeType = types.SimpleNamespace(STRING="string")
+    Service = FakeSecretService
+    ServiceFlags = types.SimpleNamespace(NONE=0, OPEN_SESSION=1, LOAD_COLLECTIONS=2)
+    SearchFlags = types.SimpleNamespace(NONE=0, ALL=1, UNLOCK=2, LOAD_SECRETS=4)
     COLLECTION_DEFAULT = "default"
     saved: dict[tuple[str, str], str] = {}
     operations: list[tuple[str, dict[str, str]]] = []
+    service_flags: list[int] = []
+    search_flags: list[int] = []
     failure: Exception | None = None
+    locked = False
+    unlock_cancelled = False
+    unlock_attempts = 0
 
     @classmethod
     def reset(cls) -> None:
         cls.saved = {}
         cls.operations = []
+        cls.service_flags = []
+        cls.search_flags = []
         cls.failure = None
+        cls.locked = False
+        cls.unlock_cancelled = False
+        cls.unlock_attempts = 0
 
     @classmethod
     def password_store_sync(
@@ -42,13 +100,6 @@ class FakeSecret:
             raise cls.failure
         cls.saved[(attributes["server"], attributes["username"])] = password
         return True
-
-    @classmethod
-    def password_lookup_sync(cls, _schema, attributes, _cancellable):
-        cls.operations.append(("lookup", attributes))
-        if cls.failure:
-            raise cls.failure
-        return cls.saved.get((attributes["server"], attributes["username"]))
 
     @classmethod
     def password_clear_sync(cls, _schema, attributes, _cancellable):
@@ -132,23 +183,64 @@ class CredentialStoreTests(unittest.TestCase):
         self.assertEqual(cleared, [(True, None)])
         self.assertEqual(
             [name for name, _attributes in FakeSecret.operations],
-            ["store", "lookup", "clear"],
+            ["store", "search", "clear"],
+        )
+        self.assertEqual(
+            FakeSecret.service_flags,
+            [
+                FakeSecret.ServiceFlags.OPEN_SESSION
+                | FakeSecret.ServiceFlags.LOAD_COLLECTIONS
+            ],
+        )
+        self.assertEqual(
+            FakeSecret.search_flags,
+            [FakeSecret.SearchFlags.UNLOCK | FakeSecret.SearchFlags.LOAD_SECRETS],
         )
 
     def test_keyring_cancellation_is_reported_without_escaping(self) -> None:
-        FakeSecret.failure = FakeSecretError("Prompt was dismissed by the user")
+        FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"
+        FakeSecret.locked = True
+        FakeSecret.unlock_cancelled = True
         store = self.credentials.CredentialStore(worker_dispatch=lambda job: job())
         result = []
 
-        store.store(
+        store.lookup(
             "https://cloud.example",
             "alice",
-            "app-password",
-            lambda ok, error: result.append((ok, error)),
+            lambda password, error: result.append((password, error)),
         )
 
-        self.assertFalse(result[0][0])
+        self.assertIsNone(result[0][0])
         self.assertIsInstance(result[0][1], self.credentials.KeyringLockedError)
+        self.assertEqual(FakeSecret.unlock_attempts, 1)
+
+    def test_locked_keyring_is_unlocked_and_secret_is_loaded(self) -> None:
+        FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"
+        FakeSecret.locked = True
+        store = self.credentials.CredentialStore(worker_dispatch=lambda job: job())
+        result = []
+
+        store.lookup(
+            "https://cloud.example",
+            "alice",
+            lambda password, error: result.append((password, error)),
+        )
+
+        self.assertEqual(result, [("app-password", None)])
+        self.assertFalse(FakeSecret.locked)
+        self.assertEqual(FakeSecret.unlock_attempts, 1)
+
+    def test_missing_item_is_not_mislabeled_as_a_locked_keyring(self) -> None:
+        store = self.credentials.CredentialStore(worker_dispatch=lambda job: job())
+        result = []
+
+        store.lookup(
+            "https://cloud.example",
+            "alice",
+            lambda password, error: result.append((password, error)),
+        )
+
+        self.assertEqual(result, [(None, None)])
 
     def test_simultaneous_lookups_are_coalesced(self) -> None:
         FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"

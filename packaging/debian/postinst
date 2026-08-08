@@ -9,4 +9,35 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
     gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
 fi
 
+case "${SUDO_UID:-}" in
+    ''|*[!0-9]*|0)
+        exit 0
+        ;;
+esac
+
+session_uid="$SUDO_UID"
+restart_marker="/run/pynextcloud-sync-restart-$session_uid"
+if [ ! -f "$restart_marker" ]; then
+    exit 0
+fi
+rm -f "$restart_marker"
+
+session_user="$(getent passwd "$session_uid" 2>/dev/null | cut -d: -f1)"
+runtime_dir="/run/user/$session_uid"
+session_bus="$runtime_dir/bus"
+if [ -z "$session_user" ] || [ ! -S "$session_bus" ]; then
+    exit 0
+fi
+
+if command -v runuser >/dev/null 2>&1 && command -v systemd-run >/dev/null 2>&1; then
+    echo "Restarting PyNextCloud Sync in the active desktop session."
+    runuser -u "$session_user" -- env \
+        XDG_RUNTIME_DIR="$runtime_dir" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=$session_bus" \
+        systemd-run --user --collect --quiet \
+        --unit="pynextcloud-sync-update-$session_uid-$$" \
+        /usr/bin/pynextcloud-sync --background || \
+        echo "PyNextCloud Sync could not be restarted automatically; start it from the application menu." >&2
+fi
+
 exit 0

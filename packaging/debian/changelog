@@ -1,3 +1,16 @@
+pynextcloud-sync (0.1.14) stable; urgency=medium
+
+  * Add a protected first synchronization with an isolated fresh server
+    snapshot, explicit merge review, and preserved conflict copies.
+  * Require existing 0.1.13 installations to create a reviewed safety baseline
+    before automatic synchronization resumes.
+  * Block missing, replaced, empty, unreadable, or abnormally reduced local
+    trees before nextcloudcmd starts; add recovery and one-time approval flows.
+  * Archive stale synchronization databases instead of silently reusing or
+    deleting them.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 10:30:00 -0300
+
 pynextcloud-sync (0.1.13) stable; urgency=medium
 
   * Resolve and unlock the default GNOME password collection before searching

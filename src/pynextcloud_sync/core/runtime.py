@@ -13,6 +13,7 @@ from pynextcloud_sync.core.scheduler import SyncScheduler
 from pynextcloud_sync.core.state import AppState, PushState, StateController
 from pynextcloud_sync.core.suspend import SuspendWatcher
 from pynextcloud_sync.core.sync_engine import SyncEngine, SyncResult
+from pynextcloud_sync.core.safety import SafetyAlert
 from pynextcloud_sync.core.timers import SyncTimers
 from pynextcloud_sync.core.triggers import Trigger
 from pynextcloud_sync.nextcloud.push import NotifyPushClient
@@ -26,6 +27,7 @@ class RuntimeController:
         credentials: Any,
         logger: Any,
         notify_failure: Callable[[SyncResult], None] | None = None,
+        notify_safety_alert: Callable[[SafetyAlert], None] | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
@@ -38,7 +40,13 @@ class RuntimeController:
         self.push_message = ""
         self.engine = SyncEngine(logger)
         self.scheduler = SyncScheduler(
-            config, credentials, self.engine, self.state, logger, self._sync_completed
+            config,
+            credentials,
+            self.engine,
+            self.state,
+            logger,
+            self._sync_completed,
+            notify_safety_alert,
         )
         self.timers = SyncTimers(self.scheduler.request)
         self.network = NetworkWatcher(self._network_changed)
@@ -257,3 +265,6 @@ class RuntimeController:
 
     def set_paused(self, paused: bool) -> None:
         self.scheduler.set_user_paused(paused)
+
+    def approve_safety_once(self) -> None:
+        self.scheduler.approve_safety_once()

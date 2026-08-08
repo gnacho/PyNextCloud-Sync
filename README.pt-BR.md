@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Relatar um problema</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/versão-0.1.13-6557e8?style=flat-square" alt="Versão 0.1.13">
+    <img src="https://img.shields.io/badge/versão-0.1.14-6557e8?style=flat-square" alt="Versão 0.1.14">
     <img src="https://img.shields.io/badge/plataforma-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -40,6 +40,8 @@ A reconciliação bidirecional é realizada pelo motor oficial [`nextcloudcmd`](
 - **Detecção local rápida:** monitoramento recursivo com `inotify` e agrupamento de eventos.
 - **Detecção de mudanças remotas:** `notify_push` opcional com intervalo de segurança configurável.
 - **Operação discreta:** uma fila que agrupa solicitações e no máximo um processo `nextcloudcmd`.
+- **Inicialização protegida:** antes do modo bidirecional, uma pasta temporária nova obtém a árvore do servidor e o usuário revisa como os dois lados serão unidos.
+- **Trava contra exclusões anormais:** pasta ausente, trocada, vazia, ilegível ou com redução acima dos limites bloqueia o motor antes que o Nextcloud seja alterado.
 - **Integração útil com o desktop:** favorito no Arquivos, atalho na Área de Trabalho, ícone especial da pasta, inicialização automática, notificações e controles na bandeja.
 - **Privacidade por princípio:** sem telemetria, analytics, publicidade ou envio remoto de falhas.
 - **Multilíngue:** interface-base em inglês, com traduções para português do Brasil e espanhol.
@@ -109,7 +111,7 @@ Baixe o `.deb` na [versão mais recente](https://github.com/ehstbr/PyNextCloud-S
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.13_all.deb
+sudo apt install ./pynextcloud-sync_0.1.14_all.deb
 ```
 
 Durante uma atualização interativa iniciada com `sudo apt install`, o pacote solicita que uma instância aberta do PyNextCloud Sync seja encerrada normalmente, aguarda a sincronização atual terminar e reinicia o aplicativo atualizado na mesma sessão gráfica. O processo de sincronização nunca é encerrado à força. Atualizações automáticas ou instalações sem uma sessão gráfica identificável deixam o controle do processo para o usuário ou administrador do sistema.
@@ -132,8 +134,8 @@ sudo apt install \
 Depois, extraia e execute:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.13.zip
-cd PyNextCloud-Sync-0.1.13
+unzip PyNextCloud-Sync-0.1.14.zip
+cd PyNextCloud-Sync-0.1.14
 ./run.sh
 ```
 
@@ -144,9 +146,29 @@ O `run.sh` utiliza o Python e os pacotes GI da distribuição. Ele não cria amb
 1. Digite a URL-base usada normalmente para abrir seu Nextcloud.
 2. Prefira **Entrar pelo navegador**, com suporte ao Login Flow v2 e autenticação em dois fatores. Também existe login manual com usuário e senha/senha de aplicativo.
 3. Escolha a pasta do espelho local. O padrão é `$HOME/NextCloud`.
-4. Revise a configuração e inicie a primeira sincronização.
+4. Revise a configuração e inicie a análise protegida.
+5. Confira arquivos exclusivos de cada lado, itens iguais, conflitos e bancos de sincronização antigos.
+6. Escolha entre mesclar preservando as duas versões, priorizar o Nextcloud, priorizar o computador ou decidir cada conflito individualmente.
 
-Uma nova conta ativa o monitoramento local, intervalo remoto de segurança de 10 minutos, push compatível, exclusões de arquivos descartáveis e inicialização automática. O aplicativo também adiciona a pasta à lateral do Arquivos, cria um link simbólico seguro na Área de Trabalho definida pelo XDG e aplica o ícone próprio. Essas integrações podem ser alteradas separadamente em **Configurações → Geral → Pasta local**.
+Durante a análise, o aplicativo usa uma pasta privada completamente nova para obter uma cópia protegida do servidor. Um banco `.sync_*.db` presente na pasta escolhida é identificado e arquivado fora da árvore sincronizada; ele nunca é reaproveitado silenciosamente. O modo bidirecional, o `inotify`, os temporizadores e o `notify_push` só são ativados depois que o resultado revisado é aplicado, verificado e registrado como base segura.
+
+Uma nova conta então ativa o monitoramento local, intervalo remoto de segurança de 10 minutos, push compatível, exclusões de arquivos descartáveis e inicialização automática. O aplicativo também adiciona a pasta à lateral do Arquivos, cria um link simbólico seguro na Área de Trabalho definida pelo XDG e aplica o ícone próprio. Essas integrações podem ser alteradas separadamente em **Configurações → Geral → Pasta local**.
+
+Instalações atualizadas da `0.1.13` também começam pausadas e passam por essa análise uma vez. Isso é intencional: a versão nova não considera seguro um estado antigo que ainda não possui manifesto próprio.
+
+## Proteção contínua contra exclusões
+
+Depois de cada sincronização bem-sucedida, o PyNextCloud Sync registra um manifesto local da árvore verificada. Antes de executar novamente o motor bidirecional, ele confere a identidade e o conteúdo básico da pasta.
+
+A sincronização é bloqueada quando:
+
+- a pasta local desaparece, deixa de ser uma pasta ou não pode ser lida;
+- a pasta configurada parece ter sido substituída ou remontada;
+- uma pasta anteriormente preenchida aparece vazia;
+- o banco de estado do `nextcloudcmd` desaparece inesperadamente;
+- somem pelo menos 10 arquivos ou 20% da base anterior, conforme os limites configuráveis.
+
+Na revisão de segurança, o usuário pode restaurar o conteúdo a partir do Nextcloud, manter tudo pausado ou aprovar intencionalmente aquelas exclusões uma única vez. Os limites ficam em **Configurações → Avançado → Trava de segurança contra exclusões**. Pasta vazia, ausente, substituída ou ilegível sempre exige revisão, independentemente desses limites.
 
 Se o favorito for removido pelo Arquivos, o aplicativo respeita a escolha e reflete o estado real, sem recriá-lo.
 
@@ -157,7 +179,7 @@ Se o favorito for removido pelo Arquivos, o aplicativo respeita a escolha e refl
 | Geral | Inicialização automática, bateria, pasta local, favorito no Arquivos, atalho na Área de Trabalho e ícone especial |
 | Sincronização | `inotify`, intervalo local, `notify_push`, intervalo remoto de segurança e exclusões de arquivos descartáveis |
 | Rede | Remoção da conta, proxy HTTP opcional e permissão explícita para certificados inválidos ou autoassinados |
-| Avançado | Logs diários, retenção, saída detalhada da sincronização e diagnóstico do runtime |
+| Avançado | Logs diários, retenção, saída detalhada, limites da trava de exclusões e diagnóstico do runtime |
 
 Os quatro gatilhos automáticos podem ser combinados ou desativados. Com monitoramento local, intervalo local, push e intervalo remoto desligados, o aplicativo funciona somente por sincronização manual.
 
@@ -178,6 +200,8 @@ Padrões contendo `/`, `\` ou `..` são rejeitados. A versão 1 não permite exc
 - Configuração: `$XDG_CONFIG_HOME/pynextcloud-sync/settings.json`
 - Exclusões geradas: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes.lst`
 - Logs diários: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
+- Manifesto de segurança: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest.json`
+- Bancos antigos arquivados: `$XDG_STATE_HOME/pynextcloud-sync/safety-archives/`
 - Segredo da conta: GNOME Keyring ou outro provedor compatível com Secret Service
 
 Os logs permanecem no computador, usam um arquivo por dia e são mantidos por 30 dias por padrão. Valores sensíveis são ocultados das mensagens de log geradas pelo aplicativo. Se o login biométrico deixar a carteira `Login` bloqueada, o GNOME exibe sua solicitação nativa de desbloqueio antes da sincronização. A senha do computador é tratada somente pelo GNOME; o PyNextCloud Sync não a recebe nem armazena. Cancelar a solicitação deixa o aplicativo aguardando o comando explícito **Desbloquear carteira de senhas**, sem repetir diálogos ou acusar credenciais inválidas do Nextcloud.
@@ -203,7 +227,7 @@ Contribuições são bem-vindas quando preservam o escopo enxuto, baixo consumo 
 
 ## Estado do projeto
 
-A versão `0.1.13` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
+A versão `0.1.14` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
 
 ---
 

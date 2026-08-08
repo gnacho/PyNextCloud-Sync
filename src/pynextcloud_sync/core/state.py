@@ -17,6 +17,7 @@ class AppState(str, Enum):
     ERROR = "error"
     AUTH_REQUIRED = "auth_required"
     KEYRING_LOCKED = "keyring_locked"
+    SAFETY_REVIEW = "safety_review"
 
 
 class PushState(str, Enum):
@@ -60,4 +61,3 @@ class StateController:
         self._snapshot = updated
         for listener in tuple(self._listeners):
             listener(updated)
-

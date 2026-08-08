@@ -211,11 +211,11 @@ class SetupWindow(Adw.ApplicationWindow):
 
     def _build_summary(self) -> None:
         page, content = self._page()
-        content.append(Gtk.Label(label=_("Ready to Synchronize"), xalign=0, css_classes=["title-1"]))
+        content.append(Gtk.Label(label=_("Ready for Safety Review"), xalign=0, css_classes=["title-1"]))
         self.summary_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         content.append(self.summary_list)
         defaults = Gtk.Label(
-            label=_("Filesystem monitoring, server push, the 10-minute remote safety interval, safe disposable-file exclusions, and autostart will be enabled."),
+            label=_("Before automatic synchronization is enabled, both sides will be analyzed in an isolated safety step and you will choose how existing content is merged."),
             wrap=True,
             xalign=0,
             css_classes=["dim-label"],
@@ -225,7 +225,7 @@ class SetupWindow(Adw.ApplicationWindow):
         back = Gtk.Button(label=_("Back"))
         back.connect("clicked", lambda _button: self.stack.set_visible_child_name("folder"))
         actions.append(back)
-        start = Gtk.Button(label=_("Start Synchronizing"), css_classes=["suggested-action"])
+        start = Gtk.Button(label=_("Analyze Both Sides Safely"), css_classes=["suggested-action"])
         start.connect("clicked", self._start_syncing)
         actions.append(start)
         content.append(actions)
@@ -331,22 +331,7 @@ class SetupWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name("summary")
 
     def _start_syncing(self, _button: Gtk.Button) -> None:
-        root = Path(self.folder_entry.get_text()).expanduser()
-        if root.exists() and any(root.iterdir()):
-            dialog = Adw.AlertDialog(
-                heading=_("This folder is not empty"),
-                body=_("Synchronization is bidirectional. Existing files may be uploaded, merged, replaced, or produce conflicts according to Nextcloud rules."),
-            )
-            dialog.add_response("cancel", _("Cancel"))
-            dialog.add_response("continue", _("Use This Folder"))
-            dialog.set_response_appearance("continue", Adw.ResponseAppearance.DESTRUCTIVE)
-            dialog.choose(self, None, self._existing_folder_choice)
-        else:
-            self._finish_setup()
-
-    def _existing_folder_choice(self, dialog: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
-        if dialog.choose_finish(result) == "continue":
-            self._finish_setup()
+        self._finish_setup()
 
     def _finish_setup(self) -> None:
         root = Path(self.folder_entry.get_text()).expanduser()
@@ -360,6 +345,8 @@ class SetupWindow(Adw.ApplicationWindow):
         self.config.data["network"]["trust_invalid_certificates"] = (
             self.trust_invalid.get_active()
         )
+        self.config.data["safety"]["bootstrap_complete"] = False
+        self.config.data["safety"]["bootstrap_completed_at"] = None
         self.config.save()
         AutostartManager().set_enabled(self.config.data["general"]["autostart"])
         self.on_complete()

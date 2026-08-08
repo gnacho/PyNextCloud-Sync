@@ -49,11 +49,25 @@ class LifecycleContractTests(unittest.TestCase):
         setup_complete = method_source(
             application, "PyNextCloudApplication", "_setup_complete"
         )
+        bootstrap_complete = method_source(
+            application, "PyNextCloudApplication", "_bootstrap_complete"
+        )
         ensure_integration = method_source(
             application, "PyNextCloudApplication", "_ensure_desktop_integration"
         )
-        self.assertIn("initialize_defaults()", setup_complete)
+        self.assertIn("initialize_integrations=True", setup_complete)
+        self.assertIn("initialize_defaults()", bootstrap_complete)
         self.assertNotIn("initialize_defaults()", ensure_integration)
+
+    def test_existing_configuration_requires_bootstrap_before_runtime(self) -> None:
+        application = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        activate = method_source(application, "PyNextCloudApplication", "do_activate")
+        ensure_runtime = method_source(
+            application, "PyNextCloudApplication", "_ensure_runtime"
+        )
+        self.assertIn('"bootstrap_complete", False', activate)
+        self.assertIn("self._ensure_bootstrap()", activate)
+        self.assertIn('"bootstrap_complete", False', ensure_runtime)
 
     def test_closed_main_window_releases_ui_subscriptions(self) -> None:
         path = ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"

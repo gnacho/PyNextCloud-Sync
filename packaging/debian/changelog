@@ -1,0 +1,37 @@
+pynextcloud-sync (0.1.9) stable; urgency=medium
+
+  * Publish the corrected project, issue, and changelog URLs under the canonical
+    ehstbr/PyNextCloud-Sync repository.
+  * Bump the Debian version so installations of 0.1.8 receive the corrected
+    application and metadata files through a normal APT upgrade.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 22:30:00 -0300
+
+pynextcloud-sync (0.1.8) stable; urgency=medium
+
+  * Set the public website to eduhcommerce.com.br and point source, issue, and
+    documentation links to ehstbr/PyNextCloud-Sync.
+  * Add bilingual release documentation, screenshots, expanded terms, and
+    third-party project/license references.
+  * Add native Files sidebar and desktop shortcuts for the sync folder.
+  * Add a branded folder icon and independent settings for each integration.
+  * Reflect external bookmark removal without recreating the bookmark.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 21:30:00 -0300
+
+pynextcloud-sync (0.1.7) stable; urgency=medium
+
+  * Open Settings from the tray as an independent preferences window.
+  * Keep the main interface closed and unallocated while Settings is open.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 20:30:00 -0300
+
+pynextcloud-sync (0.1.6) stable; urgency=medium
+
+  * Fix opening Settings from the tray when the main window is closed.
+  * Reduce background and peak memory with lazy UI lifecycle, bounded command
+    output, bounded log buffers, and efficient daily log tail reads.
+  * Avoid redundant watcher and push reconfiguration.
+  * Remove unused and obsolete internal code.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 19:30:00 -0300

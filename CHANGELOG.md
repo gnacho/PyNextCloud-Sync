@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.13 — 2026-08-07
+
+- Fixed the remaining GNOME biometric-login credential bug. During desktop
+  autostart, GNOME Keyring could return an empty Secret Service search while
+  the default Login collection was still locked, causing version 0.1.12 to
+  report that no stored credential existed without displaying an unlock prompt.
+- The credential flow now resolves the default password collection explicitly,
+  requests its native GNOME unlock prompt when locked, confirms the collection
+  was unlocked, and only then searches for the stored Nextcloud app password.
+- Canceling the native prompt still preserves the dedicated **Password keyring
+  locked** state and does not create repeated automatic prompts or mislabel the
+  Nextcloud account as invalid.
+- Added diagnostic log messages for collection unlocking and truly empty
+  credential searches, plus a regression test reproducing the real startup
+  sequence in which locked items are initially hidden from attribute search.
+
 ## 0.1.12 — 2026-08-07
 
 - Fixed the remaining Debian upgrade lifecycle bug. `gapplication list-apps`

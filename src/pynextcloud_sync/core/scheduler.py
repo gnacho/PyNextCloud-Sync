@@ -158,6 +158,9 @@ class SyncScheduler:
             if not password:
                 self._keyring_locked = False
                 self.state.set(AppState.AUTH_REQUIRED, _("No stored credential was found"))
+                self.logger.error(
+                    "Credential lookup returned no stored item for the configured account."
+                )
                 return
             self._keyring_locked = False
             self.logger.add_secret(password)

@@ -113,7 +113,7 @@ class I18nTests(unittest.TestCase):
         ).strip()
         self.assertIn("login biométrico", translated)
 
-    def test_debian_upgrade_fix_release_note_is_translated(self) -> None:
+    def test_biometric_collection_fix_release_note_is_translated(self) -> None:
         environment = os.environ.copy()
         environment.update(
             {
@@ -127,14 +127,14 @@ class I18nTests(unittest.TestCase):
                 sys.executable,
                 "-c",
                 "from pynextcloud_sync.util.i18n import _; "
-                "print(_('Version 0.1.12')); "
-                "print(_('Fixed Debian upgrade detection by querying the live D-Bus owner instead of treating list-apps as a process list.'))",
+                "print(_('Version 0.1.13')); "
+                "print(_('The default GNOME password collection is now unlocked before searching for the Nextcloud credential after biometric login.'))",
             ],
             env=environment,
             text=True,
         ).splitlines()
-        self.assertEqual(translated[0], "Versão 0.1.12")
-        self.assertIn("proprietário D-Bus ativo", translated[1])
+        self.assertEqual(translated[0], "Versão 0.1.13")
+        self.assertIn("coleção de senhas padrão", translated[1])
 
 
 if __name__ == "__main__":

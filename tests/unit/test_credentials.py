@@ -40,6 +40,19 @@ class FakeSecretItem:
         return FakeSecretValue(value) if value is not None else None
 
 
+class FakeSecretCollection:
+    @staticmethod
+    def for_alias_sync(_service, alias, flags, _cancellable):
+        FakeSecret.collection_aliases.append(alias)
+        FakeSecret.collection_flags.append(flags)
+        if FakeSecret.default_collection_missing:
+            return None
+        return FakeSecretCollection()
+
+    def get_locked(self) -> bool:
+        return FakeSecret.locked
+
+
 class FakeSecretService:
     @staticmethod
     def get_sync(flags, _cancellable):
@@ -56,11 +69,21 @@ class FakeSecretService:
         key = (attributes["server"], attributes["username"])
         if key not in FakeSecret.saved:
             return []
+        if FakeSecret.hide_items_while_locked and FakeSecret.locked:
+            return []
         if FakeSecret.locked and flags & FakeSecret.SearchFlags.UNLOCK:
             FakeSecret.unlock_attempts += 1
             if not FakeSecret.unlock_cancelled:
                 FakeSecret.locked = False
         return [FakeSecretItem(key)]
+
+    def unlock_sync(self, objects, _cancellable):
+        FakeSecret.unlock_operations.append(tuple(objects))
+        FakeSecret.unlock_attempts += 1
+        if not FakeSecret.unlock_cancelled:
+            FakeSecret.locked = False
+            return 1, list(objects)
+        return 0, []
 
 
 class FakeSecret:
@@ -68,17 +91,24 @@ class FakeSecret:
     SchemaFlags = types.SimpleNamespace(NONE=0)
     SchemaAttributeType = types.SimpleNamespace(STRING="string")
     Service = FakeSecretService
+    Collection = FakeSecretCollection
     ServiceFlags = types.SimpleNamespace(NONE=0, OPEN_SESSION=1, LOAD_COLLECTIONS=2)
+    CollectionFlags = types.SimpleNamespace(NONE=0, LOAD_ITEMS=1)
     SearchFlags = types.SimpleNamespace(NONE=0, ALL=1, UNLOCK=2, LOAD_SECRETS=4)
     COLLECTION_DEFAULT = "default"
     saved: dict[tuple[str, str], str] = {}
     operations: list[tuple[str, dict[str, str]]] = []
     service_flags: list[int] = []
     search_flags: list[int] = []
+    collection_aliases: list[str] = []
+    collection_flags: list[int] = []
+    unlock_operations: list[tuple[object, ...]] = []
     failure: Exception | None = None
     locked = False
     unlock_cancelled = False
     unlock_attempts = 0
+    hide_items_while_locked = False
+    default_collection_missing = False
 
     @classmethod
     def reset(cls) -> None:
@@ -86,10 +116,15 @@ class FakeSecret:
         cls.operations = []
         cls.service_flags = []
         cls.search_flags = []
+        cls.collection_aliases = []
+        cls.collection_flags = []
+        cls.unlock_operations = []
         cls.failure = None
         cls.locked = False
         cls.unlock_cancelled = False
         cls.unlock_attempts = 0
+        cls.hide_items_while_locked = False
+        cls.default_collection_missing = False
 
     @classmethod
     def password_store_sync(
@@ -196,6 +231,7 @@ class CredentialStoreTests(unittest.TestCase):
             FakeSecret.search_flags,
             [FakeSecret.SearchFlags.UNLOCK | FakeSecret.SearchFlags.LOAD_SECRETS],
         )
+        self.assertEqual(FakeSecret.collection_aliases, [FakeSecret.COLLECTION_DEFAULT])
 
     def test_keyring_cancellation_is_reported_without_escaping(self) -> None:
         FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"
@@ -230,6 +266,28 @@ class CredentialStoreTests(unittest.TestCase):
         self.assertFalse(FakeSecret.locked)
         self.assertEqual(FakeSecret.unlock_attempts, 1)
 
+    def test_explicit_collection_unlock_precedes_search_hidden_by_locked_keyring(self) -> None:
+        FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"
+        FakeSecret.locked = True
+        FakeSecret.hide_items_while_locked = True
+        store = self.credentials.CredentialStore(worker_dispatch=lambda job: job())
+        result = []
+
+        store.lookup(
+            "https://cloud.example",
+            "alice",
+            lambda password, error: result.append((password, error)),
+        )
+
+        self.assertEqual(result, [("app-password", None)])
+        self.assertFalse(FakeSecret.locked)
+        self.assertEqual(FakeSecret.unlock_attempts, 1)
+        self.assertEqual(len(FakeSecret.unlock_operations), 1)
+        self.assertEqual(
+            [name for name, _attributes in FakeSecret.operations],
+            ["search"],
+        )
+
     def test_missing_item_is_not_mislabeled_as_a_locked_keyring(self) -> None:
         store = self.credentials.CredentialStore(worker_dispatch=lambda job: job())
         result = []
@@ -241,6 +299,13 @@ class CredentialStoreTests(unittest.TestCase):
         )
 
         self.assertEqual(result, [(None, None)])
+
+    def test_unlock_result_supports_typelib_return_shapes(self) -> None:
+        self.assertEqual(self.credentials.CredentialStore._unlock_count(1), 1)
+        self.assertEqual(
+            self.credentials.CredentialStore._unlock_count((1, [object()])), 1
+        )
+        self.assertEqual(self.credentials.CredentialStore._unlock_count((0, [])), 0)
 
     def test_simultaneous_lookups_are_coalesced(self) -> None:
         FakeSecret.saved[("https://cloud.example", "alice")] = "app-password"

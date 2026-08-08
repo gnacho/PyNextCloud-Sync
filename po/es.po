@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PyNextCloud Sync 0.1.12\n"
+"Project-Id-Version: PyNextCloud Sync 0.1.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-07 23:32-0300\n"
+"POT-Creation-Date: 2026-08-07 23:50-0300\n"
 "PO-Revision-Date: 2026-08-07 23:20-0300\n"
 "Last-Translator: EduhCommerce\n"
 "Language-Team: Spanish\n"
@@ -55,8 +55,8 @@ msgid ""
 msgstr ""
 
 #: src/pynextcloud_sync/core/scheduler.py:83
-#: src/pynextcloud_sync/core/scheduler.py:279
-#: src/pynextcloud_sync/core/scheduler.py:292
+#: src/pynextcloud_sync/core/scheduler.py:282
+#: src/pynextcloud_sync/core/scheduler.py:295
 msgid "Waiting for a network connection"
 msgstr ""
 
@@ -85,37 +85,37 @@ msgstr ""
 msgid "No stored credential was found"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:206
+#: src/pynextcloud_sync/core/scheduler.py:209
 msgid "Synchronized with conflicts — review the log"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:211
+#: src/pynextcloud_sync/core/scheduler.py:214
 msgid "Your Nextcloud account needs attention"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:214
+#: src/pynextcloud_sync/core/scheduler.py:217
 msgid "Synchronization failed — view the log"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:252
-#: src/pynextcloud_sync/core/scheduler.py:288
+#: src/pynextcloud_sync/core/scheduler.py:255
+#: src/pynextcloud_sync/core/scheduler.py:291
 msgid "Synchronization is paused"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:265
+#: src/pynextcloud_sync/core/scheduler.py:268
 msgid "Will pause after the current synchronization"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:265
-#: src/pynextcloud_sync/core/scheduler.py:290
+#: src/pynextcloud_sync/core/scheduler.py:268
+#: src/pynextcloud_sync/core/scheduler.py:293
 msgid "Paused on battery"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:294
+#: src/pynextcloud_sync/core/scheduler.py:297
 msgid "Automatic synchronization is off"
 msgstr ""
 
-#: src/pynextcloud_sync/core/scheduler.py:296
+#: src/pynextcloud_sync/core/scheduler.py:299
 #: src/pynextcloud_sync/ui/main_window.py:25
 msgid "Synchronized"
 msgstr "Sincronizado"
@@ -249,10 +249,39 @@ msgstr ""
 "software también está sujeto a la Licencia MIT y a su exención de garantías."
 
 #: src/pynextcloud_sync/ui/about_content.py:56
+msgid "Version 0.1.13"
+msgstr "Versión 0.1.13"
+
+#: src/pynextcloud_sync/ui/about_content.py:58
+msgid ""
+"The default GNOME password collection is now unlocked before searching for "
+"the Nextcloud credential after biometric login."
+msgstr ""
+"La colección de contraseñas predeterminada de GNOME ahora se desbloquea antes "
+"de buscar la credencial de Nextcloud después del inicio de sesión biométrico."
+
+#: src/pynextcloud_sync/ui/about_content.py:59
+msgid ""
+"A locked Login collection is no longer misreported as a missing stored "
+"credential during desktop autostart."
+msgstr ""
+"Una colección de inicio de sesión bloqueada ya no se informa incorrectamente "
+"como una credencial almacenada ausente durante el inicio automático del "
+"escritorio."
+
+#: src/pynextcloud_sync/ui/about_content.py:60
+msgid ""
+"Added diagnostic logging and a regression test for credentials hidden while "
+"the keyring is locked."
+msgstr ""
+"Se añadieron registros de diagnóstico y una prueba de regresión para las "
+"credenciales ocultas mientras el llavero está bloqueado."
+
+#: src/pynextcloud_sync/ui/about_content.py:64
 msgid "Version 0.1.12"
 msgstr "Versión 0.1.12"
 
-#: src/pynextcloud_sync/ui/about_content.py:58
+#: src/pynextcloud_sync/ui/about_content.py:66
 msgid ""
 "Fixed Debian upgrade detection by querying the live D-Bus owner instead of "
 "treating list-apps as a process list."
@@ -261,7 +290,7 @@ msgstr ""
 "propietario D-Bus activo, en lugar de tratar list-apps como una lista de "
 "procesos."
 
-#: src/pynextcloud_sync/ui/about_content.py:59
+#: src/pynextcloud_sync/ui/about_content.py:67
 msgid ""
 "The package now confirms that the old instance has exited before replacing "
 "application files."
@@ -269,7 +298,7 @@ msgstr ""
 "Ahora el paquete confirma que la instancia anterior finalizó antes de "
 "reemplazar los archivos de la aplicación."
 
-#: src/pynextcloud_sync/ui/about_content.py:60
+#: src/pynextcloud_sync/ui/about_content.py:68
 msgid ""
 "Replaced the inaccurate package-upgrade fixture with a regression test that "
 "matches the real GLib behavior."
@@ -277,11 +306,11 @@ msgstr ""
 "Se reemplazó el escenario impreciso de actualización del paquete por una "
 "prueba de regresión que reproduce el comportamiento real de GLib."
 
-#: src/pynextcloud_sync/ui/about_content.py:64
+#: src/pynextcloud_sync/ui/about_content.py:72
 msgid "Version 0.1.11"
 msgstr "Versión 0.1.11"
 
-#: src/pynextcloud_sync/ui/about_content.py:66
+#: src/pynextcloud_sync/ui/about_content.py:74
 msgid ""
 "Fixed detection of running application instances during Debian upgrades when "
 "APT/dpkg does not preserve SUDO_UID."
@@ -289,7 +318,7 @@ msgstr ""
 "Se corrigió la detección de instancias en ejecución durante actualizaciones "
 "de Debian cuando APT/dpkg no conserva SUDO_UID."
 
-#: src/pynextcloud_sync/ui/about_content.py:67
+#: src/pynextcloud_sync/ui/about_content.py:75
 msgid ""
 "Upgrades now stop and restart the application through its real per-user D-"
 "Bus session."
@@ -297,7 +326,7 @@ msgstr ""
 "Las actualizaciones ahora cierran y reinician la aplicación mediante su "
 "sesión D-Bus real de usuario."
 
-#: src/pynextcloud_sync/ui/about_content.py:68
+#: src/pynextcloud_sync/ui/about_content.py:76
 msgid ""
 "Added an executable regression test for graceful package-upgrade shutdown "
 "and restart."
@@ -305,11 +334,11 @@ msgstr ""
 "Se añadió una prueba de regresión ejecutable para el cierre y reinicio "
 "seguros durante la actualización del paquete."
 
-#: src/pynextcloud_sync/ui/about_content.py:72
+#: src/pynextcloud_sync/ui/about_content.py:80
 msgid "Version 0.1.10"
 msgstr "Versión 0.1.10"
 
-#: src/pynextcloud_sync/ui/about_content.py:74
+#: src/pynextcloud_sync/ui/about_content.py:82
 msgid ""
 "Added the native GNOME Keyring unlock prompt required after biometric "
 "desktop login."
@@ -317,7 +346,7 @@ msgstr ""
 "Se añadió el diálogo nativo de GNOME Keyring necesario para desbloquear el "
 "llavero tras iniciar sesión en el escritorio con biometría."
 
-#: src/pynextcloud_sync/ui/about_content.py:75
+#: src/pynextcloud_sync/ui/about_content.py:83
 msgid ""
 "Canceled unlocks now remain separate from invalid Nextcloud credentials "
 "without repeated automatic prompts."
@@ -325,7 +354,7 @@ msgstr ""
 "Las cancelaciones del desbloqueo ahora se distinguen de credenciales "
 "inválidas de Nextcloud, sin diálogos automáticos repetidos."
 
-#: src/pynextcloud_sync/ui/about_content.py:76
+#: src/pynextcloud_sync/ui/about_content.py:84
 msgid ""
 "File synchronization and notify_push resume together after the keyring is "
 "unlocked."
@@ -333,7 +362,7 @@ msgstr ""
 "La sincronización de archivos y notify_push se reanudan conjuntamente "
 "después de desbloquear el llavero."
 
-#: src/pynextcloud_sync/ui/about_content.py:77
+#: src/pynextcloud_sync/ui/about_content.py:85
 msgid ""
 "Interactive Debian upgrades now gracefully stop and restart a running "
 "application."
@@ -341,11 +370,11 @@ msgstr ""
 "Las actualizaciones interactivas mediante Debian ahora detienen de forma "
 "segura y reinician la aplicación si estaba en ejecución."
 
-#: src/pynextcloud_sync/ui/about_content.py:81
+#: src/pynextcloud_sync/ui/about_content.py:89
 msgid "Version 0.1.9"
 msgstr "Versión 0.1.9"
 
-#: src/pynextcloud_sync/ui/about_content.py:83
+#: src/pynextcloud_sync/ui/about_content.py:91
 msgid ""
 "Published the corrected website, source, issue, and changelog links under "
 "the canonical repository."
@@ -353,25 +382,25 @@ msgstr ""
 "Se publicaron los enlaces corregidos del sitio web, código fuente, problemas "
 "e historial de cambios en el repositorio canónico."
 
-#: src/pynextcloud_sync/ui/about_content.py:87
+#: src/pynextcloud_sync/ui/about_content.py:95
 msgid "Version 0.1.8"
 msgstr "Versión 0.1.8"
 
-#: src/pynextcloud_sync/ui/about_content.py:89
+#: src/pynextcloud_sync/ui/about_content.py:97
 msgid ""
 "Added native Files sidebar and desktop shortcuts for the synchronized folder."
 msgstr ""
 "Se añadieron accesos nativos a la carpeta sincronizada en la barra lateral "
 "de Archivos y en el escritorio."
 
-#: src/pynextcloud_sync/ui/about_content.py:90
+#: src/pynextcloud_sync/ui/about_content.py:98
 msgid ""
 "Added a branded folder icon and settings for all three desktop integrations."
 msgstr ""
 "Se añadieron un icono propio para la carpeta y ajustes para las tres "
 "integraciones con el escritorio."
 
-#: src/pynextcloud_sync/ui/about_content.py:91
+#: src/pynextcloud_sync/ui/about_content.py:99
 msgid ""
 "Removing the Files bookmark outside the application now updates Settings "
 "without recreating it."
@@ -379,11 +408,11 @@ msgstr ""
 "Al quitar el marcador desde Archivos, ahora se actualizan los Ajustes sin "
 "volver a crearlo."
 
-#: src/pynextcloud_sync/ui/about_content.py:95
+#: src/pynextcloud_sync/ui/about_content.py:103
 msgid "Version 0.1.7"
 msgstr "Versión 0.1.7"
 
-#: src/pynextcloud_sync/ui/about_content.py:97
+#: src/pynextcloud_sync/ui/about_content.py:105
 msgid ""
 "Settings now opens independently from the tray without opening the main "
 "window."
@@ -391,7 +420,7 @@ msgstr ""
 "La Configuración ahora se abre de forma independiente desde la bandeja, sin "
 "abrir la ventana principal."
 
-#: src/pynextcloud_sync/ui/about_content.py:98
+#: src/pynextcloud_sync/ui/about_content.py:106
 msgid ""
 "The independent Settings window is released after closing to preserve the "
 "low-memory interface lifecycle."
@@ -399,17 +428,17 @@ msgstr ""
 "La ventana independiente de Configuración se libera al cerrarla para "
 "conservar el ciclo de vida de la interfaz con bajo consumo de memoria."
 
-#: src/pynextcloud_sync/ui/about_content.py:102
+#: src/pynextcloud_sync/ui/about_content.py:110
 msgid "Version 0.1.6"
 msgstr "Versión 0.1.6"
 
-#: src/pynextcloud_sync/ui/about_content.py:104
+#: src/pynextcloud_sync/ui/about_content.py:112
 msgid "Fixed opening Settings from the tray while the main window is closed."
 msgstr ""
 "Se corrigió la apertura de Configuración desde la bandeja cuando la ventana "
 "principal está cerrada."
 
-#: src/pynextcloud_sync/ui/about_content.py:105
+#: src/pynextcloud_sync/ui/about_content.py:113
 msgid ""
 "Reduced background memory by creating the main interface only when needed "
 "and releasing it when closed."
@@ -417,7 +446,7 @@ msgstr ""
 "Se redujo la memoria en segundo plano creando la interfaz principal solo "
 "cuando es necesaria y liberándola al cerrarla."
 
-#: src/pynextcloud_sync/ui/about_content.py:106
+#: src/pynextcloud_sync/ui/about_content.py:114
 msgid ""
 "Bounded command output, log display, activity history, and browser login "
 "polling."
@@ -425,111 +454,111 @@ msgstr ""
 "Se limitaron la salida del comando, la vista del registro, el historial de "
 "actividad y las consultas de inicio de sesión en el navegador."
 
-#: src/pynextcloud_sync/ui/about_content.py:107
+#: src/pynextcloud_sync/ui/about_content.py:115
 msgid ""
 "Avoided unnecessary filesystem watcher and push connection reconfiguration."
 msgstr ""
 "Se evitó reconfigurar innecesariamente el monitor de archivos y la conexión "
 "push."
 
-#: src/pynextcloud_sync/ui/about_content.py:111
+#: src/pynextcloud_sync/ui/about_content.py:119
 msgid "Version 0.1.5"
 msgstr "Versión 0.1.5"
 
-#: src/pynextcloud_sync/ui/about_content.py:113
+#: src/pynextcloud_sync/ui/about_content.py:121
 msgid ""
 "Activity messages can now be expanded with one click and copied from a right-"
 "click menu."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:114
+#: src/pynextcloud_sync/ui/about_content.py:122
 msgid ""
 "Fixed Brazilian Portuguese loading and completed the application translation "
 "catalog."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:118
+#: src/pynextcloud_sync/ui/about_content.py:126
 msgid "Version 0.1.4"
 msgstr "Versión 0.1.4"
 
-#: src/pynextcloud_sync/ui/about_content.py:120
+#: src/pynextcloud_sync/ui/about_content.py:128
 msgid ""
 "Made the tray icon and details follow synchronization state changes live."
 msgstr ""
 "El icono y los detalles de la bandeja ahora siguen en tiempo real los "
 "cambios del estado de sincronización."
 
-#: src/pynextcloud_sync/ui/about_content.py:121
+#: src/pynextcloud_sync/ui/about_content.py:129
 msgid ""
 "Added compatible StatusNotifierItem and D-Bus property change notifications."
 msgstr ""
 "Se añadieron notificaciones compatibles de cambios de propiedades de "
 "StatusNotifierItem y D-Bus."
 
-#: src/pynextcloud_sync/ui/about_content.py:125
+#: src/pynextcloud_sync/ui/about_content.py:133
 msgid "Version 0.1.3"
 msgstr "Versión 0.1.3"
 
-#: src/pynextcloud_sync/ui/about_content.py:127
+#: src/pynextcloud_sync/ui/about_content.py:135
 msgid "Fixed the application icon displayed by GNOME tray hosts."
 msgstr ""
 "Se corrigió el icono de la aplicación mostrado por la bandeja de GNOME."
 
-#: src/pynextcloud_sync/ui/about_content.py:128
+#: src/pynextcloud_sync/ui/about_content.py:136
 msgid "Added icon theme, absolute SVG, and pixel fallback support."
 msgstr ""
 "Se añadió soporte para tema de iconos, SVG absoluto y alternativa en píxeles."
 
-#: src/pynextcloud_sync/ui/about_content.py:132
+#: src/pynextcloud_sync/ui/about_content.py:140
 msgid "Version 0.1.2"
 msgstr "Versión 0.1.2"
 
-#: src/pynextcloud_sync/ui/about_content.py:134
+#: src/pynextcloud_sync/ui/about_content.py:142
 msgid "A more compact, responsive main window with a stable status header."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:135
+#: src/pynextcloud_sync/ui/about_content.py:143
 msgid ""
 "Collapsible recent activity with severity icons and single-line messages."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:136
+#: src/pynextcloud_sync/ui/about_content.py:144
 msgid "A working one-click tray menu and more reliable window presentation."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:137
+#: src/pynextcloud_sync/ui/about_content.py:145
 msgid "Optional daily log files with configurable retention."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:138
+#: src/pynextcloud_sync/ui/about_content.py:146
 msgid ""
 "Expanded About, legal terms, license, credits, and changelog information."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:139
+#: src/pynextcloud_sync/ui/about_content.py:147
 msgid ""
 "Fixed D-Bus menu variants, literal log rendering, and numeric log formatting."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:143
+#: src/pynextcloud_sync/ui/about_content.py:151
 msgid "Version 0.1.1"
 msgstr "Versión 0.1.1"
 
-#: src/pynextcloud_sync/ui/about_content.py:145
+#: src/pynextcloud_sync/ui/about_content.py:153
 msgid ""
 "Fixed GNOME Keyring compatibility for saving, reading, and removing "
 "credentials."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:146
+#: src/pynextcloud_sync/ui/about_content.py:154
 msgid "Moved Keyring operations away from the GTK main thread."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:150
+#: src/pynextcloud_sync/ui/about_content.py:158
 msgid "Version 0.1.0"
 msgstr "Versión 0.1.0"
 
-#: src/pynextcloud_sync/ui/about_content.py:152
+#: src/pynextcloud_sync/ui/about_content.py:160
 msgid ""
 "Initial development release with browser login, nextcloudcmd "
 "synchronization, inotify, timers, notify_push, exclusions, logs, and GNOME "

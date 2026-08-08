@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.11" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Fixed running-instance discovery during Debian upgrades without relying on SUDO_UID.</li>
+          <li>Upgrades now stop and restart the application through each active per-user D-Bus session.</li>
+          <li>Added an executable regression test for graceful package-upgrade shutdown and restart.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.10" date="2026-08-07">
       <description>
         <ul>

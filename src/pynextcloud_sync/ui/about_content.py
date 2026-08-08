@@ -53,6 +53,14 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.11"),
+            [
+                _("Fixed detection of running application instances during Debian upgrades when APT/dpkg does not preserve SUDO_UID."),
+                _("Upgrades now stop and restart the application through its real per-user D-Bus session."),
+                _("Added an executable regression test for graceful package-upgrade shutdown and restart."),
+            ],
+        ),
+        (
             _("Version 0.1.10"),
             [
                 _("Added the native GNOME Keyring unlock prompt required after biometric desktop login."),

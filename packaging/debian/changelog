@@ -1,3 +1,14 @@
+pynextcloud-sync (0.1.11) stable; urgency=medium
+
+  * Discover running application instances from the real per-user D-Bus
+    sessions instead of relying on SUDO_UID during package upgrades.
+  * Gracefully stop every detected instance, wait for active synchronization,
+    and restart only the user sessions that were running before the upgrade.
+  * Add an executable lifecycle regression test for upgrades where APT/dpkg
+    does not propagate SUDO_UID.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:59:00 -0300
+
 pynextcloud-sync (0.1.10) stable; urgency=medium
 
   * Unlock GNOME Keyring through the native Secret Service prompt after a

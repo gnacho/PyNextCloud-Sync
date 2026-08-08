@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.11 — 2026-08-07
+
+- Fixed Debian upgrade session discovery. Maintainer scripts no longer depend
+  on `SUDO_UID`, which is not reliably propagated by APT/dpkg and caused the
+  running old version to remain in memory during the 0.1.10 upgrade.
+- Upgrades now inspect the real per-user D-Bus sessions under `/run/user`, ask
+  every running PyNextCloud Sync instance to quit normally, wait for any active
+  synchronization to finish, and reopen only the sessions that were running.
+- Added an executable maintainer-script regression test that reproduces an
+  upgrade without `SUDO_UID` and verifies both graceful shutdown and restart.
+
 ## 0.1.10 — 2026-08-07
 
 - Fixed startup after biometric GNOME login by searching Secret Service with

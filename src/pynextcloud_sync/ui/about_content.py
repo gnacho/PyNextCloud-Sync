@@ -53,6 +53,14 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.13"),
+            [
+                _("The default GNOME password collection is now unlocked before searching for the Nextcloud credential after biometric login."),
+                _("A locked Login collection is no longer misreported as a missing stored credential during desktop autostart."),
+                _("Added diagnostic logging and a regression test for credentials hidden while the keyring is locked."),
+            ],
+        ),
+        (
             _("Version 0.1.12"),
             [
                 _("Fixed Debian upgrade detection by querying the live D-Bus owner instead of treating list-apps as a process list."),

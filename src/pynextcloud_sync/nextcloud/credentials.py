@@ -27,11 +27,13 @@ class CredentialStore:
     def __init__(
         self,
         worker_dispatch: Callable[[Callable[[], None]], None] | None = None,
+        logger: object | None = None,
     ) -> None:
         self._pending_lookups: dict[
             tuple[str, str], list[Callable[[str | None, Exception | None], None]]
         ] = {}
         self._worker_dispatch = worker_dispatch or self._start_worker
+        self._logger = logger
 
     @staticmethod
     def _start_worker(operation: Callable[[], None]) -> None:
@@ -108,14 +110,32 @@ class CredentialStore:
 
         self._worker_dispatch(operation)
 
-    @staticmethod
-    def _lookup_with_unlock(attributes: dict[str, str]) -> str | None:
+    def _lookup_with_unlock(self, attributes: dict[str, str]) -> str | None:
         service = Secret.Service.get_sync(
             Secret.ServiceFlags.OPEN_SESSION | Secret.ServiceFlags.LOAD_COLLECTIONS,
             None,
         )
         if service is None:
             raise RuntimeError("The desktop Secret Service is unavailable")
+
+        # A biometric desktop login can leave the default Login collection
+        # locked. On GNOME Keyring, searching immediately during autostart may
+        # then return no items at all, even with SECRET_SEARCH_UNLOCK. Resolve
+        # and unlock the collection itself first so its items become visible to
+        # the subsequent attribute search.
+        collection = Secret.Collection.for_alias_sync(
+            service,
+            Secret.COLLECTION_DEFAULT,
+            Secret.CollectionFlags.NONE,
+            None,
+        )
+        if collection is not None and collection.get_locked():
+            self._log_info(
+                "The default password keyring is locked; requesting the native unlock prompt."
+            )
+            unlock_result = service.unlock_sync([collection], None)
+            if self._unlock_count(unlock_result) < 1 and collection.get_locked():
+                raise KeyringLockedError("The password keyring remains locked")
 
         items = service.search_sync(
             SCHEMA,
@@ -124,6 +144,9 @@ class CredentialStore:
             None,
         )
         if not items:
+            self._log_warning(
+                "Secret Service returned no matching credential after the default keyring was checked."
+            )
             return None
 
         item = items[0]
@@ -136,6 +159,25 @@ class CredentialStore:
         if item.get_locked():
             raise KeyringLockedError("The password keyring remains locked")
         raise RuntimeError("The stored account credential could not be loaded")
+
+    def _log_info(self, message: str) -> None:
+        if self._logger is not None:
+            self._logger.info(message)
+
+    def _log_warning(self, message: str) -> None:
+        if self._logger is not None:
+            self._logger.warning(message)
+
+    @staticmethod
+    def _unlock_count(result: object) -> int:
+        # PyGObject exposes the C return value either directly or as the first
+        # element of a tuple followed by the out-parameter list, depending on
+        # the typelib version.
+        value = result[0] if isinstance(result, tuple) and result else result
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
 
     def clear(
         self,

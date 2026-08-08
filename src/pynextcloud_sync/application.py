@@ -30,7 +30,7 @@ class PyNextCloudApplication(Adw.Application):
         self._activation_count = 0
         self.config = ConfigStore()
         self.logger = AppLogger()
-        self.credentials = CredentialStore()
+        self.credentials = CredentialStore(logger=self.logger)
         self.runtime: RuntimeController | None = None
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None

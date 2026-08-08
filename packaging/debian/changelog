@@ -1,3 +1,14 @@
+pynextcloud-sync (0.1.13) stable; urgency=medium
+
+  * Resolve and unlock the default GNOME password collection before searching
+    for the stored Nextcloud app password after biometric desktop login.
+  * Keep canceled prompts in the dedicated locked-keyring state and add clear
+    diagnostics for collection unlock and empty credential searches.
+  * Add a regression test matching GNOME Keyring's observed startup behavior,
+    where a locked collection initially hides its credential items.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:59:45 -0300
+
 pynextcloud-sync (0.1.12) stable; urgency=medium
 
   * Detect a running application by querying ownership of its live D-Bus name

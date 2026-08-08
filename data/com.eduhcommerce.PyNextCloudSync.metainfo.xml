@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.13" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Fixed credential lookup after biometric GNOME login by explicitly unlocking the default password collection before searching it.</li>
+          <li>Prevented a locked Login collection from being misreported as a missing Nextcloud credential during desktop autostart.</li>
+          <li>Added diagnostics and a regression test matching the observed GNOME Keyring startup behavior.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.12" date="2026-08-07">
       <description>
         <ul>

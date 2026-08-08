@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.12" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Fixed Debian upgrade detection by querying the live D-Bus owner instead of treating list-apps as a process list.</li>
+          <li>Upgrades now confirm the old instance has exited before replacing files and restart only previously active sessions.</li>
+          <li>Replaced the inaccurate package-upgrade fixture with a regression test matching the real GLib behavior.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.11" date="2026-08-07">
       <description>
         <ul>

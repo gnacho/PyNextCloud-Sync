@@ -127,14 +127,14 @@ class I18nTests(unittest.TestCase):
                 sys.executable,
                 "-c",
                 "from pynextcloud_sync.util.i18n import _; "
-                "print(_('Version 0.1.11')); "
-                "print(_('Fixed detection of running application instances during Debian upgrades when APT/dpkg does not preserve SUDO_UID.'))",
+                "print(_('Version 0.1.12')); "
+                "print(_('Fixed Debian upgrade detection by querying the live D-Bus owner instead of treating list-apps as a process list.'))",
             ],
             env=environment,
             text=True,
         ).splitlines()
-        self.assertEqual(translated[0], "Versão 0.1.11")
-        self.assertIn("Corrigida a detecção", translated[1])
+        self.assertEqual(translated[0], "Versão 0.1.12")
+        self.assertIn("proprietário D-Bus ativo", translated[1])
 
 
 if __name__ == "__main__":

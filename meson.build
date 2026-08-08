@@ -1,6 +1,6 @@
 project(
   'pynextcloud-sync',
-  version: '0.1.9',
+  version: '0.1.10',
   meson_version: '>= 1.0.0',
 )
 

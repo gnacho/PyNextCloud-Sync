@@ -25,6 +25,9 @@ for version_file in "$project_root/meson.build" "$project_root/pyproject.toml" "
     fi
 done
 
+mkdir -p "$output_dir"
+output_dir="$(cd "$output_dir" && pwd)"
+
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/pynextcloud-sync-source.XXXXXX")"
 cleanup() {
     case "$work_dir" in
@@ -37,7 +40,7 @@ trap cleanup EXIT
 
 archive_root="PyNextCloud-Sync-$version"
 staging_dir="$work_dir/$archive_root"
-mkdir -p "$staging_dir" "$output_dir"
+mkdir -p "$staging_dir"
 
 tar \
     --exclude='./.git' \

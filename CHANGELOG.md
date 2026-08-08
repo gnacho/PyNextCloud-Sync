@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.10 — 2026-08-07
+
+- Fixed startup after biometric GNOME login by searching Secret Service with
+  native unlock and secret-loading flags. The GNOME Keyring prompt can now
+  unlock the Login collection without exposing the desktop password to the
+  application.
+- A canceled unlock prompt now leaves the application in the dedicated
+  **Password keyring locked** state instead of reporting that the Nextcloud
+  account needs attention.
+- Automatic filesystem, timer, push, resume, and network triggers are queued
+  while the keyring remains locked, preventing repeated unlock prompts. The
+  **Unlock Password Keyring** action retries explicitly and resumes both file
+  synchronization and `notify_push` after success.
+- Debian upgrades started with `sudo apt install` now request a graceful quit
+  from a running instance, wait for an active synchronization to finish, and
+  restart version 0.1.10 in the same desktop session. No process is force-killed.
+- Added credential, locked-state, prompt-coalescing, and Debian maintainer-script
+  regression tests.
+
 ## 0.1.9 — 2026-08-07
 
 - Published the corrected website, source, issue, and changelog links in a new

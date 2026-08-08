@@ -1,3 +1,15 @@
+pynextcloud-sync (0.1.10) stable; urgency=medium
+
+  * Unlock GNOME Keyring through the native Secret Service prompt after a
+    biometric desktop login.
+  * Keep canceled unlocks in a dedicated keyring state and defer automatic
+    triggers until the user explicitly retries.
+  * Resume file synchronization and notify_push after a successful unlock.
+  * Gracefully stop a running instance before interactive Debian upgrades and
+    restart the updated application in the same desktop session.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:45:00 -0300
+
 pynextcloud-sync (0.1.9) stable; urgency=medium
 
   * Publish the corrected project, issue, and changelog URLs under the canonical

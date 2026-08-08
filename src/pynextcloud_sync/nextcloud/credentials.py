@@ -93,9 +93,9 @@ class CredentialStore:
 
         def operation() -> None:
             try:
-                password, error = Secret.password_lookup_sync(
-                    SCHEMA, attributes, None
-                ), None
+                password, error = self._lookup_with_unlock(attributes), None
+            except KeyringLockedError as exc:
+                password, error = None, exc
             except Exception as exc:
                 password, error = None, self._map_error(exc)
 
@@ -107,6 +107,35 @@ class CredentialStore:
             self._on_main_thread(deliver)
 
         self._worker_dispatch(operation)
+
+    @staticmethod
+    def _lookup_with_unlock(attributes: dict[str, str]) -> str | None:
+        service = Secret.Service.get_sync(
+            Secret.ServiceFlags.OPEN_SESSION | Secret.ServiceFlags.LOAD_COLLECTIONS,
+            None,
+        )
+        if service is None:
+            raise RuntimeError("The desktop Secret Service is unavailable")
+
+        items = service.search_sync(
+            SCHEMA,
+            attributes,
+            Secret.SearchFlags.UNLOCK | Secret.SearchFlags.LOAD_SECRETS,
+            None,
+        )
+        if not items:
+            return None
+
+        item = items[0]
+        secret = item.get_secret()
+        if secret is not None:
+            password = secret.get_text()
+            if password is not None:
+                return password
+
+        if item.get_locked():
+            raise KeyringLockedError("The password keyring remains locked")
+        raise RuntimeError("The stored account credential could not be loaded")
 
     def clear(
         self,

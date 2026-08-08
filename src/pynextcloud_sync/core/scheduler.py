@@ -45,6 +45,7 @@ class SyncScheduler:
         self._start_source = 0
         self._cooldown_source = 0
         self._preparing = False
+        self._keyring_locked = False
         self._stopped = False
         self._feedback_followup_pending = False
         self._inotify_during_sync = False
@@ -56,6 +57,10 @@ class SyncScheduler:
     @property
     def manual_only(self) -> bool:
         return manual_only(self.config.data["sync"])
+
+    @property
+    def keyring_locked(self) -> bool:
+        return self._keyring_locked
 
     def request(self, trigger: Trigger) -> None:
         if self._stopped:
@@ -78,8 +83,20 @@ class SyncScheduler:
             self.state.set(AppState.OFFLINE, _("Waiting for a network connection"))
             self.logger.info("Synchronization deferred while offline: %s", trigger.value)
             return
+        if self._keyring_locked and trigger != Trigger.MANUAL:
+            self.queue.add(trigger)
+            self.state.set(AppState.KEYRING_LOCKED, _("Password keyring is locked"))
+            self.logger.info(
+                "Synchronization deferred while the password keyring is locked: %s",
+                trigger.value,
+            )
+            return
         self.queue.add(trigger)
-        if trigger == Trigger.LOCAL_INOTIFY:
+        if self._keyring_locked and trigger == Trigger.MANUAL:
+            # Begin the explicit unlock attempt immediately. This ensures any
+            # simultaneous notify_push lookup joins the same native prompt.
+            self._start()
+        elif trigger == Trigger.LOCAL_INOTIFY:
             self._schedule_debounce()
         else:
             self._schedule_start()
@@ -131,14 +148,18 @@ class SyncScheduler:
             self._preparing = False
             if error:
                 if isinstance(error, KeyringLockedError):
+                    self._keyring_locked = True
                     self.state.set(AppState.KEYRING_LOCKED, _("Password keyring is locked"))
                 else:
+                    self._keyring_locked = False
                     self.state.set(AppState.AUTH_REQUIRED, _("Could not read the account credential"))
                 self.logger.error("Credential lookup failed: %s", error)
                 return
             if not password:
+                self._keyring_locked = False
                 self.state.set(AppState.AUTH_REQUIRED, _("No stored credential was found"))
                 return
+            self._keyring_locked = False
             self.logger.add_secret(password)
             sync = self.config.data["sync"]
             matcher = ExclusionMatcher(

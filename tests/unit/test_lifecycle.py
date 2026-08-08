@@ -80,6 +80,13 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("if self._poll_in_flight", poll)
         self.assertIn("self._poll_cancellable.cancel()", cancel)
 
+    def test_manual_keyring_unlock_reconnects_push_and_sync_together(self) -> None:
+        path = ROOT / "src" / "pynextcloud_sync" / "core" / "runtime.py"
+        sync_now = method_source(path, "RuntimeController", "sync_now")
+        self.assertIn("self.scheduler.keyring_locked", sync_now)
+        self.assertIn("self.scheduler.request(Trigger.MANUAL)", sync_now)
+        self.assertIn("self._configure_push(", sync_now)
+
 
 if __name__ == "__main__":
     unittest.main()

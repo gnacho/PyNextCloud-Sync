@@ -1,6 +1,6 @@
 project(
   'pynextcloud-sync',
-  version: '0.1.13',
+  version: '0.1.14',
   meson_version: '>= 1.0.0',
 )
 
@@ -14,6 +14,7 @@ python_sources = files(
   'src/pynextcloud_sync/application.py',
   'src/pynextcloud_sync/core/__init__.py',
   'src/pynextcloud_sync/core/autostart.py',
+  'src/pynextcloud_sync/core/bootstrap.py',
   'src/pynextcloud_sync/core/desktop_integration.py',
   'src/pynextcloud_sync/core/exclusions.py',
   'src/pynextcloud_sync/core/inotify.py',
@@ -21,6 +22,7 @@ python_sources = files(
   'src/pynextcloud_sync/core/power.py',
   'src/pynextcloud_sync/core/runtime.py',
   'src/pynextcloud_sync/core/scheduler.py',
+  'src/pynextcloud_sync/core/safety.py',
   'src/pynextcloud_sync/core/state.py',
   'src/pynextcloud_sync/core/suspend.py',
   'src/pynextcloud_sync/core/sync_engine.py',
@@ -41,6 +43,7 @@ python_sources = files(
   'src/pynextcloud_sync/ui/about.py',
   'src/pynextcloud_sync/ui/about_content.py',
   'src/pynextcloud_sync/ui/activity.py',
+  'src/pynextcloud_sync/ui/bootstrap.py',
   'src/pynextcloud_sync/ui/log_view.py',
   'src/pynextcloud_sync/ui/main_window.py',
   'src/pynextcloud_sync/ui/settings.py',
@@ -66,6 +69,7 @@ python.install_sources(
   files(
     'src/pynextcloud_sync/core/__init__.py',
     'src/pynextcloud_sync/core/autostart.py',
+    'src/pynextcloud_sync/core/bootstrap.py',
     'src/pynextcloud_sync/core/desktop_integration.py',
     'src/pynextcloud_sync/core/exclusions.py',
     'src/pynextcloud_sync/core/inotify.py',
@@ -73,6 +77,7 @@ python.install_sources(
     'src/pynextcloud_sync/core/power.py',
     'src/pynextcloud_sync/core/runtime.py',
     'src/pynextcloud_sync/core/scheduler.py',
+    'src/pynextcloud_sync/core/safety.py',
     'src/pynextcloud_sync/core/state.py',
     'src/pynextcloud_sync/core/suspend.py',
     'src/pynextcloud_sync/core/sync_engine.py',
@@ -111,6 +116,7 @@ python.install_sources(
     'src/pynextcloud_sync/ui/about.py',
     'src/pynextcloud_sync/ui/about_content.py',
     'src/pynextcloud_sync/ui/activity.py',
+    'src/pynextcloud_sync/ui/bootstrap.py',
     'src/pynextcloud_sync/ui/log_view.py',
     'src/pynextcloud_sync/ui/main_window.py',
     'src/pynextcloud_sync/ui/settings.py',

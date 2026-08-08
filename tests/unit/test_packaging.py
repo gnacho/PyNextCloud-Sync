@@ -12,7 +12,7 @@ ROOT = Path(__file__).parents[2]
 
 class PackagingTests(unittest.TestCase):
     def test_release_version_is_consistent_across_package_metadata(self) -> None:
-        expected = "0.1.13"
+        expected = "0.1.14"
         for relative_path in (
             "src/pynextcloud_sync/__init__.py",
             "pyproject.toml",
@@ -136,7 +136,7 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             environment["PYNEXTCLOUD_TEST_RESTART_LOG"] = str(restart_log)
 
             stopped = subprocess.run(
-                ["/bin/sh", str(preinst), "upgrade", "0.1.12", "0.1.13"],
+                ["/bin/sh", str(preinst), "upgrade", "0.1.12", "0.1.14"],
                 check=True,
                 capture_output=True,
                 text=True,

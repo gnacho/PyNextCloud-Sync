@@ -15,6 +15,16 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.14" date="2026-08-08">
+      <description>
+        <ul>
+          <li>Added a protected first synchronization that uses a fresh isolated server snapshot before enabling bidirectional synchronization.</li>
+          <li>Added an explicit analysis and merge review for empty, populated, conflicting, and previously synchronized local folders.</li>
+          <li>Added a persistent safety baseline that blocks missing, replaced, emptied, unreadable, or abnormally reduced local trees before nextcloudcmd starts.</li>
+          <li>Added safe recovery, one-time deletion approval, preserved conflict copies, and configurable deletion review thresholds.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.13" date="2026-08-07">
       <description>
         <ul>

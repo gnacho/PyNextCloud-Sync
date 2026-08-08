@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.14 — 2026-08-08
+
+- Replaced automatic first synchronization with a protected initialization
+  review. A completely new private staging folder obtains the server snapshot,
+  so a stale `.sync_*.db` in the selected local folder is never reused.
+- Added an explicit analysis of local-only, Nextcloud-only, identical, content
+  conflict, and file-versus-folder paths before normal synchronization starts.
+- Added four user-controlled conflict policies: preserve both with the newest at
+  the original path, give Nextcloud priority, give the computer priority, or
+  review every conflict individually. The non-preferred version is always kept
+  under a clear dated name.
+- Existing synchronization databases are archived outside the synchronized tree
+  before a clean final baseline is created. They are never silently deleted or
+  reused during initialization.
+- Upgrades from schema 1, including version 0.1.13, start paused and require the
+  same protected review before automatic triggers or `nextcloudcmd` are enabled.
+- Added a persistent safety manifest for the last verified synchronization.
+  Missing, replaced, emptied, unreadable, or abnormally reduced local folders
+  block synchronization before the bidirectional engine starts.
+- Added recovery from Nextcloud, explicit one-time approval for intentional
+  deletions, tray and main-window warning states, desktop notifications, and
+  configurable file-count and percentage thresholds.
+- Kept all credential, GNOME integration, low-memory UI, translation, and Debian
+  upgrade fixes from version 0.1.13.
+
 ## 0.1.13 — 2026-08-07
 
 - Fixed the remaining GNOME biometric-login credential bug. During desktop

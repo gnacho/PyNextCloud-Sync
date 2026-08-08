@@ -127,13 +127,13 @@ class I18nTests(unittest.TestCase):
                 sys.executable,
                 "-c",
                 "from pynextcloud_sync.util.i18n import _; "
-                "print(_('Version 0.1.13')); "
+                "print(_('Version 0.1.14')); "
                 "print(_('The default GNOME password collection is now unlocked before searching for the Nextcloud credential after biometric login.'))",
             ],
             env=environment,
             text=True,
         ).splitlines()
-        self.assertEqual(translated[0], "Versão 0.1.13")
+        self.assertEqual(translated[0], "Versão 0.1.14")
         self.assertIn("coleção de senhas padrão", translated[1])
 
 

@@ -42,6 +42,14 @@ class ConfigTests(unittest.TestCase):
         validated = validate_config({"schema_version": 1})
         self.assertTrue(validated["logging"]["save_logs"])
         self.assertEqual(validated["logging"]["retention_days"], 30)
+        self.assertFalse(validated["safety"]["bootstrap_complete"])
+        self.assertTrue(validated["safety"]["guard_enabled"])
+
+    def test_rejects_invalid_safety_threshold(self) -> None:
+        data = copy.deepcopy(DEFAULT_CONFIG)
+        data["safety"]["deletion_percent_threshold"] = 0
+        with self.assertRaises(ConfigurationError):
+            validate_config(data)
 
     def test_rejects_invalid_log_retention(self) -> None:
         data = copy.deepcopy(DEFAULT_CONFIG)

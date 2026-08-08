@@ -53,6 +53,15 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.14"),
+            [
+                _("Added a protected first synchronization with a fresh isolated server snapshot and an explicit merge review."),
+                _("Existing synchronization databases are archived and never silently reused during initialization."),
+                _("Added a persistent safety baseline that blocks missing, replaced, empty, unreadable, or abnormally reduced local folders before nextcloudcmd starts."),
+                _("Added safe recovery, one-time deletion approval, preserved conflict copies, and configurable review thresholds."),
+            ],
+        ),
+        (
             _("Version 0.1.13"),
             [
                 _("The default GNOME password collection is now unlocked before searching for the Nextcloud credential after biometric login."),

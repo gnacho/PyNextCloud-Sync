@@ -293,11 +293,13 @@ class StatusNotifier:
         return [str(path) for path in candidates if path.is_dir()]
 
     def _properties(self, item_id: int) -> dict[str, GLib.Variant]:
-        paused = presentation_for(self.snapshot.state).user_paused
+        presentation = presentation_for(self.snapshot.state)
+        paused = presentation.user_paused
+        safety_review = self.snapshot.state.value == "safety_review"
         labels = {
             0: "PyNextCloud Sync",
             1: _("Open PyNextCloud Sync"),
-            2: _("Sync Once") if paused else _("Sync Now"),
+            2: _("Review Safety Alert") if safety_review else (_("Sync Once") if paused else _("Sync Now")),
             3: _("Resume Sync") if paused else _("Pause Sync"),
             4: _("Open NextCloud Folder"),
             5: _("View Sync Log"),
@@ -316,7 +318,7 @@ class StatusNotifier:
             properties["type"] = GLib.Variant("s", "separator")
         icon_names = {
             1: "window-new-symbolic",
-            2: "emblem-synchronizing-symbolic",
+            2: "security-high-symbolic" if safety_review else "emblem-synchronizing-symbolic",
             3: "media-playback-start-symbolic" if paused else "media-playback-pause-symbolic",
             4: "folder-symbolic",
             5: "text-x-generic-symbolic",

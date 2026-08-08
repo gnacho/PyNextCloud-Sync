@@ -11,7 +11,7 @@ from pynextcloud_sync.core.exclusions import DEFAULT_PATTERNS, validate_pattern
 from pynextcloud_sync.util.paths import config_dir, default_sync_root, ensure_private_directory
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION,
@@ -31,6 +31,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "general": {"autostart": True, "pause_on_battery": False},
     "logging": {"save_logs": True, "retention_days": 30},
     "network": {"custom_proxy": None, "trust_invalid_certificates": False},
+    "safety": {
+        "bootstrap_complete": False,
+        "bootstrap_completed_at": None,
+        "guard_enabled": True,
+        "deletion_count_threshold": 10,
+        "deletion_percent_threshold": 20,
+    },
     "runtime": {"last_successful_sync": None, "last_exit_code": None},
 }
 
@@ -105,6 +112,20 @@ def validate_config(data: dict[str, Any]) -> dict[str, Any]:
         raise ConfigurationError("retention_days must be between 1 and 365.")
     logging_config["retention_days"] = retention_days
     logging_config["save_logs"] = bool(logging_config.get("save_logs", True))
+    safety = merged["safety"]
+    safety["bootstrap_complete"] = bool(safety.get("bootstrap_complete", False))
+    safety["guard_enabled"] = bool(safety.get("guard_enabled", True))
+    try:
+        deletion_count = int(safety.get("deletion_count_threshold", 10))
+        deletion_percent = int(safety.get("deletion_percent_threshold", 20))
+    except (TypeError, ValueError) as exc:
+        raise ConfigurationError("Invalid safety deletion threshold.") from exc
+    if not 1 <= deletion_count <= 100_000:
+        raise ConfigurationError("deletion_count_threshold must be between 1 and 100000.")
+    if not 1 <= deletion_percent <= 100:
+        raise ConfigurationError("deletion_percent_threshold must be between 1 and 100.")
+    safety["deletion_count_threshold"] = deletion_count
+    safety["deletion_percent_threshold"] = deletion_percent
     sync["exclude_patterns"] = [
         validate_pattern(str(pattern)) for pattern in sync.get("exclude_patterns", [])
     ]

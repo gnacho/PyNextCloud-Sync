@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.eduhcommerce.PyNextCloudSync</id>
+  <name>PyNextCloud Sync</name>
+  <summary>Lightweight Nextcloud file synchronization for Linux</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>PyNextCloud Sync keeps one complete physical local mirror of a Nextcloud account synchronized through the official nextcloudcmd engine.</p>
+    <p>It adds GNOME integration, filesystem monitoring, server push notifications, safety intervals, secure account setup, exclusions, and logs.</p>
+  </description>
+  <launchable type="desktop-id">com.eduhcommerce.PyNextCloudSync.desktop</launchable>
+  <developer id="com.eduhcommerce"><name>EduhCommerce</name></developer>
+  <url type="homepage">https://eduhcommerce.com.br</url>
+  <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
+  <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
+  <releases>
+    <release version="0.1.9" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Published corrected project, issue, and changelog links under the canonical ehstbr repository.</li>
+          <li>Bumped the package version so systems with 0.1.8 installed apply the corrected metadata and application files.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.8" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Added native Files sidebar and desktop shortcuts for the synchronized folder.</li>
+          <li>Added a branded folder icon and independent settings for the three integrations.</li>
+          <li>Files bookmark changes now remain consistent with the Settings window.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.7" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Settings now opens as an independent window directly from the tray.</li>
+          <li>The main window remains closed and unallocated when opening Settings.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.6" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Fixed opening Settings from the tray while the main window is closed.</li>
+          <li>Made the main interface lazy and releasable to reduce background memory.</li>
+          <li>Bounded command output, log display, activity history, and login polling.</li>
+          <li>Avoided unnecessary inotify and push reconfiguration.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.5" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Added click-to-expand activity messages and right-click copy support.</li>
+          <li>Bundled translations and fixed Brazilian Portuguese locale detection.</li>
+          <li>Completed the Brazilian Portuguese application catalog.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.4" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Made the tray icon, title, tooltip, and attention state follow synchronization state changes live.</li>
+          <li>Added compatible StatusNotifierItem and D-Bus property change notifications.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.3" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Fixed the branded tray icon on GNOME AppIndicator hosts.</li>
+          <li>Added correct icon theme metadata, an absolute SVG path, and pixel fallbacks.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.2" date="2026-08-07">
+      <description>
+        <ul>
+          <li>Responsive compact main window and collapsible activity view.</li>
+          <li>Reliable tray menu with a branded icon fallback.</li>
+          <li>Configurable daily log files and expanded About information.</li>
+          <li>Fixes for D-Bus menu variants, literal log text, and numeric formatting.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.1" date="2026-08-07"/>
+    <release version="0.1.0" date="2026-08-07"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

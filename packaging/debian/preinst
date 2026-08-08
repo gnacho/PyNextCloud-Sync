@@ -2,34 +2,35 @@
 set -e
 
 app_id="com.eduhcommerce.PyNextCloudSync"
+runtime_root="/run/user"
+state_dir="/run/pynextcloud-sync-upgrade"
+restart_file="$state_dir/restart-uids"
 
 if [ "${1:-}" != "upgrade" ]; then
     exit 0
 fi
 
-case "${SUDO_UID:-}" in
-    ''|*[!0-9]*|0)
-        exit 0
-        ;;
-esac
-
-session_uid="$SUDO_UID"
-session_user="$(getent passwd "$session_uid" 2>/dev/null | cut -d: -f1)"
-runtime_dir="/run/user/$session_uid"
-session_bus="$runtime_dir/bus"
-restart_marker="/run/pynextcloud-sync-restart-$session_uid"
-
-if [ -z "$session_user" ] || [ ! -S "$session_bus" ]; then
-    exit 0
-fi
-
-for command_name in gapplication runuser systemd-run; do
+for command_name in getent gapplication install runuser; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         exit 0
     fi
 done
 
+install -d -m 0700 "$state_dir"
+: > "$restart_file"
+chmod 0600 "$restart_file"
+
 run_in_session() {
+    session_uid="$1"
+    shift
+    session_user="$(getent passwd "$session_uid" 2>/dev/null | cut -d: -f1)"
+    runtime_dir="$runtime_root/$session_uid"
+    session_bus="$runtime_dir/bus"
+
+    if [ -z "$session_user" ] || [ ! -S "$session_bus" ]; then
+        return 1
+    fi
+
     runuser -u "$session_user" -- env \
         XDG_RUNTIME_DIR="$runtime_dir" \
         DBUS_SESSION_BUS_ADDRESS="unix:path=$session_bus" \
@@ -37,30 +38,48 @@ run_in_session() {
 }
 
 app_is_running() {
-    run_in_session gapplication list-apps 2>/dev/null | grep -Fxq "$app_id"
+    session_uid="$1"
+    run_in_session "$session_uid" gapplication list-apps 2>/dev/null | \
+        grep -Fxq "$app_id"
 }
 
-if ! app_is_running; then
-    exit 0
-fi
+for session_bus in "$runtime_root"/[0-9]*/bus; do
+    if [ ! -S "$session_bus" ]; then
+        continue
+    fi
 
-echo "PyNextCloud Sync is running; requesting a safe shutdown before the upgrade."
-if ! run_in_session gapplication action "$app_id" quit >/dev/null 2>&1; then
-    echo "Could not request PyNextCloud Sync to quit. Close it and retry the upgrade." >&2
-    exit 1
-fi
+    runtime_dir="${session_bus%/bus}"
+    session_uid="${runtime_dir##*/}"
+    case "$session_uid" in
+        ''|*[!0-9]*|0)
+            continue
+            ;;
+    esac
 
-remaining=300
-while app_is_running; do
-    if [ "$remaining" -le 0 ]; then
-        echo "PyNextCloud Sync did not finish its current synchronization in time." >&2
-        echo "The upgrade was stopped to avoid replacing files while it is still running." >&2
+    if ! app_is_running "$session_uid"; then
+        continue
+    fi
+
+    echo "PyNextCloud Sync is running in user session $session_uid; requesting a safe shutdown before the upgrade."
+    printf '%s\n' "$session_uid" >> "$restart_file"
+
+    if ! run_in_session "$session_uid" \
+        gapplication action "$app_id" quit >/dev/null 2>&1; then
+        echo "Could not request PyNextCloud Sync to quit in user session $session_uid." >&2
+        echo "Close it and retry the upgrade." >&2
         exit 1
     fi
-    sleep 1
-    remaining=$((remaining - 1))
+
+    remaining=300
+    while app_is_running "$session_uid"; do
+        if [ "$remaining" -le 0 ]; then
+            echo "PyNextCloud Sync did not finish its current synchronization in time." >&2
+            echo "The upgrade was stopped to avoid replacing files while it is still running." >&2
+            exit 1
+        fi
+        sleep 1
+        remaining=$((remaining - 1))
+    done
 done
 
-: > "$restart_marker"
-chmod 0600 "$restart_marker"
 exit 0

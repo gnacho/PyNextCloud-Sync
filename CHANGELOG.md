@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.12 — 2026-08-07
+
+- Fixed the remaining Debian upgrade lifecycle bug. `gapplication list-apps`
+  enumerates desktop entries that advertise D-Bus activation; it does not
+  report which applications are currently running, so version 0.1.11 could
+  still leave the old process in memory.
+- The new package now queries `org.freedesktop.DBus.NameHasOwner` on every live
+  user session, invokes the application's real `quit` action, and confirms that
+  the D-Bus name has been released before allowing package files to be replaced.
+- A previously running session is recorded before shutdown and reopened with
+  the updated application after configuration. If the application does not
+  exit within the safety timeout, the upgrade stops instead of silently
+  continuing over a running process.
+- Replaced the inaccurate `list-apps` test double with an executable regression
+  test in which `list-apps` is empty while the live D-Bus name is owned,
+  matching the actual GLib behavior.
+
 ## 0.1.11 — 2026-08-07
 
 - Fixed Debian upgrade session discovery. Maintainer scripts no longer depend

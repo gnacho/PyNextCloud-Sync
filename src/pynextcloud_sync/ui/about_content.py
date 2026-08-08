@@ -53,6 +53,14 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.12"),
+            [
+                _("Fixed Debian upgrade detection by querying the live D-Bus owner instead of treating list-apps as a process list."),
+                _("The package now confirms that the old instance has exited before replacing application files."),
+                _("Replaced the inaccurate package-upgrade fixture with a regression test that matches the real GLib behavior."),
+            ],
+        ),
+        (
             _("Version 0.1.11"),
             [
                 _("Fixed detection of running application instances during Debian upgrades when APT/dpkg does not preserve SUDO_UID."),

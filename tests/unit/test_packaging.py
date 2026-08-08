@@ -12,7 +12,7 @@ ROOT = Path(__file__).parents[2]
 
 class PackagingTests(unittest.TestCase):
     def test_release_version_is_consistent_across_package_metadata(self) -> None:
-        expected = "0.1.11"
+        expected = "0.1.12"
         for relative_path in (
             "src/pynextcloud_sync/__init__.py",
             "pyproject.toml",
@@ -42,6 +42,8 @@ class PackagingTests(unittest.TestCase):
         self.assertNotIn("SUDO_UID", preinst)
         self.assertNotIn("SUDO_UID", postinst)
         self.assertIn('"$runtime_root"/[0-9]*/bus', preinst)
+        self.assertIn("org.freedesktop.DBus.NameHasOwner", preinst)
+        self.assertNotIn("gapplication list-apps", preinst)
         self.assertIn('gapplication action "$app_id" quit', preinst)
         self.assertIn('while app_is_running "$session_uid"', preinst)
         self.assertNotIn("pkill", preinst)
@@ -89,7 +91,9 @@ exec "$@"
                 """#!/bin/sh
 case "$1" in
     list-apps)
-        [ -f "$PYNEXTCLOUD_TEST_APP_STATE" ] && printf '%s\\n' 'com.eduhcommerce.PyNextCloudSync'
+        # This deliberately returns no applications. The real command lists
+        # D-Bus-activatable desktop entries, not running processes.
+        exit 0
         ;;
     action)
         mv "$PYNEXTCLOUD_TEST_APP_STATE" "$PYNEXTCLOUD_TEST_APP_STATE.stopped"
@@ -98,6 +102,16 @@ case "$1" in
         exit 2
         ;;
 esac
+""",
+            )
+            self._write_executable(
+                fake_bin / "gdbus",
+                """#!/bin/sh
+if [ -f "$PYNEXTCLOUD_TEST_APP_STATE" ]; then
+    printf '%s\\n' '(true,)'
+else
+    printf '%s\\n' '(false,)'
+fi
 """,
             )
             self._write_executable(
@@ -122,7 +136,7 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             environment["PYNEXTCLOUD_TEST_RESTART_LOG"] = str(restart_log)
 
             stopped = subprocess.run(
-                ["/bin/sh", str(preinst), "upgrade", "0.1.10", "0.1.11"],
+                ["/bin/sh", str(preinst), "upgrade", "0.1.11", "0.1.12"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -133,7 +147,7 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             self.assertEqual((state_dir / "restart-uids").read_text(), "1000\n")
 
             restarted = subprocess.run(
-                ["/bin/sh", str(postinst), "configure", "0.1.10"],
+                ["/bin/sh", str(postinst), "configure", "0.1.11"],
                 check=True,
                 capture_output=True,
                 text=True,

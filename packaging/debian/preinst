@@ -10,7 +10,7 @@ if [ "${1:-}" != "upgrade" ]; then
     exit 0
 fi
 
-for command_name in getent gapplication install runuser; do
+for command_name in gapplication gdbus getent install runuser; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         exit 0
     fi
@@ -39,8 +39,16 @@ run_in_session() {
 
 app_is_running() {
     session_uid="$1"
-    run_in_session "$session_uid" gapplication list-apps 2>/dev/null | \
-        grep -Fxq "$app_id"
+    # The `list-apps` command lists desktop entries that advertise D-Bus
+    # activation; it does not list running GApplication processes. Query the
+    # session bus directly so a normally launched PyNextCloud Sync instance is
+    # detected even though its desktop file intentionally uses Exec=.
+    run_in_session "$session_uid" gdbus call \
+        --session \
+        --dest org.freedesktop.DBus \
+        --object-path /org/freedesktop/DBus \
+        --method org.freedesktop.DBus.NameHasOwner \
+        "$app_id" 2>/dev/null | grep -Fq "true"
 }
 
 for session_bus in "$runtime_root"/[0-9]*/bus; do

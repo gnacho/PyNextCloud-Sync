@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.16" date="2026-08-09">
+      <description>
+        <ul>
+          <li>Kept update notices above the main window and re-presented them after launcher activations.</li>
+          <li>Moved update actions above the scrollable release details and linked downloads directly to the latest release.</li>
+          <li>Added a more urgent mandatory-update presentation with an unavailable Not Now action and a separate application exit.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.15" date="2026-08-09">
       <description>
         <ul>

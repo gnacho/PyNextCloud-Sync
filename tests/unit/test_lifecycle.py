@@ -65,6 +65,37 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("changelog.set_expanded(False)", source)
         self.assertNotIn("Adw.AlertDialog", source)
 
+    def test_update_actions_are_fixed_before_the_scrollable_details(self) -> None:
+        source = (
+            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+        ).read_text(encoding="utf-8")
+        self.assertLess(
+            source.index('Gtk.Button(label=_("Download New Version"))'),
+            source.index("scroller = Gtk.ScrolledWindow("),
+        )
+        self.assertIn("page.append(scroller)", source)
+        self.assertNotIn('_("Open Releases Page")', source)
+
+    def test_update_notice_stays_above_the_main_window(self) -> None:
+        path = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        show_update = method_source(
+            path, "PyNextCloudApplication", "_show_update_window"
+        )
+        present_main = method_source(path, "PyNextCloudApplication", "present_main")
+        self.assertIn("parent=parent", show_update)
+        self.assertIn("GLib.idle_add(self._present_update_window_foreground", show_update)
+        self.assertIn("self.update_window.set_transient_for(self.main_window)", present_main)
+        self.assertIn("self._present_update_window_foreground", present_main)
+
+    def test_mandatory_notice_uses_urgent_copy_and_disables_not_now(self) -> None:
+        source = (
+            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('"dialog-warning-symbolic"', source)
+        self.assertIn('_("Mandatory update available")', source)
+        self.assertIn("not_now.set_sensitive(False)", source)
+        self.assertIn('Gtk.Button(label=_("Close Application"))', source)
+
     def test_tray_settings_opens_an_independent_preferences_window(self) -> None:
         application = ROOT / "src" / "pynextcloud_sync" / "application.py"
         main_window = ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"

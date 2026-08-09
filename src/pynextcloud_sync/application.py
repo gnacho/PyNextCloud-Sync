@@ -207,18 +207,41 @@ class PyNextCloudApplication(Adw.Application):
         dialog.choose(parent, None, chosen)
 
     def _show_update_window(self, manifest: UpdateManifest) -> None:
+        parent = self._update_window_parent()
         if self.update_window:
             if self.update_window.manifest == manifest:
-                self.update_window.present()
+                if parent and self.update_window.get_transient_for() is not parent:
+                    self.update_window.set_transient_for(parent)
+                self._present_update_window_foreground(self.update_window)
                 return
             self.update_window.close()
         self.update_window = UpdateWindow(
             self,
             manifest,
+            parent=parent,
             on_close=self._update_window_closed,
             on_quit=self.quit,
         )
         self.update_window.present()
+        GLib.idle_add(self._present_update_window_foreground, self.update_window)
+
+    def _update_window_parent(self) -> Gtk.Window | None:
+        active = self.get_active_window()
+        if active and active is not self.update_window and active.get_visible():
+            return active
+        if self.main_window and self.main_window.get_visible():
+            return self.main_window
+        return None
+
+    def _present_update_window_foreground(self, window: UpdateWindow) -> bool:
+        if self.update_window is not window:
+            return GLib.SOURCE_REMOVE
+        parent = self._update_window_parent()
+        if parent and window.get_transient_for() is not parent:
+            window.set_transient_for(parent)
+        window.unminimize()
+        window.present()
+        return GLib.SOURCE_REMOVE
 
     def _update_window_closed(self, window: UpdateWindow) -> None:
         if self.update_window is window:
@@ -365,6 +388,12 @@ class PyNextCloudApplication(Adw.Application):
         if self.main_window:
             self.main_window.unminimize()
             self.main_window.present()
+            if self.update_window:
+                self.update_window.set_transient_for(self.main_window)
+                GLib.idle_add(
+                    self._present_update_window_foreground,
+                    self.update_window,
+                )
 
     def open_folder(self) -> None:
         account = self.config.data.get("account")

@@ -13,9 +13,7 @@ from pynextcloud_sync import VERSION
 VERSION_MANIFEST_URL = (
     "https://raw.githubusercontent.com/ehstbr/PyNextCloud-Sync/main/version.json"
 )
-RELEASES_URL = (
-    "https://github.com/ehstbr/PyNextCloud-Sync/releases?utm_source=chatgpt.com"
-)
+RELEASES_URL = "https://github.com/ehstbr/PyNextCloud-Sync/releases/latest"
 MAX_MANIFEST_BYTES = 64 * 1024
 MAX_SUMMARY_CHARACTERS = 8_000
 MAX_CHANGELOG_ITEMS = 100

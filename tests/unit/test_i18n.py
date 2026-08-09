@@ -153,7 +153,9 @@ class I18nTests(unittest.TestCase):
                 "print(_('Check for Updates')); "
                 "print(_('Update Available')); "
                 "print(_('Required Update')); "
-                "print(_('Full Changelog'))",
+                "print(_('Full Changelog')); "
+                "print(_('Download New Version')); "
+                "print(_('Mandatory update available'))",
             ],
             env=environment,
             text=True,
@@ -165,6 +167,8 @@ class I18nTests(unittest.TestCase):
                 "Atualização disponível",
                 "Atualização obrigatória",
                 "Histórico completo de alterações",
+                "Baixar nova versão",
+                "Atualização obrigatória disponível",
             ],
         )
 

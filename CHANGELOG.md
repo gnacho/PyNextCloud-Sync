@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.16 — 2026-08-09
+
+- Kept the update window above the main application window by assigning the
+  visible application window as its transient parent and presenting the notice
+  again after GTK completes a launcher activation.
+- Moved the primary actions into a fixed hero area above the scrollable version
+  details and changelog, so downloading or dismissing an optional update never
+  requires scrolling.
+- Renamed the main action to **Download New Version** and changed its fixed,
+  trusted destination to the latest release page.
+- Made mandatory notices visibly urgent with a warning icon and the explicit
+  **Mandatory update available** heading.
+- Mandatory notices keep **Not Now** visible but disabled, while preserving the
+  required **Download New Version** and **Close Application** actions.
+
 ## 0.1.15 — 2026-08-09
 
 - Added `version.json` at the repository root with a schema version, latest

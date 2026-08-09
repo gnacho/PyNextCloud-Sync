@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "version": "0.1.17",
-  "mandatory": true,
+  "version": "0.1.16",
+  "mandatory": false,
   "released_at": "2026-08-09T02:29:46Z",
   "summary": "Improved update notifications with foreground priority, always-visible actions, a direct latest-release download link, and clearer mandatory-update urgency.",
   "changelog": [

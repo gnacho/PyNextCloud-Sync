@@ -53,6 +53,14 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.17"),
+            [
+                _("Automatic update notices now wait until the main window is fully mapped before they are created."),
+                _("Update windows are no longer reassociated after becoming visible, preventing placement on another monitor at the desktop origin."),
+                _("Mandatory updates now show only Download New Version and Close Application."),
+            ],
+        ),
+        (
             _("Version 0.1.16"),
             [
                 _("The update notice now remains above the main window when the application is opened from its launcher."),

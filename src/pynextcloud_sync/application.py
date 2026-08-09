@@ -16,6 +16,7 @@ from pynextcloud_sync.core.updates import (
     UpdateChecker,
     UpdateManifest,
 )
+from pynextcloud_sync.core.window_presentation import MappedWindowPresenter
 from pynextcloud_sync.nextcloud.credentials import CredentialStore
 from pynextcloud_sync.nextcloud.api import NextcloudApi
 from pynextcloud_sync.storage.config import ConfigStore, ConfigurationError
@@ -52,6 +53,14 @@ class PyNextCloudApplication(Adw.Application):
         self.setup_window: SetupWindow | None = None
         self.update_window: UpdateWindow | None = None
         self.tray: StatusNotifier | None = None
+        self._update_window_presenter = MappedWindowPresenter(
+            idle_add=GLib.idle_add,
+            show=lambda manifest, parent: self._show_update_window(
+                manifest,
+                parent=parent,
+            ),
+            source_remove=GLib.SOURCE_REMOVE,
+        )
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
@@ -125,7 +134,10 @@ class PyNextCloudApplication(Adw.Application):
             return
         self._continue_activation(show_main=show_main)
         if result.update_available and result.latest:
-            self._show_update_window(result.latest)
+            if show_main:
+                self._queue_update_window_for_mapped_parent(result.latest)
+            else:
+                self._show_update_window(result.latest)
 
     def _continue_activation(self, *, show_main: bool) -> None:
         if self._mandatory_update_manifest:
@@ -178,7 +190,7 @@ class PyNextCloudApplication(Adw.Application):
                 if result.latest.mandatory:
                     self._enter_mandatory_update_mode(result.latest)
                 else:
-                    self._show_update_window(result.latest)
+                    self._show_update_window(result.latest, parent=parent)
                 return
             self._show_status_dialog(
                 _("PyNextCloud Sync Is Up to Date"),
@@ -206,15 +218,28 @@ class PyNextCloudApplication(Adw.Application):
 
         dialog.choose(parent, None, chosen)
 
-    def _show_update_window(self, manifest: UpdateManifest) -> None:
-        parent = self._update_window_parent()
+    def _show_update_window(
+        self,
+        manifest: UpdateManifest,
+        *,
+        parent: Gtk.Window | None = None,
+    ) -> None:
+        if parent is None:
+            parent = self._update_window_parent(require_mapped=True)
+        elif not parent.get_mapped():
+            parent = None
         if self.update_window:
-            if self.update_window.manifest == manifest:
-                if parent and self.update_window.get_transient_for() is not parent:
-                    self.update_window.set_transient_for(parent)
+            same_manifest = self.update_window.manifest == manifest
+            same_parent = self.update_window.get_transient_for() is parent
+            if same_manifest and same_parent:
                 self._present_update_window_foreground(self.update_window)
                 return
-            self.update_window.close()
+            if self.update_window.mandatory:
+                self._present_update_window_foreground(self.update_window)
+                return
+            old_window = self.update_window
+            self.update_window = None
+            old_window.close()
         self.update_window = UpdateWindow(
             self,
             manifest,
@@ -225,20 +250,39 @@ class PyNextCloudApplication(Adw.Application):
         self.update_window.present()
         GLib.idle_add(self._present_update_window_foreground, self.update_window)
 
-    def _update_window_parent(self) -> Gtk.Window | None:
-        active = self.get_active_window()
-        if active and active is not self.update_window and active.get_visible():
-            return active
-        if self.main_window and self.main_window.get_visible():
-            return self.main_window
+    def _update_window_parent(self, *, require_mapped: bool = False) -> Gtk.Window | None:
+        candidates = (
+            self.get_active_window(),
+            self.main_window,
+            self.bootstrap_window,
+            self.setup_window,
+            self.settings_window,
+        )
+        for candidate in candidates:
+            if (
+                candidate
+                and candidate is not self.update_window
+                and candidate.get_visible()
+                and (not require_mapped or candidate.get_mapped())
+            ):
+                return candidate
         return None
+
+    def _queue_update_window_for_mapped_parent(
+        self,
+        manifest: UpdateManifest,
+        parent: Gtk.Window | None = None,
+    ) -> None:
+        self._update_window_presenter.clear()
+        parent = parent or self._update_window_parent()
+        if not parent:
+            self._show_update_window(manifest)
+            return
+        self._update_window_presenter.queue(manifest, parent)
 
     def _present_update_window_foreground(self, window: UpdateWindow) -> bool:
         if self.update_window is not window:
             return GLib.SOURCE_REMOVE
-        parent = self._update_window_parent()
-        if parent and window.get_transient_for() is not parent:
-            window.set_transient_for(parent)
         window.unminimize()
         window.present()
         return GLib.SOURCE_REMOVE
@@ -389,10 +433,9 @@ class PyNextCloudApplication(Adw.Application):
             self.main_window.unminimize()
             self.main_window.present()
             if self.update_window:
-                self.update_window.set_transient_for(self.main_window)
-                GLib.idle_add(
-                    self._present_update_window_foreground,
-                    self.update_window,
+                self._queue_update_window_for_mapped_parent(
+                    self.update_window.manifest,
+                    self.main_window,
                 )
 
     def open_folder(self) -> None:
@@ -603,6 +646,7 @@ class PyNextCloudApplication(Adw.Application):
         return GLib.SOURCE_REMOVE
 
     def do_shutdown(self) -> None:
+        self._update_window_presenter.clear()
         self.update_checker.cancel()
         if self.bootstrap_window:
             self.bootstrap_window.runner.cancel()

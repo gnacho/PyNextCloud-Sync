@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.17 — 2026-08-09
+
+- Fixed automatic update notices opening on another monitor at the desktop
+  origin when the application was launched normally.
+- Startup notices now wait for the main window to be fully mapped and one UI
+  cycle to complete before being created with that window as their transient
+  parent, matching the correctly centered manual-check behavior.
+- Removed the unsafe fallback that changed a visible update window's transient
+  parent. A notice created during tray-only startup is recreated after the main
+  window maps instead.
+- Mandatory updates now show only **Download New Version** and
+  **Close Application**. **Not Now** remains available only for optional
+  updates.
+- Added executable lifecycle tests for unmapped, already mapped, replaced, and
+  temporarily unmapped parent windows.
+
 ## 0.1.16 — 2026-08-09
 
 - Kept the update window above the main application window by assigning the

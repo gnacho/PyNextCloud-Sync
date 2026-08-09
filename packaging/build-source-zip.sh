@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="${1:-$project_root/dist}"
-source_date_epoch="${SOURCE_DATE_EPOCH:-1786240284}"
+source_date_epoch="${SOURCE_DATE_EPOCH:-1786243825}"
 
 for command_name in find grep mkdir mktemp rm sed sort tar touch zip; do
     if ! command -v "$command_name" >/dev/null 2>&1; then

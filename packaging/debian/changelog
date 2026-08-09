@@ -1,3 +1,12 @@
+pynextcloud-sync (0.1.17) stable; urgency=medium
+
+  * Wait for the main window to map before showing the automatic update notice.
+  * Create update windows with their transient parent assigned before mapping.
+  * Recreate tray-startup notices instead of reparenting visible windows.
+  * Replace Not Now with Close Application for mandatory updates.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 23:50:25 -0300
+
 pynextcloud-sync (0.1.16) stable; urgency=medium
 
   * Keep the update notice above the main window across launcher activations.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 import tempfile
 import unittest
@@ -12,7 +13,7 @@ ROOT = Path(__file__).parents[2]
 
 class PackagingTests(unittest.TestCase):
     def test_release_version_is_consistent_across_package_metadata(self) -> None:
-        expected = "0.1.14"
+        expected = "0.1.15"
         for relative_path in (
             "src/pynextcloud_sync/__init__.py",
             "pyproject.toml",
@@ -22,9 +23,24 @@ class PackagingTests(unittest.TestCase):
             "CHANGELOG.md",
             "README.md",
             "README.pt-BR.md",
+            "version.json",
         ):
             contents = (ROOT / relative_path).read_text(encoding="utf-8")
             self.assertIn(expected, contents, relative_path)
+
+    def test_repository_update_manifest_matches_the_release(self) -> None:
+        payload = json.loads((ROOT / "version.json").read_text(encoding="utf-8"))
+        self.assertEqual(payload["schema_version"], 1)
+        self.assertEqual(payload["version"], "0.1.15")
+        self.assertIs(type(payload["mandatory"]), bool)
+        self.assertTrue(payload["summary"].strip())
+        self.assertGreater(len(payload["changelog"]), 0)
+        self.assertTrue(all(item.strip() for item in payload["changelog"]))
+        self.assertRegex(payload["released_at"], r"^\d{4}-\d{2}-\d{2}T.*Z$")
+
+    def test_debian_package_includes_the_published_manifest(self) -> None:
+        build = (ROOT / "packaging/build-deb.sh").read_text(encoding="utf-8")
+        self.assertIn('"$project_root/version.json"', build)
 
     def test_maintainer_scripts_have_valid_shell_syntax(self) -> None:
         for name in ("preinst", "postinst", "postrm"):
@@ -136,7 +152,7 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             environment["PYNEXTCLOUD_TEST_RESTART_LOG"] = str(restart_log)
 
             stopped = subprocess.run(
-                ["/bin/sh", str(preinst), "upgrade", "0.1.12", "0.1.14"],
+                ["/bin/sh", str(preinst), "upgrade", "0.1.14", "0.1.15"],
                 check=True,
                 capture_output=True,
                 text=True,

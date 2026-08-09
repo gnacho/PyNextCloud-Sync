@@ -21,9 +21,9 @@ def basic_authorization(username: str, password: str) -> str:
 
 
 class HttpClient:
-    def __init__(self, user_agent: str | None = None) -> None:
+    def __init__(self, user_agent: str | None = None, *, timeout: int = 30) -> None:
         user_agent = user_agent or f"PyNextCloud-Sync/{VERSION}"
-        self.session = Soup.Session(user_agent=user_agent, timeout=30)
+        self.session = Soup.Session(user_agent=user_agent, timeout=timeout)
         self.trust_invalid_certificates = False
 
     def prepare_message(self, message: Soup.Message) -> Soup.Message:

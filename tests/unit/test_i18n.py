@@ -136,6 +136,38 @@ class I18nTests(unittest.TestCase):
         self.assertEqual(translated[0], "Versão 0.1.14")
         self.assertIn("coleção de senhas padrão", translated[1])
 
+    def test_update_window_and_manual_check_are_translated(self) -> None:
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "LANGUAGE": "pt_BR",
+                "PYNEXTCLOUD_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
+                "PYTHONPATH": str(PROJECT_ROOT / "src"),
+            }
+        )
+        translated = subprocess.check_output(
+            [
+                sys.executable,
+                "-c",
+                "from pynextcloud_sync.util.i18n import _; "
+                "print(_('Check for Updates')); "
+                "print(_('Update Available')); "
+                "print(_('Required Update')); "
+                "print(_('Full Changelog'))",
+            ],
+            env=environment,
+            text=True,
+        ).splitlines()
+        self.assertEqual(
+            translated,
+            [
+                "Verificar atualização",
+                "Atualização disponível",
+                "Atualização obrigatória",
+                "Histórico completo de alterações",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

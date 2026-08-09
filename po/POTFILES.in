@@ -13,3 +13,4 @@ src/pynextcloud_sync/ui/main_window.py
 src/pynextcloud_sync/ui/settings.py
 src/pynextcloud_sync/ui/setup.py
 src/pynextcloud_sync/ui/tray.py
+src/pynextcloud_sync/ui/update_window.py

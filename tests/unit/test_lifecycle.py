@@ -23,8 +23,47 @@ class LifecycleContractTests(unittest.TestCase):
     def test_background_activation_keeps_the_main_window_lazy(self) -> None:
         path = ROOT / "src" / "pynextcloud_sync" / "application.py"
         activate = method_source(path, "PyNextCloudApplication", "do_activate")
-        self.assertIn("self._ensure_tray()", activate)
+        continue_activation = method_source(
+            path, "PyNextCloudApplication", "_continue_activation"
+        )
+        self.assertIn("self._begin_startup_update_check()", activate)
+        self.assertIn("self._ensure_tray()", continue_activation)
         self.assertNotIn("self._ensure_main_window()", activate)
+
+    def test_update_check_precedes_runtime_and_mandatory_updates_block_it(self) -> None:
+        path = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        activate = method_source(path, "PyNextCloudApplication", "do_activate")
+        finished = method_source(
+            path, "PyNextCloudApplication", "_startup_update_finished"
+        )
+        ensure_runtime = method_source(
+            path, "PyNextCloudApplication", "_ensure_runtime"
+        )
+        self.assertIn("if not self._startup_update_complete", activate)
+        self.assertIn("result.latest.mandatory", finished)
+        self.assertIn("self._enter_mandatory_update_mode", finished)
+        self.assertIn("self._continue_activation", finished)
+        self.assertIn("self._mandatory_update_manifest", ensure_runtime)
+
+    def test_about_exposes_the_manual_update_check(self) -> None:
+        about = (ROOT / "src" / "pynextcloud_sync" / "ui" / "about.py").read_text(
+            encoding="utf-8"
+        )
+        main_window = (
+            ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('about.add_link(_("Check for Updates")', about)
+        self.assertIn('about.connect("activate-link"', about)
+        self.assertIn("application.check_for_updates", main_window)
+
+    def test_update_notice_is_a_full_window_with_native_expandable_changelog(self) -> None:
+        source = (
+            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("class UpdateWindow(Adw.ApplicationWindow)", source)
+        self.assertIn("Adw.ExpanderRow(", source)
+        self.assertIn("changelog.set_expanded(False)", source)
+        self.assertNotIn("Adw.AlertDialog", source)
 
     def test_tray_settings_opens_an_independent_preferences_window(self) -> None:
         application = ROOT / "src" / "pynextcloud_sync" / "application.py"
@@ -61,7 +100,9 @@ class LifecycleContractTests(unittest.TestCase):
 
     def test_existing_configuration_requires_bootstrap_before_runtime(self) -> None:
         application = ROOT / "src" / "pynextcloud_sync" / "application.py"
-        activate = method_source(application, "PyNextCloudApplication", "do_activate")
+        activate = method_source(
+            application, "PyNextCloudApplication", "_continue_activation"
+        )
         ensure_runtime = method_source(
             application, "PyNextCloudApplication", "_ensure_runtime"
         )

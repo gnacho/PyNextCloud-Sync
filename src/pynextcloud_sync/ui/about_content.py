@@ -53,6 +53,15 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.15"),
+            [
+                _("Added automatic startup update checks through a validated GitHub version manifest."),
+                _("Optional updates remain non-blocking, while mandatory updates prevent the synchronization runtime from starting."),
+                _("Added a manual update check in About, semantic version comparison, safe failure handling, and UTC release dates."),
+                _("The update window now shows a short summary and an expandable full changelog."),
+            ],
+        ),
+        (
             _("Version 0.1.14"),
             [
                 _("Added a protected first synchronization with a fresh isolated server snapshot and an explicit merge review."),

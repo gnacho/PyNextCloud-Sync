@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.15 — 2026-08-09
+
+- Added `version.json` at the repository root with a schema version, latest
+  application version, mandatory-update flag, plain-text summary, and an ISO
+  8601 release timestamp in UTC. A separate plain-text changelog list feeds an
+  expandable release-details section in the update window.
+- Added an automatic check at every process startup. The synchronization
+  runtime, `inotify`, timers, and `notify_push` remain inactive until the check
+  confirms that the installed version is not blocked.
+- Optional updates open a detailed, non-modal window while normal application
+  initialization continues. Mandatory updates prevent the application runtime
+  from starting and offer only the official Releases page or application exit.
+- The custom Libadwaita window presents the short summary immediately and keeps
+  the complete per-release changelog in a native collapsed expander row.
+- Added the same manual check to About, with clear results for available,
+  current, unreachable, and invalid-manifest states.
+- Added strict SemVer comparison, including prerelease precedence, without
+  string-based version ordering.
+- Added bounded downloads, strict JSON and UTC date validation, an eight-second
+  network timeout, no-cache requests, and fail-open startup behavior when
+  GitHub is unavailable.
+
 ## 0.1.14 — 2026-08-08
 
 - Replaced automatic first synchronization with a protected initialization

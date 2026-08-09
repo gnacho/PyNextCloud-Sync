@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.15" date="2026-08-09">
+      <description>
+        <ul>
+          <li>Added automatic update checks through a validated version manifest hosted in the GitHub repository.</li>
+          <li>Added non-blocking optional update notices and mandatory blocking before synchronization runtime initialization.</li>
+          <li>Added a manual update check in About, semantic version comparison, safe failure handling, UTC release dates, and an expandable full changelog.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.14" date="2026-08-08">
       <description>
         <ul>

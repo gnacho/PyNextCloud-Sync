@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-0.1.14-6557e8?style=flat-square" alt="Version 0.1.14">
+    <img src="https://img.shields.io/badge/version-0.1.15-6557e8?style=flat-square" alt="Version 0.1.15">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -111,7 +111,7 @@ Download the `.deb` from the [latest release](https://github.com/ehstbr/PyNextCl
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.14_all.deb
+sudo apt install ./pynextcloud-sync_0.1.15_all.deb
 ```
 
 During an interactive upgrade started with `sudo apt install`, the package asks a running PyNextCloud Sync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
@@ -134,8 +134,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.14.zip
-cd PyNextCloud-Sync-0.1.14
+unzip PyNextCloud-Sync-0.1.15.zip
+cd PyNextCloud-Sync-0.1.15
 ./run.sh
 ```
 
@@ -171,6 +171,28 @@ Synchronization is blocked when:
 The safety review lets the user restore from Nextcloud, remain paused, or explicitly approve those deletions for one run. Limits are available under **Settings → Advanced → Deletion Safety Guard**. Empty, missing, replaced, and unreadable folders always require review regardless of those limits.
 
 If Files removes the sidebar bookmark, the application respects that choice and reflects the real state instead of recreating it.
+
+## Update checks
+
+At every application startup, PyNextCloud Sync reads `version.json` from the
+root of the GitHub repository before enabling the synchronization runtime. An
+unreachable GitHub service, HTTP failure, or invalid manifest is logged and
+does not prevent normal startup.
+
+| Field | Purpose |
+| --- | --- |
+| `schema_version` | Version of the manifest contract |
+| `version` | Latest release using SemVer |
+| `mandatory` | Prevents older versions from running when `true` |
+| `released_at` | ISO 8601 release date and time in UTC |
+| `summary` | Short plain-text release summary |
+| `changelog` | Complete ordered list of plain-text changes |
+
+Optional updates use a non-modal Libadwaita window, so normal initialization
+continues. Mandatory updates keep the runtime, filesystem monitoring, timers,
+and push connection disabled and offer only the official Releases page or
+application exit. The same validation can be started manually from **About →
+Check for Updates**. The detailed changelog remains collapsed until requested.
 
 ## Configuration model
 
@@ -227,7 +249,7 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `0.1.14` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `0.1.15` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 

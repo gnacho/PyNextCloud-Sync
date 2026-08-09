@@ -57,19 +57,16 @@ The actual bidirectional reconciliation is performed by the official [`nextcloud
     <td width="50%" align="center"><strong>Network and account controls</strong><br><img src="docs/screenshots/settings-network.png" alt="Network settings"></td>
     <td width="50%" align="center"><strong>Local logs and diagnostics</strong><br><img src="docs/screenshots/settings-advanced.png" alt="Advanced settings"></td>
   </tr>
+  <tr>
+    <td width="50%" align="center"><strong>Optional update</strong><br><img src="docs/screenshots/update-optional.png" alt="Optional update available"></td>
+    <td width="50%" align="center"><strong>Mandatory update</strong><br><img src="docs/screenshots/update-mandatory.png" alt="Mandatory update required"></td>
+  </tr>
 </table>
 
 <p align="center">
   <strong>Everything important is also available from the tray</strong><br><br>
   <img src="docs/screenshots/tray-menu.png" width="368" alt="PyNextCloud Sync tray menu">
 </p>
-
-<table>
-  <tr>
-    <td width="50%" align="center"><strong>Optional update</strong><br><img src="docs/screenshots/update-optional.png" alt="Optional update available"></td>
-    <td width="50%" align="center"><strong>Mandatory update</strong><br><img src="docs/screenshots/update-mandatory.png" alt="Mandatory update required"></td>
-  </tr>
-</table>
 
 <details>
 <summary><strong>View the first-run setup</strong></summary>

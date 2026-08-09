@@ -15,6 +15,15 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.17" date="2026-08-09">
+      <description>
+        <ul>
+          <li>Fixed automatic update notices opening on another monitor at the desktop origin during normal application startup.</li>
+          <li>Update notices now wait for the main window to map before being created with the correct transient relationship.</li>
+          <li>Mandatory updates now show only Download New Version and Close Application.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.16" date="2026-08-09">
       <description>
         <ul>

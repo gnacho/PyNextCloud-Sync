@@ -4,7 +4,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="${1:-$project_root/dist}"
 package_name="pynextcloud-sync"
-source_date_epoch="${SOURCE_DATE_EPOCH:-1786060800}"
+source_date_epoch="${SOURCE_DATE_EPOCH:-1786240284}"
 
 for command_name in dpkg-deb install find sort xargs md5sum gzip sed grep du awk mktemp rm touch chmod; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
@@ -79,6 +79,7 @@ install -m 0644 \
     "$project_root/TERMS.pt-BR.md" \
     "$project_root/THIRD-PARTY.md" \
     "$project_root/THIRD-PARTY.pt-BR.md" \
+    "$project_root/version.json" \
     "$doc_dir/"
 install -m 0644 "$project_root/packaging/debian/copyright" "$doc_dir/copyright"
 gzip -9nc "$project_root/CHANGELOG.md" > "$doc_dir/changelog.gz"

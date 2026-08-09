@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Relatar um problema</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/versão-0.1.14-6557e8?style=flat-square" alt="Versão 0.1.14">
+    <img src="https://img.shields.io/badge/versão-0.1.15-6557e8?style=flat-square" alt="Versão 0.1.15">
     <img src="https://img.shields.io/badge/plataforma-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -111,7 +111,7 @@ Baixe o `.deb` na [versão mais recente](https://github.com/ehstbr/PyNextCloud-S
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.14_all.deb
+sudo apt install ./pynextcloud-sync_0.1.15_all.deb
 ```
 
 Durante uma atualização interativa iniciada com `sudo apt install`, o pacote solicita que uma instância aberta do PyNextCloud Sync seja encerrada normalmente, aguarda a sincronização atual terminar e reinicia o aplicativo atualizado na mesma sessão gráfica. O processo de sincronização nunca é encerrado à força. Atualizações automáticas ou instalações sem uma sessão gráfica identificável deixam o controle do processo para o usuário ou administrador do sistema.
@@ -134,8 +134,8 @@ sudo apt install \
 Depois, extraia e execute:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.14.zip
-cd PyNextCloud-Sync-0.1.14
+unzip PyNextCloud-Sync-0.1.15.zip
+cd PyNextCloud-Sync-0.1.15
 ./run.sh
 ```
 
@@ -171,6 +171,29 @@ A sincronização é bloqueada quando:
 Na revisão de segurança, o usuário pode restaurar o conteúdo a partir do Nextcloud, manter tudo pausado ou aprovar intencionalmente aquelas exclusões uma única vez. Os limites ficam em **Configurações → Avançado → Trava de segurança contra exclusões**. Pasta vazia, ausente, substituída ou ilegível sempre exige revisão, independentemente desses limites.
 
 Se o favorito for removido pelo Arquivos, o aplicativo respeita a escolha e reflete o estado real, sem recriá-lo.
+
+## Verificação de atualizações
+
+A cada inicialização, o PyNextCloud Sync consulta o `version.json` na raiz do
+repositório do GitHub antes de ativar o mecanismo de sincronização. GitHub
+indisponível, falha HTTP ou manifesto inválido são registrados no log e não
+impedem a inicialização normal.
+
+| Campo | Finalidade |
+| --- | --- |
+| `schema_version` | Versão do contrato do manifesto |
+| `version` | Versão mais recente conforme SemVer |
+| `mandatory` | Impede versões anteriores de funcionar quando `true` |
+| `released_at` | Data e hora do lançamento em ISO 8601 e UTC |
+| `summary` | Resumo curto da versão em texto puro |
+| `changelog` | Lista completa e ordenada de alterações em texto puro |
+
+Atualizações opcionais usam uma janela Libadwaita não modal, permitindo que a
+inicialização normal continue. Atualizações obrigatórias mantêm desativados o
+mecanismo, o monitoramento de arquivos, os temporizadores e a conexão push,
+oferecendo somente a página oficial de releases ou o fechamento do aplicativo.
+A mesma validação pode ser iniciada manualmente em **Sobre → Verificar
+atualização**. O changelog detalhado permanece recolhido até ser solicitado.
 
 ## Organização das configurações
 
@@ -227,7 +250,7 @@ Contribuições são bem-vindas quando preservam o escopo enxuto, baixo consumo 
 
 ## Estado do projeto
 
-A versão `0.1.14` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
+A versão `0.1.15` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
 
 ---
 

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "version": "0.1.15",
+  "mandatory": false,
+  "released_at": "2026-08-09T01:51:24Z",
+  "summary": "Added a centralized update system with safe startup checks, optional notices, and mandatory blocking for versions considered unsafe.",
+  "changelog": [
+    "Checks the validated GitHub version manifest at every application startup.",
+    "Keeps optional updates non-blocking while the application continues its normal initialization.",
+    "Blocks the synchronization runtime when a newer release is marked as mandatory.",
+    "Adds a manual update check to the About screen.",
+    "Uses SemVer precedence instead of comparing version strings.",
+    "Validates the JSON schema, required fields, response size, plain-text content, and UTC release timestamp.",
+    "Handles connection, GitHub, HTTP, download, and invalid-manifest failures without blocking normal startup.",
+    "Shows an elegant Libadwaita update window with version details, UTC release date, short summary, and an expandable full changelog."
+  ]
+}

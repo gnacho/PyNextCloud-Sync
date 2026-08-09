@@ -461,7 +461,13 @@ class MainWindow(Adw.ApplicationWindow):
         return False
 
     def _show_about(self, _button: Gtk.Button) -> None:
-        show_about_dialog(self)
+        application = self.get_application()
+        check_for_updates = (
+            application.check_for_updates
+            if application and hasattr(application, "check_for_updates")
+            else None
+        )
+        show_about_dialog(self, check_for_updates)
 
     def _hide_on_close(self, _window: Gtk.Window) -> bool:
         self._dispose_ui()

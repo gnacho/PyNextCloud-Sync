@@ -1,6 +1,6 @@
 project(
   'pynextcloud-sync',
-  version: '0.1.14',
+  version: '0.1.15',
   meson_version: '>= 1.0.0',
 )
 
@@ -28,6 +28,7 @@ python_sources = files(
   'src/pynextcloud_sync/core/sync_engine.py',
   'src/pynextcloud_sync/core/timers.py',
   'src/pynextcloud_sync/core/triggers.py',
+  'src/pynextcloud_sync/core/updates.py',
   'src/pynextcloud_sync/nextcloud/__init__.py',
   'src/pynextcloud_sync/nextcloud/api.py',
   'src/pynextcloud_sync/nextcloud/command.py',
@@ -50,6 +51,7 @@ python_sources = files(
   'src/pynextcloud_sync/ui/setup.py',
   'src/pynextcloud_sync/ui/tray.py',
   'src/pynextcloud_sync/ui/tray_state.py',
+  'src/pynextcloud_sync/ui/update_window.py',
   'src/pynextcloud_sync/util/__init__.py',
   'src/pynextcloud_sync/util/i18n.py',
   'src/pynextcloud_sync/util/paths.py',
@@ -83,6 +85,7 @@ python.install_sources(
     'src/pynextcloud_sync/core/sync_engine.py',
     'src/pynextcloud_sync/core/timers.py',
     'src/pynextcloud_sync/core/triggers.py',
+    'src/pynextcloud_sync/core/updates.py',
   ),
   subdir: 'pynextcloud_sync/core',
   pure: true,
@@ -123,6 +126,7 @@ python.install_sources(
     'src/pynextcloud_sync/ui/setup.py',
     'src/pynextcloud_sync/ui/tray.py',
     'src/pynextcloud_sync/ui/tray_state.py',
+    'src/pynextcloud_sync/ui/update_window.py',
   ),
   subdir: 'pynextcloud_sync/ui',
   pure: true,
@@ -182,6 +186,7 @@ install_data(
   'TERMS.pt-BR.md',
   'THIRD-PARTY.md',
   'THIRD-PARTY.pt-BR.md',
+  'version.json',
   install_dir: join_paths(get_option('datadir'), 'doc', 'pynextcloud-sync'),
 )
 

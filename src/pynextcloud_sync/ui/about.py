@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import platform
+from typing import Callable
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GLib, Gtk
 
 from pynextcloud_sync import APP_ID, APP_NAME, VERSION
 from pynextcloud_sync.util.i18n import _
@@ -20,9 +21,13 @@ ISSUES_URL = f"{PROJECT_URL}/issues"
 CHANGELOG_URL = f"{PROJECT_URL}/blob/main/CHANGELOG.md"
 TERMS_URL = f"{PROJECT_URL}/blob/main/TERMS.md"
 THIRD_PARTY_URL = f"{PROJECT_URL}/blob/main/THIRD-PARTY.md"
+CHECK_UPDATES_URI = "pynextcloud-sync://check-update"
 
 
-def show_about_dialog(parent: Gtk.Window) -> None:
+def show_about_dialog(
+    parent: Gtk.Window,
+    check_for_updates: Callable[[Gtk.Window | None], None] | None = None,
+) -> None:
     about = Adw.AboutDialog(
         application_name=APP_NAME,
         application_icon=APP_ID,
@@ -40,6 +45,17 @@ def show_about_dialog(parent: Gtk.Window) -> None:
         about.set_release_notes_version(VERSION)
 
     about.add_link(_("Source code on GitHub"), PROJECT_URL)
+    if check_for_updates:
+        about.add_link(_("Check for Updates"), CHECK_UPDATES_URI)
+
+        def activate_link(_dialog: Adw.AboutDialog, uri: str) -> bool:
+            if uri != CHECK_UPDATES_URI:
+                return False
+            about.close()
+            GLib.idle_add(lambda: check_for_updates(parent))
+            return True
+
+        about.connect("activate-link", activate_link)
     about.add_link(_("Report a problem"), ISSUES_URL)
     about.add_link(_("Complete changelog"), CHANGELOG_URL)
     about.add_link(_("Terms of Use"), TERMS_URL)

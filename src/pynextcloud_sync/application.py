@@ -11,6 +11,11 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from pynextcloud_sync import APP_ID
 from pynextcloud_sync.core.desktop_integration import DesktopIntegration
 from pynextcloud_sync.core.runtime import RuntimeController
+from pynextcloud_sync.core.updates import (
+    UpdateCheckResult,
+    UpdateChecker,
+    UpdateManifest,
+)
 from pynextcloud_sync.nextcloud.credentials import CredentialStore
 from pynextcloud_sync.nextcloud.api import NextcloudApi
 from pynextcloud_sync.storage.config import ConfigStore, ConfigurationError
@@ -20,6 +25,7 @@ from pynextcloud_sync.ui.bootstrap import BootstrapWindow
 from pynextcloud_sync.ui.settings import SettingsWindow
 from pynextcloud_sync.ui.setup import SetupWindow
 from pynextcloud_sync.ui.tray import StatusNotifier
+from pynextcloud_sync.ui.update_window import UpdateWindow
 from pynextcloud_sync.util.i18n import _
 from pynextcloud_sync.util.paths import project_root
 
@@ -29,15 +35,22 @@ class PyNextCloudApplication(Adw.Application):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.background = background
         self._activation_count = 0
+        self._startup_update_complete = False
+        self._startup_update_in_progress = False
+        self._pending_activation_show_main = False
+        self._manual_update_in_progress = False
+        self._mandatory_update_manifest: UpdateManifest | None = None
         self.config = ConfigStore()
         self.logger = AppLogger()
         self.credentials = CredentialStore(logger=self.logger)
+        self.update_checker = UpdateChecker()
         self.runtime: RuntimeController | None = None
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None
         self.bootstrap_window: BootstrapWindow | None = None
         self.settings_window: SettingsWindow | None = None
         self.setup_window: SetupWindow | None = None
+        self.update_window: UpdateWindow | None = None
         self.tray: StatusNotifier | None = None
 
     def do_startup(self) -> None:
@@ -61,6 +74,10 @@ class PyNextCloudApplication(Adw.Application):
             ("sync", lambda *_args: self._tray_sync()),
             ("log", lambda *_args: self.show_log()),
             ("settings", lambda *_args: self.show_settings()),
+            (
+                "check-update",
+                lambda *_args: self.check_for_updates(self.get_active_window()),
+            ),
             ("quit", lambda *_args: self.request_quit()),
         ):
             action = Gio.SimpleAction.new(name, None)
@@ -75,6 +92,45 @@ class PyNextCloudApplication(Adw.Application):
             theme = Gtk.IconTheme.get_for_display(display)
             theme.add_search_path(str(project_root() / "data" / "icons"))
             theme.add_search_path(str(project_root() / "data" / "icons" / "status"))
+        show_main = not (first_activation and self.background)
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
+        if not self._startup_update_complete:
+            self._pending_activation_show_main |= show_main
+            self._begin_startup_update_check()
+            return
+        self._continue_activation(show_main=show_main)
+
+    def _begin_startup_update_check(self) -> None:
+        if self._startup_update_in_progress:
+            return
+        self._startup_update_in_progress = True
+        try:
+            self.update_checker.check(self._startup_update_finished)
+        except Exception as exc:
+            self._startup_update_finished(UpdateCheckResult(error=str(exc)))
+
+    def _startup_update_finished(self, result: UpdateCheckResult) -> None:
+        self._startup_update_in_progress = False
+        self._startup_update_complete = True
+        show_main = self._pending_activation_show_main
+        self._pending_activation_show_main = False
+        if result.error:
+            self.logger.warning("Automatic update check failed: %s", result.error)
+            self._continue_activation(show_main=show_main)
+            return
+        if result.update_available and result.latest and result.latest.mandatory:
+            self._enter_mandatory_update_mode(result.latest)
+            return
+        self._continue_activation(show_main=show_main)
+        if result.update_available and result.latest:
+            self._show_update_window(result.latest)
+
+    def _continue_activation(self, *, show_main: bool) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
         if not self.config.configured:
             if not self.setup_window:
                 self.setup_window = SetupWindow(
@@ -88,8 +144,103 @@ class PyNextCloudApplication(Adw.Application):
         self._ensure_desktop_integration()
         self._ensure_runtime()
         self._ensure_tray()
-        if not (first_activation and self.background):
+        if show_main:
             self.present_main()
+
+    def check_for_updates(self, parent: Gtk.Window | None = None) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
+        if self._manual_update_in_progress:
+            return
+        self._manual_update_in_progress = True
+        progress = Adw.AlertDialog(
+            heading=_("Checking for Updates"),
+            body=_("Contacting the GitHub version service…"),
+        )
+        progress.present(parent)
+
+        def finished(result: UpdateCheckResult) -> None:
+            self._manual_update_in_progress = False
+            progress.close()
+            if result.error:
+                self.logger.warning("Manual update check failed: %s", result.error)
+                self._show_status_dialog(
+                    _("Could Not Check for Updates"),
+                    _(
+                        "The version information could not be obtained. Check your "
+                        "connection and try again later."
+                    ),
+                    parent,
+                )
+                return
+            if result.update_available and result.latest:
+                if result.latest.mandatory:
+                    self._enter_mandatory_update_mode(result.latest)
+                else:
+                    self._show_update_window(result.latest)
+                return
+            self._show_status_dialog(
+                _("PyNextCloud Sync Is Up to Date"),
+                _("You are already using the latest available version."),
+                parent,
+            )
+
+        try:
+            self.update_checker.check(finished)
+        except Exception as exc:
+            finished(UpdateCheckResult(error=str(exc)))
+
+    def _show_status_dialog(
+        self,
+        heading: str,
+        body: str,
+        parent: Gtk.Window | None,
+    ) -> None:
+        dialog = Adw.AlertDialog(heading=heading, body=body)
+        dialog.add_response("close", _("Close"))
+        dialog.set_default_response("close")
+
+        def chosen(source: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
+            source.choose_finish(result)
+
+        dialog.choose(parent, None, chosen)
+
+    def _show_update_window(self, manifest: UpdateManifest) -> None:
+        if self.update_window:
+            if self.update_window.manifest == manifest:
+                self.update_window.present()
+                return
+            self.update_window.close()
+        self.update_window = UpdateWindow(
+            self,
+            manifest,
+            on_close=self._update_window_closed,
+            on_quit=self.quit,
+        )
+        self.update_window.present()
+
+    def _update_window_closed(self, window: UpdateWindow) -> None:
+        if self.update_window is window:
+            self.update_window = None
+
+    def _enter_mandatory_update_mode(self, manifest: UpdateManifest) -> None:
+        self._mandatory_update_manifest = manifest
+        if self.tray:
+            self.tray.stop()
+            self.tray = None
+        if self.runtime:
+            self.runtime.stop()
+            self.runtime = None
+        if self.settings_window:
+            self.settings_window.close()
+            self.settings_window = None
+        if self.main_window:
+            old_window = self.main_window
+            self.main_window = None
+            old_window.dispose_for_account_reset()
+            old_window.close()
+        self._show_update_window(manifest)
 
     def _setup_complete(self) -> None:
         if self.setup_window:
@@ -142,7 +293,7 @@ class PyNextCloudApplication(Adw.Application):
         self._bootstrap_initialize_integrations = False
 
     def _ensure_runtime(self) -> None:
-        if self.runtime or not self.config.data.get("safety", {}).get(
+        if self._mandatory_update_manifest or self.runtime or not self.config.data.get("safety", {}).get(
             "bootstrap_complete", False
         ):
             return
@@ -199,6 +350,9 @@ class PyNextCloudApplication(Adw.Application):
         self.main_window = MainWindow(self, self.config, self.runtime, self.logger)
 
     def present_main(self) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
         if not self.config.configured:
             self.activate()
             return
@@ -221,6 +375,9 @@ class PyNextCloudApplication(Adw.Application):
         Gio.AppInfo.launch_default_for_uri(root.as_uri(), None)
 
     def show_log(self) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
         if not self.config.configured:
             self.activate()
             return
@@ -234,6 +391,9 @@ class PyNextCloudApplication(Adw.Application):
             self.main_window.show_log()
 
     def show_settings(self) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
         if not self.config.configured:
             self.activate()
             return
@@ -414,6 +574,7 @@ class PyNextCloudApplication(Adw.Application):
         return GLib.SOURCE_REMOVE
 
     def do_shutdown(self) -> None:
+        self.update_checker.cancel()
         if self.bootstrap_window:
             self.bootstrap_window.runner.cancel()
         if self.settings_window:

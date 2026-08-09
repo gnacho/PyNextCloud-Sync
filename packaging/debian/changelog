@@ -1,3 +1,14 @@
+pynextcloud-sync (0.1.15) stable; urgency=medium
+
+  * Check the validated GitHub version manifest at every application start and
+    expose the same check manually from About.
+  * Keep optional updates non-blocking and prevent runtime initialization when
+    the latest version is marked mandatory.
+  * Add SemVer comparison, strict manifest validation, safe failure handling,
+    and UTC release date presentation.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 22:51:24 -0300
+
 pynextcloud-sync (0.1.14) stable; urgency=medium
 
   * Add a protected first synchronization with an isolated fresh server

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.1.18",
+  "version": "0.1.17",
   "mandatory": false,
   "released_at": "2026-08-09T02:50:25Z",
   "summary": "Fixed automatic update-window placement on multi-monitor desktops and simplified the actions shown for mandatory updates.",

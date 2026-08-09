@@ -57,19 +57,16 @@ A reconciliação bidirecional é realizada pelo motor oficial [`nextcloudcmd`](
     <td width="50%" align="center"><strong>Controles de rede e conta</strong><br><img src="docs/screenshots/settings-network.png" alt="Configurações de rede"></td>
     <td width="50%" align="center"><strong>Logs locais e diagnóstico</strong><br><img src="docs/screenshots/settings-advanced.png" alt="Configurações avançadas"></td>
   </tr>
+  <tr>
+    <td width="50%" align="center"><strong>Atualização opcional</strong><br><img src="docs/screenshots/update-optional.png" alt="Nova atualização opcional disponível"></td>
+    <td width="50%" align="center"><strong>Atualização obrigatória</strong><br><img src="docs/screenshots/update-mandatory.png" alt="Nova atualização obrigatória disponível"></td>
+  </tr>
 </table>
 
 <p align="center">
   <strong>As ações importantes também estão disponíveis na bandeja</strong><br><br>
   <img src="docs/screenshots/tray-menu.png" width="368" alt="Menu de bandeja do PyNextCloud Sync">
 </p>
-
-<table>
-  <tr>
-    <td width="50%" align="center"><strong>Atualização opcional</strong><br><img src="docs/screenshots/update-optional.png" alt="Nova atualização opcional disponível"></td>
-    <td width="50%" align="center"><strong>Atualização obrigatória</strong><br><img src="docs/screenshots/update-mandatory.png" alt="Nova atualização obrigatória disponível"></td>
-  </tr>
-</table>
 
 <details>
 <summary><strong>Ver a configuração inicial</strong></summary>

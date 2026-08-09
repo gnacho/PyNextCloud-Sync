@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.1.15",
+  "version": "0.1.16",
   "mandatory": false,
   "released_at": "2026-08-09T01:51:24Z",
   "summary": "Added a centralized update system with safe startup checks, optional notices, and mandatory blocking for versions considered unsafe.",

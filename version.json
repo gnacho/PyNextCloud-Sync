@@ -1,15 +1,14 @@
 {
   "schema_version": 1,
-  "version": "0.1.16",
+  "version": "0.1.17",
   "mandatory": false,
-  "released_at": "2026-08-09T02:29:46Z",
-  "summary": "Improved update notifications with foreground priority, always-visible actions, a direct latest-release download link, and clearer mandatory-update urgency.",
+  "released_at": "2026-08-09T02:50:25Z",
+  "summary": "Fixed automatic update-window placement on multi-monitor desktops and simplified the actions shown for mandatory updates.",
   "changelog": [
-    "Keeps the update window above the main window when the application is opened from its launcher.",
-    "Re-presents an existing update notice after later application activations so the main window cannot hide it.",
-    "Moves the primary update actions to a fixed area above the scrollable version details and changelog.",
-    "Renames the primary action to Download New Version and opens the latest GitHub release directly.",
-    "Uses an urgent warning icon and the explicit Mandatory update available heading for required updates.",
-    "Keeps Not Now visible but disabled during mandatory updates while retaining Download New Version and Close Application."
+    "Waits for the main window to be fully mapped before creating the automatic update notice opened during launcher startup.",
+    "Creates the update notice with its transient parent already assigned, matching the correctly centered manual-check behavior.",
+    "Stops changing a visible update window's parent, preventing Wayland from moving it to another monitor or the desktop origin.",
+    "Recreates a standalone tray-startup notice when the main window is opened later so it is centered on that window.",
+    "Shows only Download New Version and Close Application during mandatory updates; Not Now remains exclusive to optional updates."
   ]
 }

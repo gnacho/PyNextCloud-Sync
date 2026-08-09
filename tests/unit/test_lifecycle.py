@@ -76,25 +76,40 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("page.append(scroller)", source)
         self.assertNotIn('_("Open Releases Page")', source)
 
-    def test_update_notice_stays_above_the_main_window(self) -> None:
+    def test_startup_update_waits_for_the_mapped_main_window(self) -> None:
         path = ROOT / "src" / "pynextcloud_sync" / "application.py"
-        show_update = method_source(
-            path, "PyNextCloudApplication", "_show_update_window"
+        startup_finished = method_source(
+            path, "PyNextCloudApplication", "_startup_update_finished"
+        )
+        queue_update = method_source(
+            path,
+            "PyNextCloudApplication",
+            "_queue_update_window_for_mapped_parent",
         )
         present_main = method_source(path, "PyNextCloudApplication", "present_main")
-        self.assertIn("parent=parent", show_update)
-        self.assertIn("GLib.idle_add(self._present_update_window_foreground", show_update)
-        self.assertIn("self.update_window.set_transient_for(self.main_window)", present_main)
-        self.assertIn("self._present_update_window_foreground", present_main)
+        foreground = method_source(
+            path,
+            "PyNextCloudApplication",
+            "_present_update_window_foreground",
+        )
+        self.assertIn("self._queue_update_window_for_mapped_parent", startup_finished)
+        self.assertIn("self._update_window_presenter.queue(manifest, parent)", queue_update)
+        self.assertIn("self._queue_update_window_for_mapped_parent", present_main)
+        self.assertNotIn("set_transient_for", present_main)
+        self.assertNotIn("set_transient_for", foreground)
 
-    def test_mandatory_notice_uses_urgent_copy_and_disables_not_now(self) -> None:
+    def test_mandatory_notice_uses_urgent_copy_and_replaces_not_now_with_quit(self) -> None:
         source = (
             ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
         ).read_text(encoding="utf-8")
         self.assertIn('"dialog-warning-symbolic"', source)
         self.assertIn('_("Mandatory update available")', source)
-        self.assertIn("not_now.set_sensitive(False)", source)
         self.assertIn('Gtk.Button(label=_("Close Application"))', source)
+        self.assertNotIn("not_now.set_sensitive(False)", source)
+        self.assertLess(
+            source.index("if mandatory:\n            quit_button"),
+            source.index("else:\n            not_now"),
+        )
 
     def test_tray_settings_opens_an_independent_preferences_window(self) -> None:
         application = ROOT / "src" / "pynextcloud_sync" / "application.py"

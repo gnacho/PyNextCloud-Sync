@@ -108,18 +108,15 @@ class UpdateWindow(Adw.ApplicationWindow):
         releases.connect("clicked", self._open_releases)
         actions.append(releases)
 
-        not_now = Gtk.Button(label=_("Not Now"))
-        if mandatory:
-            not_now.set_sensitive(False)
-        else:
-            not_now.connect("clicked", lambda *_args: self.close())
-        actions.append(not_now)
-
         if mandatory:
             quit_button = Gtk.Button(label=_("Close Application"))
             quit_button.add_css_class("destructive-action")
             quit_button.connect("clicked", lambda *_args: self._on_quit())
             actions.append(quit_button)
+        else:
+            not_now = Gtk.Button(label=_("Not Now"))
+            not_now.connect("clicked", lambda *_args: self.close())
+            actions.append(not_now)
         hero.append(actions)
 
         page.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))

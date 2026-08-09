@@ -64,6 +64,13 @@ A reconciliação bidirecional é realizada pelo motor oficial [`nextcloudcmd`](
   <img src="docs/screenshots/tray-menu.png" width="368" alt="Menu de bandeja do PyNextCloud Sync">
 </p>
 
+<table>
+  <tr>
+    <td width="50%" align="center"><strong>Atualização opcional</strong><br><img src="docs/screenshots/update-optional.png" alt="Nova atualização opcional disponível"></td>
+    <td width="50%" align="center"><strong>Atualização obrigatória</strong><br><img src="docs/screenshots/update-mandatory.png" alt="Nova atualização obrigatória disponível"></td>
+  </tr>
+</table>
+
 <details>
 <summary><strong>Ver a configuração inicial</strong></summary>
 <br>

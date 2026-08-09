@@ -159,15 +159,15 @@ class UpdateCheckerTests(unittest.TestCase):
             self.assertIsNotNone(results[0].error)
 
     def test_checker_uses_the_canonical_json_and_releases_urls(self) -> None:
-        fake = _FakeHttp(data=manifest_bytes(version="0.1.15"))
+        fake = _FakeHttp(data=manifest_bytes(version="0.1.16"))
         results = []
         checker = UpdateChecker(http=fake)
-        checker.check(results.append, current_version="0.1.15")
+        checker.check(results.append, current_version="0.1.16")
         self.assertEqual(checker.url, VERSION_MANIFEST_URL)
         self.assertIn("raw.githubusercontent.com/ehstbr/PyNextCloud-Sync", checker.url)
         self.assertEqual(
             RELEASES_URL,
-            "https://github.com/ehstbr/PyNextCloud-Sync/releases?utm_source=chatgpt.com",
+            "https://github.com/ehstbr/PyNextCloud-Sync/releases/latest",
         )
         self.assertEqual(fake.headers["Cache-Control"], "no-cache")
         self.assertFalse(results[0].update_available)

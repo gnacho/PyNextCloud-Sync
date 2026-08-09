@@ -1,3 +1,12 @@
+pynextcloud-sync (0.1.16) stable; urgency=medium
+
+  * Keep the update notice above the main window across launcher activations.
+  * Keep update actions visible above the scrollable release details.
+  * Open the latest GitHub release from the Download New Version action.
+  * Add urgent mandatory-update presentation and disable Not Now when blocked.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 23:29:46 -0300
+
 pynextcloud-sync (0.1.15) stable; urgency=medium
 
   * Check the validated GitHub version manifest at every application start and

@@ -53,6 +53,15 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.1.16"),
+            [
+                _("The update notice now remains above the main window when the application is opened from its launcher."),
+                _("Download and dismissal actions remain visible above the scrollable release details."),
+                _("Download New Version now opens the latest GitHub release directly."),
+                _("Mandatory updates use an urgent warning presentation and keep Not Now disabled."),
+            ],
+        ),
+        (
             _("Version 0.1.15"),
             [
                 _("Added automatic startup update checks through a validated GitHub version manifest."),

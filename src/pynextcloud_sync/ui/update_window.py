@@ -19,6 +19,7 @@ class UpdateWindow(Adw.ApplicationWindow):
         application: Gtk.Application,
         manifest: UpdateManifest,
         *,
+        parent: Gtk.Window | None,
         on_close: Callable[[UpdateWindow], None],
         on_quit: Callable[[], None],
     ) -> None:
@@ -35,6 +36,8 @@ class UpdateWindow(Adw.ApplicationWindow):
         self.set_resizable(True)
         self.set_modal(mandatory)
         self.set_deletable(not mandatory)
+        if parent:
+            self.set_transient_for(parent)
         self.connect("close-request", self._close_requested)
 
         toolbar = Adw.ToolbarView()
@@ -42,36 +45,39 @@ class UpdateWindow(Adw.ApplicationWindow):
         header.set_show_end_title_buttons(not mandatory)
         toolbar.add_top_bar(header)
 
-        scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        clamp = Adw.Clamp(maximum_size=520, tightening_threshold=400)
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
-        content.set_margin_top(24)
-        content.set_margin_bottom(24)
-        content.set_margin_start(18)
-        content.set_margin_end(18)
-        clamp.set_child(content)
-        scroller.set_child(clamp)
-        toolbar.set_content(scroller)
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        toolbar.set_content(page)
+
+        hero_clamp = Adw.Clamp(maximum_size=520, tightening_threshold=400)
+        hero = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        hero.set_margin_top(20)
+        hero.set_margin_bottom(18)
+        hero.set_margin_start(18)
+        hero.set_margin_end(18)
+        hero_clamp.set_child(hero)
+        page.append(hero_clamp)
 
         icon = Gtk.Image(
             icon_name=(
-                "software-update-urgent-symbolic"
+                "dialog-warning-symbolic"
                 if mandatory
                 else "software-update-available-symbolic"
             ),
-            pixel_size=64,
+            pixel_size=56,
         )
-        content.append(icon)
+        if mandatory:
+            icon.add_css_class("error")
+        hero.append(icon)
 
         heading = Gtk.Label(
-            label=_("This version must be updated")
+            label=_("Mandatory update available")
             if mandatory
             else _("A new version is available"),
             css_classes=["title-1"],
             justify=Gtk.Justification.CENTER,
             wrap=True,
         )
-        content.append(heading)
+        hero.append(heading)
 
         explanation = Gtk.Label(
             label=(
@@ -90,7 +96,47 @@ class UpdateWindow(Adw.ApplicationWindow):
             xalign=0.5,
         )
         explanation.add_css_class("dim-label")
-        content.append(explanation)
+        hero.append(explanation)
+
+        actions = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            spacing=10,
+            halign=Gtk.Align.CENTER,
+        )
+        releases = Gtk.Button(label=_("Download New Version"))
+        releases.add_css_class("suggested-action")
+        releases.connect("clicked", self._open_releases)
+        actions.append(releases)
+
+        not_now = Gtk.Button(label=_("Not Now"))
+        if mandatory:
+            not_now.set_sensitive(False)
+        else:
+            not_now.connect("clicked", lambda *_args: self.close())
+        actions.append(not_now)
+
+        if mandatory:
+            quit_button = Gtk.Button(label=_("Close Application"))
+            quit_button.add_css_class("destructive-action")
+            quit_button.connect("clicked", lambda *_args: self._on_quit())
+            actions.append(quit_button)
+        hero.append(actions)
+
+        page.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
+
+        scroller = Gtk.ScrolledWindow(
+            hscrollbar_policy=Gtk.PolicyType.NEVER,
+            vexpand=True,
+        )
+        details_clamp = Adw.Clamp(maximum_size=520, tightening_threshold=400)
+        details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+        details.set_margin_top(18)
+        details.set_margin_bottom(20)
+        details.set_margin_start(18)
+        details.set_margin_end(18)
+        details_clamp.set_child(details)
+        scroller.set_child(details_clamp)
+        page.append(scroller)
 
         version_group = Adw.PreferencesGroup(title=_("Version Information"))
         version_group.add(
@@ -106,14 +152,14 @@ class UpdateWindow(Adw.ApplicationWindow):
                 title=_("Released at"), subtitle=manifest.released_at_utc_text
             )
         )
-        content.append(version_group)
+        details.append(version_group)
 
         changes_group = Adw.PreferencesGroup(title=_("What's New"))
         summary_row = Adw.ActionRow(title=manifest.summary)
         if hasattr(summary_row, "set_title_lines"):
             summary_row.set_title_lines(0)
         changes_group.add(summary_row)
-        content.append(changes_group)
+        details.append(changes_group)
 
         changelog_group = Adw.PreferencesGroup()
         changelog = Adw.ExpanderRow(
@@ -130,34 +176,14 @@ class UpdateWindow(Adw.ApplicationWindow):
                 row.set_title_lines(0)
             changelog.add_row(row)
         changelog_group.add(changelog)
-        content.append(changelog_group)
-
-        actions = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            spacing=12,
-            halign=Gtk.Align.CENTER,
-        )
-        releases = Gtk.Button(label=_("Open Releases Page"))
-        releases.add_css_class("suggested-action")
-        releases.connect("clicked", self._open_releases)
-        actions.append(releases)
-        finish = Gtk.Button(
-            label=_("Close Application") if mandatory else _("Not Now")
-        )
-        if mandatory:
-            finish.add_css_class("destructive-action")
-            finish.connect("clicked", lambda *_args: self._on_quit())
-        else:
-            finish.connect("clicked", lambda *_args: self.close())
-        actions.append(finish)
-        content.append(actions)
+        details.append(changelog_group)
 
         footer = Gtk.Label(
             label=APP_NAME,
             css_classes=["dim-label", "caption"],
             halign=Gtk.Align.CENTER,
         )
-        content.append(footer)
+        details.append(footer)
         self.set_content(toolbar)
 
     def _open_releases(self, _button: Gtk.Button) -> None:

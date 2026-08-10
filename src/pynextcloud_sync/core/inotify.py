@@ -20,6 +20,7 @@ IN_CREATE = 0x00000100
 IN_DELETE = 0x00000200
 IN_DELETE_SELF = 0x00000400
 IN_MOVE_SELF = 0x00000800
+IN_Q_OVERFLOW = 0x00004000
 IN_IGNORED = 0x00008000
 IN_ISDIR = 0x40000000
 
@@ -37,6 +38,10 @@ EVENT_STRUCT = struct.Struct("iIII")
 
 
 class InotifyLimitError(RuntimeError):
+    pass
+
+
+class InotifyOverflowError(RuntimeError):
     pass
 
 
@@ -135,6 +140,9 @@ class InotifyWatcher:
                 self._parse(chunk)
         except BlockingIOError:
             pass
+        except InotifyOverflowError as exc:
+            self.on_degraded(exc)
+            return GLib.SOURCE_REMOVE
         except OSError as exc:
             self.on_degraded(exc)
             return GLib.SOURCE_REMOVE
@@ -148,6 +156,10 @@ class InotifyWatcher:
             raw_name = data[offset : offset + name_length]
             offset += name_length
             name = os.fsdecode(raw_name.split(b"\0", 1)[0]) if name_length else ""
+            if mask & IN_Q_OVERFLOW:
+                raise InotifyOverflowError(
+                    "The inotify event queue overflowed; local event history is incomplete."
+                )
             directory = self.watches.get(wd)
             if directory is None:
                 continue

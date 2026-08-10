@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.18 — 2026-08-10
+
+- Detect Linux `IN_Q_OVERFLOW` explicitly. When the inotify queue loses events,
+  discard trust in that event stream, rebuild the watcher, and request one
+  protected normal reconciliation through `nextcloudcmd`.
+- Add a minimal durable run marker before starting `nextcloudcmd`; clear it only
+  after a successful run has produced and persisted a new safety baseline.
+- If the wrapper is killed or otherwise interrupted, keep using the previous
+  last-known-good baseline on restart. Existing folder identity, empty-tree,
+  missing-database, and abnormal-deletion checks still run before `nextcloudcmd`.
+- Keep the marker when the post-sync baseline cannot be committed instead of
+  silently treating the wrapper state as fully recorded.
+- Persist the safety manifest with a directory `fsync` after the atomic replace.
+- Do not add a custom rescan, WebDAV diff, conflict resolver, transaction
+  journal, or synchronization algorithm. File discovery, transfer, conflict
+  handling, and deletion propagation remain the responsibility of `nextcloudcmd`.
+
 ## 0.1.17 — 2026-08-09
 
 - Fixed automatic update notices opening on another monitor at the desktop

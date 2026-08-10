@@ -224,6 +224,12 @@ class SafetyManifest:
                 handle.flush()
                 os.fsync(handle.fileno())
             temporary.replace(self.path)
+            flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+            directory_fd = os.open(self.path.parent, flags)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
         finally:
             temporary.unlink(missing_ok=True)
         return payload
@@ -335,15 +341,16 @@ class SafetyGuard:
             )
         return None
 
-    def record_current(self) -> None:
+    def record_current(self) -> bool:
         account = self.config.data.get("account")
         if not account:
-            return
+            return False
         snapshot = scan_inventory(Path(account["local_root"]), self._matcher())
         if snapshot.errors:
             self.logger.error(
                 "Could not update the safety baseline: %s", "; ".join(snapshot.errors)
             )
-            return
+            return False
         self.manifest.save(account, snapshot)
         self.logger.info("Safety baseline updated with %s local files.", len(snapshot.files))
+        return True

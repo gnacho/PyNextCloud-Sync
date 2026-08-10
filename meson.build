@@ -1,6 +1,6 @@
 project(
   'pynextcloud-sync',
-  version: '0.1.17',
+  version: '0.1.18',
   meson_version: '>= 1.0.0',
 )
 
@@ -26,6 +26,7 @@ python_sources = files(
   'src/pynextcloud_sync/core/state.py',
   'src/pynextcloud_sync/core/suspend.py',
   'src/pynextcloud_sync/core/sync_engine.py',
+  'src/pynextcloud_sync/core/sync_run_marker.py',
   'src/pynextcloud_sync/core/timers.py',
   'src/pynextcloud_sync/core/triggers.py',
   'src/pynextcloud_sync/core/updates.py',
@@ -84,6 +85,7 @@ python.install_sources(
     'src/pynextcloud_sync/core/state.py',
     'src/pynextcloud_sync/core/suspend.py',
     'src/pynextcloud_sync/core/sync_engine.py',
+    'src/pynextcloud_sync/core/sync_run_marker.py',
     'src/pynextcloud_sync/core/timers.py',
     'src/pynextcloud_sync/core/triggers.py',
     'src/pynextcloud_sync/core/updates.py',

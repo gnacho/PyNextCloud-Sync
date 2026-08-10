@@ -9,6 +9,7 @@ from gi.repository import GLib
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
 from pynextcloud_sync.core.state import AppState, StateController
 from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard
+from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.core.triggers import CoalescingQueue, Trigger, manual_only
 from pynextcloud_sync.nextcloud.command import NextcloudCmdMissingError, build_command
 from pynextcloud_sync.nextcloud.credentials import KeyringLockedError
@@ -53,6 +54,8 @@ class SyncScheduler:
         self._safety_bypass_once = False
         self.safety_alert: SafetyAlert | None = None
         self.safety_guard = SafetyGuard(config, logger)
+        self.run_marker = SyncRunMarker()
+        self._run_marker_active = False
         self._keyring_locked = False
         self._stopped = False
         self._feedback_followup_pending = False
@@ -88,7 +91,7 @@ class SyncScheduler:
             self.logger.info("Synchronization request coalesced: %s", trigger.value)
             return
         if self.paused and trigger != Trigger.MANUAL:
-            if trigger in {Trigger.LOCAL_INOTIFY, Trigger.LOCAL_INTERVAL}:
+            if trigger in {Trigger.LOCAL_INOTIFY, Trigger.LOCAL_INTERVAL, Trigger.LOCAL_RECOVERY}:
                 self.local_dirty = True
             else:
                 self.remote_pending = True
@@ -158,6 +161,10 @@ class SyncScheduler:
         self.logger.info("Synchronization triggers: %s", reason_text)
         safety = self.config.data.get("safety")
         if safety and safety.get("guard_enabled", True) and not self._safety_bypass_once:
+            if self.run_marker.pending_for(account):
+                self.logger.warning(
+                    "A previous synchronization did not reach a committed safety baseline; validating the last known-good baseline before recovery."
+                )
             self._preparing = True
             self._safety_checking = True
             self.state.set(AppState.SYNC_QUEUED, _("Checking the safety baseline…"))
@@ -259,6 +266,18 @@ class SyncScheduler:
                 self.state.set(AppState.ERROR, str(exc))
                 self.logger.error(exc)
                 return
+            safety = self.config.data.get("safety")
+            if safety and safety.get("guard_enabled", True):
+                try:
+                    self.run_marker.begin(account)
+                    self._run_marker_active = True
+                except OSError as exc:
+                    self.state.set(AppState.ERROR, _("Synchronization failed — view the log"))
+                    self.logger.error(
+                        "Synchronization blocked because the run marker could not be persisted: %s",
+                        exc,
+                    )
+                    return
             feedback_followup = self._feedback_followup_pending
             self._feedback_followup_pending = False
             self.engine.run(
@@ -290,10 +309,13 @@ class SyncScheduler:
             self._preparing = True
 
             def record_baseline() -> None:
+                recorded = False
                 try:
-                    self.safety_guard.record_current()
+                    recorded = self.safety_guard.record_current()
+                except Exception as exc:
+                    self.logger.error("Could not commit the safety baseline: %s", exc)
                 finally:
-                    GLib.idle_add(self._baseline_recorded)
+                    GLib.idle_add(self._baseline_recorded, recorded)
 
             threading.Thread(
                 target=record_baseline,
@@ -328,8 +350,21 @@ class SyncScheduler:
             self.COOLDOWN_SECONDS, self._cooldown_finished, queued
         )
 
-    def _baseline_recorded(self) -> bool:
+    def _baseline_recorded(self, recorded: bool) -> bool:
         self._preparing = False
+        if self._run_marker_active:
+            if recorded:
+                try:
+                    self.run_marker.clear()
+                    self._run_marker_active = False
+                except OSError as exc:
+                    self.logger.error(
+                        "Could not clear the completed synchronization run marker: %s", exc
+                    )
+            else:
+                self.logger.warning(
+                    "Synchronization run marker retained because the new safety baseline was not committed."
+                )
         if (
             not self._stopped
             and not self._cooldown_source

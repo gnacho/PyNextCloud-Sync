@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "version": "0.1.17",
+  "version": "0.1.18",
   "mandatory": false,
-  "released_at": "2026-08-09T02:50:25Z",
-  "summary": "Fixed automatic update-window placement on multi-monitor desktops and simplified the actions shown for mandatory updates.",
+  "released_at": "2026-08-10T17:20:00Z",
+  "summary": "Hardened wrapper-side safety for interrupted runs and lost inotify events while keeping nextcloudcmd as the sole synchronization engine.",
   "changelog": [
-    "Waits for the main window to be fully mapped before creating the automatic update notice opened during launcher startup.",
-    "Creates the update notice with its transient parent already assigned, matching the correctly centered manual-check behavior.",
-    "Stops changing a visible update window's parent, preventing Wayland from moving it to another monitor or the desktop origin.",
-    "Recreates a standalone tray-startup notice when the main window is opened later so it is centered on that window.",
-    "Shows only Download New Version and Close Application during mandatory updates; Not Now remains exclusive to optional updates."
+    "Detects Linux IN_Q_OVERFLOW explicitly instead of silently discarding the special inotify event.",
+    "Rebuilds filesystem monitoring after an inotify overflow and requests one protected reconciliation through nextcloudcmd; PyNextCloud Sync does not implement its own rescan or synchronization engine.",
+    "Adds a tiny durable run marker immediately before nextcloudcmd starts and removes it only after a successful run has produced a committed safety baseline.",
+    "After an interrupted wrapper run, validates the existing last-known-good baseline before recovery, preserving the existing folder identity, empty-tree, missing-database, and mass-deletion protections.",
+    "Keeps the run marker when the post-sync safety baseline cannot be persisted, so an uncommitted wrapper run is not silently treated as fully recorded."
   ]
 }

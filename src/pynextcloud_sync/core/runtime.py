@@ -6,7 +6,7 @@ from typing import Any, Callable
 from gi.repository import GLib
 
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
-from pynextcloud_sync.core.inotify import InotifyWatcher
+from pynextcloud_sync.core.inotify import InotifyOverflowError, InotifyWatcher
 from pynextcloud_sync.core.network import NetworkWatcher
 from pynextcloud_sync.core.power import PowerWatcher
 from pynextcloud_sync.core.scheduler import SyncScheduler
@@ -57,6 +57,7 @@ class RuntimeController:
         )
         self.inotify: InotifyWatcher | None = None
         self._fallback_source = 0
+        self._inotify_recovery_source = 0
         self._started = False
         self._error_notified = False
         self._timers_signature: tuple[object, ...] | None = None
@@ -94,6 +95,9 @@ class RuntimeController:
         if self._fallback_source:
             GLib.source_remove(self._fallback_source)
             self._fallback_source = 0
+        if self._inotify_recovery_source:
+            GLib.source_remove(self._inotify_recovery_source)
+            self._inotify_recovery_source = 0
         self._timers_signature = None
         self._inotify_signature = None
         self._push_signature = None
@@ -173,6 +177,14 @@ class RuntimeController:
         if self.inotify:
             self.inotify.stop()
             self.inotify = None
+        if isinstance(error, InotifyOverflowError):
+            # Overflow means events were lost, not that synchronization failed.
+            # Rebuild the watcher, then let nextcloudcmd perform one normal full
+            # reconciliation after the existing safety checks pass.
+            self.state.set(AppState.SYNC_QUEUED, _("Synchronization scheduled"))
+            if not self._inotify_recovery_source:
+                self._inotify_recovery_source = GLib.idle_add(self._recover_inotify_overflow)
+            return
         if not self.config.data["sync"].get("local_interval_enabled", False) and not self._fallback_source:
             minutes = int(self.config.data["sync"].get("local_interval_minutes", 5))
             self._fallback_source = GLib.timeout_add_seconds(
@@ -182,6 +194,19 @@ class RuntimeController:
             AppState.ERROR,
             _("Filesystem watch limit reached; using a local safety interval for this session"),
         )
+
+    def _recover_inotify_overflow(self) -> bool:
+        self._inotify_recovery_source = 0
+        if not self._started or not self.config.configured:
+            return GLib.SOURCE_REMOVE
+        sync = self.config.data["sync"]
+        if sync.get("local_inotify_enabled", True):
+            self._configure_inotify(sync)
+        self.logger.info(
+            "inotify overflow recovery requested a protected reconciliation through nextcloudcmd."
+        )
+        self.scheduler.request(Trigger.LOCAL_RECOVERY)
+        return GLib.SOURCE_REMOVE
 
     def _fallback_local_interval(self) -> bool:
         self.scheduler.request(Trigger.LOCAL_INTERVAL)

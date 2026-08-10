@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Relatar um problema</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/versão-0.1.17-6557e8?style=flat-square" alt="Versão 0.1.17">
+    <img src="https://img.shields.io/badge/versão-0.1.18-6557e8?style=flat-square" alt="Versão 0.1.18">
     <img src="https://img.shields.io/badge/plataforma-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -115,7 +115,7 @@ Baixe o `.deb` na [versão mais recente](https://github.com/ehstbr/PyNextCloud-S
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.17_all.deb
+sudo apt install ./pynextcloud-sync_0.1.18_all.deb
 ```
 
 Durante uma atualização interativa iniciada com `sudo apt install`, o pacote solicita que uma instância aberta do PyNextCloud Sync seja encerrada normalmente, aguarda a sincronização atual terminar e reinicia o aplicativo atualizado na mesma sessão gráfica. O processo de sincronização nunca é encerrado à força. Atualizações automáticas ou instalações sem uma sessão gráfica identificável deixam o controle do processo para o usuário ou administrador do sistema.
@@ -138,8 +138,8 @@ sudo apt install \
 Depois, extraia e execute:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.17.zip
-cd PyNextCloud-Sync-0.1.17
+unzip PyNextCloud-Sync-0.1.18.zip
+cd PyNextCloud-Sync-0.1.18
 ./run.sh
 ```
 
@@ -162,7 +162,7 @@ Instalações atualizadas da `0.1.13` também começam pausadas e passam por ess
 
 ## Proteção contínua contra exclusões
 
-Depois de cada sincronização bem-sucedida, o PyNextCloud Sync registra um manifesto local da árvore verificada. Antes de executar novamente o motor bidirecional, ele confere a identidade e o conteúdo básico da pasta.
+Depois de cada sincronização bem-sucedida, o PyNextCloud Sync registra um manifesto local da árvore verificada. Antes de executar novamente o motor bidirecional, ele confere a identidade e o conteúdo básico da pasta. Um pequeno marcador registra se o wrapper chegou a confirmar o novo baseline após o `nextcloudcmd`; depois de uma interrupção do processo, o último baseline confiável é verificado novamente antes da recuperação. Se o Linux informar estouro da fila do inotify, o watcher é reconstruído e o aplicativo solicita uma reconciliação normal protegida ao `nextcloudcmd`, sem tentar reconstruir por conta própria os eventos perdidos.
 
 A sincronização é bloqueada quando:
 
@@ -254,7 +254,7 @@ Contribuições são bem-vindas quando preservam o escopo enxuto, baixo consumo 
 
 ## Estado do projeto
 
-A versão `0.1.17` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
+A versão `0.1.18` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
 
 ---
 

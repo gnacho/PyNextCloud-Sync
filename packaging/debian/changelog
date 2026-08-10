@@ -1,3 +1,12 @@
+pynextcloud-sync (0.1.18) stable; urgency=medium
+
+  * Detect and recover from inotify queue overflow before trusting new local events.
+  * Rebuild filesystem monitoring and request a protected nextcloudcmd reconciliation.
+  * Keep a minimal durable marker around uncommitted nextcloudcmd wrapper runs.
+  * Preserve nextcloudcmd as the sole file discovery and reconciliation engine.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Mon, 10 Aug 2026 14:20:00 -0300
+
 pynextcloud-sync (0.1.17) stable; urgency=medium
 
   * Wait for the main window to map before showing the automatic update notice.

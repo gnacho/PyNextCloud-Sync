@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -11,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
+from pynextcloud_sync.storage.config import account_fingerprint
 from pynextcloud_sync.util.paths import ensure_private_directory, state_dir
 from pynextcloud_sync.util.i18n import _
 
@@ -153,17 +153,6 @@ def scan_inventory(root: Path, matcher: ExclusionMatcher) -> InventorySnapshot:
     return snapshot
 
 
-def account_fingerprint(account: dict[str, Any]) -> str:
-    identity = "\n".join(
-        (
-            str(account.get("server_url", "")).rstrip("/").casefold(),
-            str(account.get("login_name", "")).casefold(),
-            str(Path(str(account.get("local_root", ""))).expanduser().absolute()),
-        )
-    )
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
-
-
 def _read_root_id(root: Path) -> str | None:
     try:
         return os.getxattr(root, ROOT_ID_XATTR).decode("ascii")
@@ -186,6 +175,10 @@ def ensure_root_id(root: Path) -> str | None:
 class SafetyManifest:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or (state_dir() / "safety-manifest.json")
+
+    @classmethod
+    def for_account(cls, account: dict[str, Any]) -> SafetyManifest:
+        return cls(state_dir() / f"safety-manifest-{account_fingerprint(account)}.json")
 
     def load(self) -> dict[str, Any] | None:
         try:

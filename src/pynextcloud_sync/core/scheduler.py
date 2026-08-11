@@ -6,13 +6,16 @@ from typing import Any, Callable
 
 from gi.repository import GLib
 
+from pynextcloud_sync.core.debounce import DebounceGate
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
+from pynextcloud_sync.core.sync_permit import SyncPermit
 from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard
+from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard, SafetyManifest
 from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.core.triggers import CoalescingQueue, Trigger, manual_only
 from pynextcloud_sync.nextcloud.command import NextcloudCmdMissingError, build_command
 from pynextcloud_sync.nextcloud.credentials import KeyringLockedError
+from pynextcloud_sync.storage.config import account_fingerprint
 from pynextcloud_sync.util.paths import config_dir
 from pynextcloud_sync.util.i18n import _
 
@@ -32,6 +35,7 @@ class SyncScheduler:
         logger: Any,
         on_completed: Callable[[SyncResult], None] | None = None,
         on_safety_alert: Callable[[SafetyAlert], None] | None = None,
+        sync_permit: SyncPermit | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
@@ -40,21 +44,34 @@ class SyncScheduler:
         self.logger = logger
         self.on_completed = on_completed
         self.on_safety_alert = on_safety_alert
+        self.sync_permit = sync_permit
         self.queue = CoalescingQueue()
         self.online = True
         self.user_paused = False
         self.battery_paused = False
         self.local_dirty = False
         self.remote_pending = False
-        self._debounce_source = 0
+        self._debounce = DebounceGate(
+            debounce_ms=self.DEBOUNCE_MS,
+            cooldown_seconds=self.COOLDOWN_SECONDS,
+            on_ready=self._schedule_start,
+        )
         self._start_source = 0
-        self._cooldown_source = 0
         self._preparing = False
         self._safety_checking = False
         self._safety_bypass_once = False
         self.safety_alert: SafetyAlert | None = None
-        self.safety_guard = SafetyGuard(config, logger)
-        self.run_marker = SyncRunMarker()
+        account = config.data.get("account")
+        if account:
+            self.safety_guard = SafetyGuard(
+                config, logger, manifest=SafetyManifest.for_account(account)
+            )
+            self.run_marker = SyncRunMarker.for_account(account)
+            self._account_fingerprint = account_fingerprint(account)
+        else:
+            self.safety_guard = SafetyGuard(config, logger)
+            self.run_marker = SyncRunMarker()
+            self._account_fingerprint = None
         self._run_marker_active = False
         self._keyring_locked = False
         self._stopped = False
@@ -121,22 +138,15 @@ class SyncScheduler:
             self._schedule_start()
 
     def _schedule_debounce(self) -> None:
-        if self._debounce_source:
-            GLib.source_remove(self._debounce_source)
         self.state.set(AppState.SYNC_QUEUED, _("Waiting for local changes to settle"))
-        self._debounce_source = GLib.timeout_add(self.DEBOUNCE_MS, self._debounce_elapsed)
-
-    def _debounce_elapsed(self) -> bool:
-        self._debounce_source = 0
-        self._schedule_start()
-        return GLib.SOURCE_REMOVE
+        self._debounce.kick()
 
     def _schedule_start(self) -> None:
         if (
             self._stopped
-            or self._debounce_source
+            or self._debounce.debounce_source
             or self._start_source
-            or self._cooldown_source
+            or self._debounce.in_cooldown
             or self._preparing
             or self._safety_checking
             or self.engine.running
@@ -253,7 +263,12 @@ class SyncScheduler:
             matcher = ExclusionMatcher(
                 sync.get("exclude_patterns", []), sync.get("exclude_patterns_enabled", True)
             )
-            exclude_path = matcher.write_nextcloudcmd_file(config_dir() / "excludes.lst")
+            excludes_name = (
+                f"excludes-{self._account_fingerprint}.lst"
+                if self._account_fingerprint
+                else "excludes.lst"
+            )
+            exclude_path = matcher.write_nextcloudcmd_file(config_dir() / excludes_name)
             try:
                 spec = build_command(
                     account,
@@ -280,6 +295,11 @@ class SyncScheduler:
                     return
             feedback_followup = self._feedback_followup_pending
             self._feedback_followup_pending = False
+            if self.sync_permit and not self.sync_permit.try_acquire():
+                self.queue.extend(reasons)
+                self.state.set(AppState.SYNC_QUEUED, _("Waiting for another account to finish…"))
+                self.sync_permit.wait_for_release(self._schedule_start)
+                return
             self.engine.run(
                 spec,
                 lambda result: self._finished(result, reasons, feedback_followup),
@@ -346,9 +366,9 @@ class SyncScheduler:
                 self.queue.add(Trigger.LOCAL_INOTIFY)
             queued = bool(self.queue)
         self._inotify_during_sync = False
-        self._cooldown_source = GLib.timeout_add_seconds(
-            self.COOLDOWN_SECONDS, self._cooldown_finished, queued
-        )
+        if self.sync_permit:
+            self.sync_permit.release()
+        self._debounce.begin_cooldown(lambda: self._cooldown_finished(queued))
 
     def _baseline_recorded(self, recorded: bool) -> bool:
         self._preparing = False
@@ -367,7 +387,7 @@ class SyncScheduler:
                 )
         if (
             not self._stopped
-            and not self._cooldown_source
+            and not self._debounce.in_cooldown
             and self.queue
             and self.online
             and not self.paused
@@ -375,16 +395,14 @@ class SyncScheduler:
             self._schedule_start()
         return GLib.SOURCE_REMOVE
 
-    def _cooldown_finished(self, run_pending: bool) -> bool:
-        self._cooldown_source = 0
+    def _cooldown_finished(self, run_pending: bool) -> None:
         if self._stopped:
-            return GLib.SOURCE_REMOVE
+            return
         if run_pending and self.queue and self.online and not self.paused:
             self._schedule_start()
         else:
             if not self.paused:
                 self._set_idle_state()
-        return GLib.SOURCE_REMOVE
 
     def set_user_paused(self, paused: bool) -> None:
         self.user_paused = paused
@@ -455,11 +473,10 @@ class SyncScheduler:
 
     def stop(self) -> None:
         self._stopped = True
-        for attribute in ("_debounce_source", "_start_source", "_cooldown_source"):
-            source = getattr(self, attribute)
-            if source:
-                GLib.source_remove(source)
-                setattr(self, attribute, 0)
+        self._debounce.stop()
+        if self._start_source:
+            GLib.source_remove(self._start_source)
+            self._start_source = 0
         self.queue.clear()
         self.local_dirty = False
         self.remote_pending = False

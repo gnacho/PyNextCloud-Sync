@@ -2,4 +2,4 @@
 
 APP_ID = "com.eduhcommerce.PyNextCloudSync"
 APP_NAME = "PyNextCloud Sync"
-VERSION = "0.1.19"
+VERSION = "2.0.0"

@@ -54,7 +54,7 @@ O uso de um servidor Nextcloud também pode estar sujeito a termos, políticas d
 
 ## 9. Licença
 
-O PyNextCloud Sync versão `0.1.19` e as versões posteriores são distribuídos sob a [Licença Pública Geral GNU versão 3 ou posterior](LICENSE). Suas cláusulas sobre ausência de garantia e limitação de responsabilidade permanecem integralmente aplicáveis. As dependências externas não são relicenciadas por este projeto, e as versões anteriores do PyNextCloud Sync permanecem disponíveis sob a licença incluída em cada lançamento correspondente.
+O PyNextCloud Sync versão `2.0.0` e as versões posteriores são distribuídos sob a [Licença Pública Geral GNU versão 3 ou posterior](LICENSE). Suas cláusulas sobre ausência de garantia e limitação de responsabilidade permanecem integralmente aplicáveis. As dependências externas não são relicenciadas por este projeto, e as versões anteriores do PyNextCloud Sync permanecem disponíveis sob a licença incluída em cada lançamento correspondente.
 
 ## 10. Alterações destes termos
 

@@ -27,6 +27,9 @@ class FakeVariant:
         self.signature = signature
         self.value = value
 
+    def unpack(self) -> object:
+        return self.value
+
 
 class FakePixbuf:
     def __init__(self, size: int) -> None:
@@ -224,6 +227,87 @@ class TrayContractTests(unittest.TestCase):
         self.assertIn(
             "NewIcon", [signal[3] for signal in connection.signals]
         )
+
+    def test_account_submenu_items_are_rendered_in_layout(self) -> None:
+        tray_module = load_tray_module()
+        state = StateController(AppState.IDLE_OK)
+        no_op = lambda: None
+        notifier = tray_module.StatusNotifier(
+            state,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            FakeLogger(),
+            account_provider=lambda: [("acc-1", "alice"), ("acc-2", "bob")],
+        )
+        layout = notifier._layout_data(0)
+        root_children = layout[2]
+        account_menus = [
+            child.unpack()
+            for child in root_children
+            if child.unpack()[0] == notifier.ACCOUNTS_MENU_ID
+        ]
+        self.assertEqual(len(account_menus), 1)
+        menu = account_menus[0]
+        self.assertEqual(menu[0], notifier.ACCOUNTS_MENU_ID)
+        account_ids = [child.unpack()[0] for child in menu[2]]
+        self.assertEqual(
+            account_ids,
+            [
+                notifier.ACCOUNT_MENU_BASE,
+                notifier.ACCOUNT_MENU_BASE + 10,
+            ],
+        )
+
+    def test_account_action_click_dispatches_to_callback(self) -> None:
+        tray_module = load_tray_module()
+        state = StateController(AppState.IDLE_OK)
+        no_op = lambda: None
+        received: list[tuple[str, str]] = []
+        notifier = tray_module.StatusNotifier(
+            state,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            FakeLogger(),
+            account_provider=lambda: [("acc-1", "alice"), ("acc-2", "bob")],
+            on_account_action=lambda account_id, action: received.append(
+                (account_id, action)
+            ),
+        )
+        notifier._dispatch_click(notifier.ACCOUNT_MENU_BASE + notifier.ACCOUNT_ACTION_SYNC)
+        self.assertEqual(received, [("acc-1", "sync")])
+        notifier._dispatch_click(
+            notifier.ACCOUNT_MENU_BASE + 10 + notifier.ACCOUNT_ACTION_OPEN
+        )
+        self.assertEqual(received[-1], ("acc-2", "open"))
+
+    def test_global_action_click_still_uses_the_actions_table(self) -> None:
+        tray_module = load_tray_module()
+        state = StateController(AppState.IDLE_OK)
+        no_op = lambda: None
+        fired: list[int] = []
+        notifier = tray_module.StatusNotifier(
+            state,
+            no_op,
+            lambda: fired.append(2),
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            no_op,
+            FakeLogger(),
+        )
+        notifier._dispatch_click(2)
+        self.assertEqual(fired, [2])
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from pynextcloud_sync import APP_ID
+from pynextcloud_sync.core.account_manager import AccountManager
 from pynextcloud_sync.core.desktop_integration import DesktopIntegration
 from pynextcloud_sync.core.runtime import RuntimeController
 from pynextcloud_sync.core.updates import (
@@ -45,6 +46,8 @@ class PyNextCloudApplication(Adw.Application):
         self.logger = AppLogger()
         self.credentials = CredentialStore(logger=self.logger)
         self.update_checker = UpdateChecker()
+        self.account_manager: AccountManager | None = None
+        self.active_account_id: str | None = None
         self.runtime: RuntimeController | None = None
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None
@@ -360,21 +363,66 @@ class PyNextCloudApplication(Adw.Application):
         self._bootstrap_initialize_integrations = False
 
     def _ensure_runtime(self) -> None:
-        if self._mandatory_update_manifest or self.runtime or not self.config.data.get("safety", {}).get(
-            "bootstrap_complete", False
-        ):
+        if self._mandatory_update_manifest:
             return
-        self.runtime = RuntimeController(
-            self.config,
-            self.credentials,
-            self.logger,
-            self._notify_sync_failure,
-            self._notify_safety_alert,
-        )
-        self.runtime.start()
+        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
+            return
+        if not self.account_manager:
+            self.account_manager = AccountManager(
+                self.config,
+                self.credentials,
+                self.logger,
+                self._notify_sync_failure,
+                self._notify_safety_alert,
+            )
+        self.account_manager.start()
+        self._select_active_account()
+
+    def _select_active_account(self) -> None:
+        if not self.account_manager:
+            return
+        accounts = self.config.accounts
+        if not accounts:
+            self.active_account_id = None
+            self.runtime = None
+            return
+        active = self.active_account_id
+        if active not in self.account_manager.runtimes:
+            for account in accounts:
+                if account["id"] in self.account_manager.runtimes:
+                    active = account["id"]
+                    break
+            else:
+                active = None
+        self.active_account_id = active
+        self.config.set_active_view(active)
+        runtime = self.account_manager.get(active) if active else None
+        self.runtime = runtime.runtime if runtime else None
+
+    def set_active_account(self, account_id: str | None) -> None:
+        if account_id == self.active_account_id:
+            return
+        self.active_account_id = account_id
+        self.config.set_active_view(account_id)
+        if self.settings_window:
+            self.settings_window.close()
+            self.settings_window = None
+        if not self.account_manager:
+            return
+        runtime = self.account_manager.get(account_id) if account_id else None
+        self.runtime = runtime.runtime if runtime else None
+        self._ensure_desktop_integration()
+
+    def _active_account(self) -> dict | None:
+        if not self.active_account_id:
+            return None
+        for account in self.config.accounts:
+            if account["id"] == self.active_account_id:
+                return account
+        return None
 
     def _ensure_desktop_integration(self) -> None:
-        account = self.config.data.get("account")
+        account = self._active_account()
         if not account:
             return
         root = Path(account["local_root"])
@@ -388,10 +436,10 @@ class PyNextCloudApplication(Adw.Application):
             self.desktop_integration = DesktopIntegration(root)
 
     def _ensure_tray(self) -> None:
-        if self.tray or not self.runtime:
+        if self.tray or not self.account_manager or not self.runtime:
             return
         self.tray = StatusNotifier(
-            self.runtime.state,
+            self.account_manager.aggregate_state,
             self.present_main,
             self._tray_sync,
             lambda: self.runtime.set_paused(not self.runtime.scheduler.user_paused),
@@ -400,8 +448,27 @@ class PyNextCloudApplication(Adw.Application):
             self.show_settings,
             self.request_quit,
             self.logger,
+            account_provider=lambda: [
+                (runtime.account_id, runtime.display_name)
+                for runtime in self.account_manager.runtimes.values()
+            ],
+            on_account_action=self._tray_account_action,
         )
         self.tray.start()
+
+    def _tray_account_action(self, account_id: str, action: str) -> None:
+        if not self.account_manager:
+            return
+        runtime = self.account_manager.get(account_id)
+        if not runtime:
+            return
+        if action == "sync":
+            runtime.runtime.sync_now()
+        elif action == "open":
+            self.set_active_account(account_id)
+            self.open_folder()
+        elif action == "pause":
+            runtime.runtime.set_paused(not runtime.runtime.scheduler.user_paused)
 
     def _tray_sync(self) -> None:
         if self.runtime and self.runtime.scheduler.safety_alert:
@@ -414,7 +481,23 @@ class PyNextCloudApplication(Adw.Application):
     def _ensure_main_window(self) -> None:
         if self.main_window or not self.runtime:
             return
-        self.main_window = MainWindow(self, self.config, self.runtime, self.logger)
+        self.main_window = MainWindow(
+            self,
+            self.config,
+            self.account_manager,
+            self.logger,
+            on_add_account=self._add_account_flow,
+            on_open_settings=self.show_settings,
+        )
+
+    def _add_account_flow(self) -> None:
+        if self.setup_window:
+            self.setup_window.present()
+            return
+        self.setup_window = SetupWindow(
+            self, self.config, self.credentials, self._setup_complete
+        )
+        self.setup_window.present()
 
     def present_main(self) -> None:
         if self._mandatory_update_manifest:
@@ -423,15 +506,28 @@ class PyNextCloudApplication(Adw.Application):
         if not self.config.configured:
             self.activate()
             return
-        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
+        active_account = self._active_account()
+        if active_account and not active_account.get("safety", {}).get(
+            "bootstrap_complete", False
+        ):
             self._ensure_bootstrap()
             return
+        if not active_account:
+            if not self.config.accounts:
+                self.activate()
+                return
+            active_account = self.config.accounts[0]
+            self.active_account_id = active_account["id"]
+            if not active_account.get("safety", {}).get("bootstrap_complete", False):
+                self._ensure_bootstrap()
+                return
         self._ensure_runtime()
         self._ensure_tray()
         self._ensure_main_window()
         if self.main_window:
             self.main_window.unminimize()
             self.main_window.present()
+            self.main_window.present_account(self.active_account_id)
             if self.update_window:
                 self._queue_update_window_for_mapped_parent(
                     self.update_window.manifest,
@@ -439,7 +535,7 @@ class PyNextCloudApplication(Adw.Application):
                 )
 
     def open_folder(self) -> None:
-        account = self.config.data.get("account")
+        account = self._active_account()
         if not account:
             return
         root = Path(account["local_root"])
@@ -498,38 +594,44 @@ class PyNextCloudApplication(Adw.Application):
         if self.main_window is window:
             self.main_window = None
 
-    def _notify_sync_failure(self, result: object) -> None:
+    def _notify_sync_failure(self, account_name: str, result: object) -> None:
         if getattr(result, "classification", "") == "authentication":
             notification = Gio.Notification.new(_("Nextcloud account needs attention"))
-            notification.set_body(_("Open PyNextCloud Sync to check the account credential."))
+            notification.set_body(
+                _("{account}: open PyNextCloud Sync to check the account credential.").format(
+                    account=account_name
+                )
+            )
             notification.set_default_action("app.show")
-            self.send_notification("auth-failure", notification)
+            self.send_notification(f"auth-failure-{account_name}", notification)
         else:
             notification = Gio.Notification.new(_("Synchronization failed"))
             retries = self.config.data["sync"]["max_sync_retries"]
             notification.set_body(
-                _("Synchronization failed after {retries} retries. Open the log for details.").format(
-                    retries=retries
+                _("{account}: synchronization failed after {retries} retries. Open the log for details.").format(
+                    account=account_name, retries=retries
                 )
             )
             notification.set_default_action("app.log")
-            self.send_notification("sync-failure", notification)
+            self.send_notification(f"sync-failure-{account_name}", notification)
 
-    def _notify_safety_alert(self, alert: object) -> None:
+    def _notify_safety_alert(self, account_name: str, alert: object) -> None:
         notification = Gio.Notification.new(_("Safety review required"))
         count = int(getattr(alert, "missing_count", 0))
         if count:
             notification.set_body(
-                _("{count} local files disappeared. Synchronization was blocked before Nextcloud could be changed.").format(
-                    count=count
+                _("{account}: {count} local files disappeared. Synchronization was blocked before Nextcloud could be changed.").format(
+                    account=account_name, count=count
                 )
             )
         else:
             notification.set_body(
-                _("The local synchronization folder changed unexpectedly. Synchronization was blocked.")
+                _("{account}: the local synchronization folder changed unexpectedly. Synchronization was blocked.").format(
+                    account=account_name
+                )
             )
         notification.set_default_action("app.show")
-        self.send_notification("safety-review", notification)
+        self.send_notification(f"safety-review-{account_name}", notification)
 
     def review_safety_alert(self, parent: Gtk.Window | None = None) -> None:
         if not self.runtime or not self.runtime.scheduler.safety_alert:
@@ -577,8 +679,15 @@ class PyNextCloudApplication(Adw.Application):
         self.config.save()
         self._ensure_bootstrap(recovery=True, initialize_integrations=False)
 
+    def _any_engine_running(self) -> bool:
+        if self.account_manager:
+            for runtime in self.account_manager.runtimes.values():
+                if runtime.runtime.engine.running:
+                    return True
+        return bool(self.runtime and self.runtime.engine.running)
+
     def request_quit(self) -> None:
-        if self.runtime and self.runtime.engine.running:
+        if self._any_engine_running():
             notification = Gio.Notification.new(_("Finishing synchronization"))
             notification.set_body(
                 _("PyNextCloud Sync will quit when the current synchronization finishes.")
@@ -589,35 +698,40 @@ class PyNextCloudApplication(Adw.Application):
         self.quit()
 
     def remove_account(self) -> None:
-        account = self.config.data.get("account")
+        account = self._active_account()
         if not account:
             return
+        account_id = account["id"]
 
         def finalize() -> None:
             if self.settings_window:
                 old_settings = self.settings_window
                 self.settings_window = None
                 old_settings.close()
-            if self.tray:
-                self.tray.stop()
-                self.tray = None
-            if self.runtime:
-                self.runtime.stop()
-                self.runtime = None
             if self.desktop_integration:
                 self.desktop_integration.cleanup()
                 self.desktop_integration.close()
                 self.desktop_integration = None
+            if self.account_manager:
+                self.account_manager.remove(account_id)
+            if self.tray:
+                self.tray.stop()
+                self.tray = None
             if self.main_window:
                 old_window = self.main_window
                 old_window.dispose_for_account_reset()
                 self.remove_window(old_window)
                 self.main_window = None
-            self.config.reset_account()
-            self.setup_window = SetupWindow(
-                self, self.config, self.credentials, self._setup_complete
-            )
-            self.setup_window.present()
+            self.config.remove_account(account_id)
+            self.active_account_id = None
+            self.runtime = None
+            if self.config.configured:
+                self.activate()
+            else:
+                self.setup_window = SetupWindow(
+                    self, self.config, self.credentials, self._setup_complete
+                )
+                self.setup_window.present()
 
         def cleared(_ok: bool, _error: Exception | None) -> None:
             finalize()
@@ -640,7 +754,7 @@ class PyNextCloudApplication(Adw.Application):
         )
 
     def _quit_when_ready(self) -> bool:
-        if self.runtime and self.runtime.engine.running:
+        if self._any_engine_running():
             return GLib.SOURCE_CONTINUE
         self.quit()
         return GLib.SOURCE_REMOVE
@@ -654,8 +768,8 @@ class PyNextCloudApplication(Adw.Application):
             self.settings_window.close()
         if self.tray:
             self.tray.stop()
-        if self.runtime:
-            self.runtime.stop()
+        if self.account_manager:
+            self.account_manager.stop()
         if self.desktop_integration:
             self.desktop_integration.close()
         self.logger.close()

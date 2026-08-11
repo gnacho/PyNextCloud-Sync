@@ -9,6 +9,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from pynextcloud_sync import APP_ID
+from pynextcloud_sync.core.account_manager import AccountManager
 from pynextcloud_sync.core.desktop_integration import DesktopIntegration
 from pynextcloud_sync.core.runtime import RuntimeController
 from pynextcloud_sync.core.updates import (
@@ -45,6 +46,8 @@ class PyNextCloudApplication(Adw.Application):
         self.logger = AppLogger()
         self.credentials = CredentialStore(logger=self.logger)
         self.update_checker = UpdateChecker()
+        self.account_manager: AccountManager | None = None
+        self.active_account_id: str | None = None
         self.runtime: RuntimeController | None = None
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None
@@ -360,18 +363,34 @@ class PyNextCloudApplication(Adw.Application):
         self._bootstrap_initialize_integrations = False
 
     def _ensure_runtime(self) -> None:
-        if self._mandatory_update_manifest or self.runtime or not self.config.data.get("safety", {}).get(
+        if self._mandatory_update_manifest or self.account_manager or not self.config.data.get("safety", {}).get(
             "bootstrap_complete", False
         ):
             return
-        self.runtime = RuntimeController(
+        self.account_manager = AccountManager(
             self.config,
             self.credentials,
             self.logger,
             self._notify_sync_failure,
             self._notify_safety_alert,
         )
-        self.runtime.start()
+        self.account_manager.start()
+        self._select_active_account()
+
+    def _select_active_account(self) -> None:
+        if not self.account_manager:
+            return
+        accounts = self.config.accounts
+        if not accounts:
+            self.active_account_id = None
+            self.runtime = None
+            return
+        active = self.active_account_id
+        if active not in self.account_manager.runtimes:
+            active = accounts[0]["id"]
+        self.active_account_id = active
+        runtime = self.account_manager.get(active)
+        self.runtime = runtime.runtime if runtime else None
 
     def _ensure_desktop_integration(self) -> None:
         account = self.config.data.get("account")

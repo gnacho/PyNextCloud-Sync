@@ -31,6 +31,16 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 2.0.0"),
+            [
+                _("Added support for multiple Nextcloud accounts, each with its own synchronization, safety, and runtime settings."),
+                _("Existing single-account configurations are migrated automatically on first launch."),
+                _("The main window now has an accounts sidebar and a per-account status and activity panel."),
+                _("The tray shows an aggregated state and per-account actions for syncing, opening, and pausing."),
+                _("Synchronizations are serialized across accounts so concurrent reconciliations do not saturate the network."),
+            ],
+        ),
+        (
             _("Version 0.1.19"),
             [
                 _("Relicensed PyNextCloud Sync under the GNU General Public License version 3 or later."),

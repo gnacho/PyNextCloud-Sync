@@ -4,6 +4,7 @@ import datetime as dt
 from collections import deque
 from pathlib import Path
 from threading import Lock
+from typing import Callable
 
 import gi
 
@@ -12,6 +13,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 
 from pynextcloud_sync import APP_NAME
+from pynextcloud_sync.core.account import AccountSession
 from pynextcloud_sync.core.state import AppState, StateSnapshot
 from pynextcloud_sync.util.i18n import _
 
@@ -45,11 +47,21 @@ def _compact_action_row(**properties: object) -> Adw.ActionRow:
     return row
 
 
-class MainWindow(Adw.ApplicationWindow):
-    def __init__(self, application: Gtk.Application, config: object, runtime: object, logger: object) -> None:
-        super().__init__(application=application, title=APP_NAME)
-        self.set_default_size(720, 560)
+class AccountView(Gtk.Box):
+    """The synchronization panel for one account."""
+
+    def __init__(
+        self,
+        application: Gtk.Application,
+        config: object,
+        session: AccountSession,
+        runtime: object,
+        logger: object,
+    ) -> None:
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.application = application
         self.config = config
+        self.session = session
         self.runtime = runtime
         self.logger = logger
         self.log_window: LogWindow | None = None
@@ -63,34 +75,10 @@ class MainWindow(Adw.ApplicationWindow):
         self._activity_idle_source = 0
         self._disposed = False
 
-        toolbar = Adw.ToolbarView()
-        header = Adw.HeaderBar()
-        header.set_title_widget(Adw.WindowTitle(title=APP_NAME, subtitle=_("Nextcloud file synchronization")))
-        settings = Gtk.Button(
-            icon_name="emblem-system-symbolic", tooltip_text=_("Settings"), css_classes=["flat"]
-        )
-        settings.connect("clicked", self.show_settings)
-        header.pack_end(settings)
-        about = Gtk.Button(
-            icon_name="help-about-symbolic", tooltip_text=_("About"), css_classes=["flat"]
-        )
-        about.connect("clicked", self._show_about)
-        header.pack_end(about)
-        toolbar.add_top_bar(header)
-
-        self.toast_overlay = Adw.ToastOverlay()
-        scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
-        clamp = Adw.Clamp(maximum_size=660, tightening_threshold=500)
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        content.set_margin_top(16)
-        content.set_margin_bottom(16)
-        content.set_margin_start(18)
-        content.set_margin_end(18)
-        clamp.set_child(content)
-        scroller.set_child(clamp)
-        self.toast_overlay.set_child(scroller)
-        toolbar.set_content(self.toast_overlay)
-        self.set_content(toolbar)
+        self.set_margin_top(16)
+        self.set_margin_bottom(16)
+        self.set_margin_start(18)
+        self.set_margin_end(18)
 
         status_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         status_row = Gtk.ListBoxRow(activatable=False, selectable=False)
@@ -114,9 +102,9 @@ class MainWindow(Adw.ApplicationWindow):
         status_box.append(status_text)
         status_row.set_child(status_box)
         status_list.append(status_row)
-        content.append(status_list)
+        self.append(status_list)
 
-        account = self.config.data["account"]
+        account = self.session.account_dict
         account_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         account_list.append(
             _compact_action_row(
@@ -127,7 +115,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
         folder_row = _compact_action_row(
             title=_("Local Folder"),
-            subtitle=account["local_root"],
+            subtitle=self.session.local_root,
             icon_name="folder-symbolic",
             activatable=True,
         )
@@ -140,7 +128,7 @@ class MainWindow(Adw.ApplicationWindow):
             icon_name="document-open-recent-symbolic",
         )
         account_list.append(self.last_row)
-        content.append(account_list)
+        self.append(account_list)
 
         self.buttons = Gtk.Box(spacing=12, homogeneous=True)
         self.sync_content = Adw.ButtonContent(
@@ -155,7 +143,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.pause_button = Gtk.Button(child=self.pause_content, css_classes=["pill"])
         self.pause_button.connect("clicked", self._pause_clicked)
         self.buttons.append(self.pause_button)
-        content.append(self.buttons)
+        self.append(self.buttons)
 
         self.activity_expander = Adw.ExpanderRow(
             title=_("Recent Activity"),
@@ -169,7 +157,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.activity_expander.set_subtitle_lines(1)
         activity_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         activity_list.append(self.activity_expander)
-        content.append(activity_list)
+        self.append(activity_list)
 
         self.view_log_row = _compact_action_row(
             title=_("View Synchronization Log"),
@@ -184,13 +172,12 @@ class MainWindow(Adw.ApplicationWindow):
             condition = Adw.BreakpointCondition.parse("max-width: 520px")
             breakpoint = Adw.Breakpoint.new(condition)
             breakpoint.add_setter(self.buttons, "orientation", Gtk.Orientation.VERTICAL)
-            breakpoint.add_setter(content, "margin-start", 9)
-            breakpoint.add_setter(content, "margin-end", 9)
+            breakpoint.add_setter(self, "margin-start", 9)
+            breakpoint.add_setter(self, "margin-end", 9)
             self.add_breakpoint(breakpoint)
 
         self._state_unsubscribe = self.runtime.state.subscribe(self._state_changed)
         self._log_unsubscribe = self.logger.subscribe(self._log_line)
-        self.connect("close-request", self._hide_on_close)
 
     def _state_changed(self, snapshot: StateSnapshot) -> None:
         icon, title = STATE_PRESENTATION[snapshot.state]
@@ -220,7 +207,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.last_row.set_subtitle(self._format_last_sync())
 
     def _format_last_sync(self) -> str:
-        value = self.config.data["runtime"].get("last_successful_sync")
+        value = self.session.runtime.get("last_successful_sync")
         if not value:
             return _("Not yet synchronized")
         try:
@@ -369,7 +356,12 @@ class MainWindow(Adw.ApplicationWindow):
     ) -> None:
         self.get_clipboard().set(message)
         popover.popdown()
-        self.toast_overlay.add_toast(Adw.Toast(title=_("Message copied")))
+        self._show_toast(_("Message copied"))
+
+    def _show_toast(self, title: str) -> None:
+        overlay = self.get_ancestor(Adw.ToastOverlay)
+        if overlay:
+            overlay.add_toast(Adw.Toast(title=title))
 
     @staticmethod
     def _activity_menu_closed(
@@ -411,8 +403,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _sync_clicked(self, _button: Gtk.Button) -> None:
         if self.runtime.scheduler.safety_alert:
-            application = self.get_application()
-            if application:
+            application = self.application
+            if application and hasattr(application, "review_safety_alert"):
                 application.review_safety_alert(self)
             return
         if self.runtime.scheduler.battery_paused:
@@ -435,7 +427,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.runtime.set_paused(not self.runtime.scheduler.user_paused)
 
     def open_folder(self) -> None:
-        root = Path(self.config.data["account"]["local_root"])
+        root = Path(self.session.local_root)
         root.mkdir(parents=True, exist_ok=True)
         Gio.AppInfo.launch_default_for_uri(root.as_uri(), None)
 
@@ -447,18 +439,210 @@ class MainWindow(Adw.ApplicationWindow):
             self.log_window.connect("close-request", self._log_closed)
         self.log_window.present()
 
+    def _log_closed(self, _window: Gtk.Window) -> bool:
+        self.log_window = None
+        return False
+
+    def dispose(self) -> None:
+        if self._disposed:
+            return
+        self._disposed = True
+        self._state_unsubscribe()
+        self._log_unsubscribe()
+        if self._activity_idle_source:
+            GLib.source_remove(self._activity_idle_source)
+            self._activity_idle_source = 0
+        with self._activity_lock:
+            self._pending_activity_lines.clear()
+        if self.log_window:
+            self.log_window.close()
+            self.log_window = None
+
+
+class MainWindow(Adw.ApplicationWindow):
+    def __init__(
+        self,
+        application: Gtk.Application,
+        config: object,
+        account_manager: object,
+        logger: object,
+        *,
+        on_add_account: Callable[[], None] | None = None,
+        on_open_settings: Callable[[], None] | None = None,
+    ) -> None:
+        super().__init__(application=application, title=APP_NAME)
+        self.set_default_size(900, 600)
+        self.config = config
+        self.account_manager = account_manager
+        self.logger = logger
+        self._on_add_account = on_add_account
+        self._on_open_settings = on_open_settings
+        self.account_view: AccountView | None = None
+        self.account_rows: dict[str, Gtk.ListBoxRow] = {}
+        self._disposed = False
+        self._selecting = False
+
+        toolbar = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        header.set_title_widget(Adw.WindowTitle(title=APP_NAME, subtitle=_("Nextcloud file synchronization")))
+        settings = Gtk.Button(
+            icon_name="emblem-system-symbolic", tooltip_text=_("Settings"), css_classes=["flat"]
+        )
+        settings.connect("clicked", self.show_settings)
+        header.pack_end(settings)
+        about = Gtk.Button(
+            icon_name="help-about-symbolic", tooltip_text=_("About"), css_classes=["flat"]
+        )
+        about.connect("clicked", self._show_about)
+        header.pack_end(about)
+        toolbar.add_top_bar(header)
+
+        self.toast_overlay = Adw.ToastOverlay()
+
+        split = Adw.NavigationSplitView()
+        split.set_collapsed(False)
+        split.set_sidebar_width_fraction(0.28)
+        split.set_min_sidebar_width(220)
+
+        sidebar = self._build_sidebar()
+        self.content_stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+        clamp = Adw.Clamp(maximum_size=660, tightening_threshold=500)
+        clamp.set_child(self.content_stack)
+        scroller.set_child(clamp)
+        self.toast_overlay.set_child(scroller)
+        split.set_content(sidebar=sidebar, content=self.toast_overlay)
+
+        toolbar.set_content(split)
+        self.set_content(toolbar)
+        self.connect("close-request", self._hide_on_close)
+
+    def _build_sidebar(self) -> Gtk.Widget:
+        sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        sidebar.set_margin_top(12)
+        sidebar.set_margin_bottom(12)
+        sidebar.set_margin_start(6)
+        sidebar.set_margin_end(6)
+
+        label = Gtk.Label(label=_("Accounts"), xalign=0, css_classes=["heading"])
+        label.set_margin_start(8)
+        label.set_margin_bottom(4)
+        sidebar.append(label)
+
+        self.accounts_list = Gtk.ListBox(
+            css_classes=["boxed-list", "navigation-sidebar"], selection_mode=Gtk.SelectionMode.SINGLE
+        )
+        self.accounts_list.connect("row-selected", self._account_selected)
+        sidebar.append(self.accounts_list)
+
+        add_button = Gtk.Button(
+            label=_("Add Account"), icon_name="list-add-symbolic",
+            halign=Gtk.Align.FILL, css_classes=["flat"],
+        )
+        add_button.connect("clicked", lambda _button: self._add_account())
+        sidebar.append(add_button)
+        return sidebar
+
+    def _refresh_sidebar(self) -> None:
+        while row := self.accounts_list.get_first_child():
+            self.accounts_list.remove(row)
+        self.account_rows.clear()
+        for account in self.config.accounts:
+            row = Gtk.ListBoxRow(activatable=True, selectable=True)
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            box.set_margin_top(8)
+            box.set_margin_bottom(8)
+            box.set_margin_start(8)
+            box.set_margin_end(8)
+            avatar = Gtk.Image(icon_name="avatar-default-symbolic", pixel_size=28)
+            box.append(avatar)
+            text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+            name = Gtk.Label(label=account["login_name"], xalign=0, ellipsize=Pango.EllipsizeMode.END)
+            server = Gtk.Label(
+                label=account["server_url"], xalign=0, ellipsize=Pango.EllipsizeMode.END,
+                css_classes=["dim-label"],
+            )
+            text.append(name)
+            text.append(server)
+            box.append(text)
+            row.set_child(box)
+            row.data = account
+            self.accounts_list.append(row)
+            self.account_rows[account["id"]] = row
+
+    def _account_selected(self, listbox: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
+        if self._selecting or row is None:
+            return
+        account = getattr(row, "data", None)
+        if not account:
+            return
+        application = self.get_application()
+        if application and hasattr(application, "set_active_account"):
+            application.set_active_account(account["id"])
+        self._show_account(account["id"])
+
+    def _show_account(self, account_id: str | None) -> None:
+        if self.account_view:
+            self.account_view.dispose()
+            self.account_view = None
+        if not account_id or not self.account_manager:
+            self.content_stack.set_visible_child_name("empty")
+            return
+        runtime = self.account_manager.get(account_id)
+        if not runtime:
+            self.content_stack.set_visible_child_name("empty")
+            return
+        session = runtime.session
+        view = AccountView(
+            self.get_application(),
+            self.config,
+            session,
+            runtime.runtime,
+            self.logger,
+        )
+        self.account_view = view
+        self.content_stack.add_named(view, "account")
+        self.content_stack.set_visible_child_name("account")
+
+    def _add_account(self) -> None:
+        if self._on_add_account:
+            self._on_add_account()
+
+    def present_account(self, account_id: str | None) -> None:
+        self._refresh_sidebar()
+        if not account_id and self.config.accounts:
+            account_id = self.config.accounts[0]["id"]
+        self._selecting = True
+        try:
+            for row_id, row in self.account_rows.items():
+                if row_id == account_id:
+                    self.accounts_list.select_row(row)
+                    break
+            else:
+                self.accounts_list.select_row(None)
+        finally:
+            self._selecting = False
+        self._show_account(account_id)
+
+    def show_log(self, _button: Gtk.Button | None = None) -> None:
+        if self._disposed:
+            return
+        if self.account_view:
+            self.account_view.show_log()
+
     def show_settings(self, _button: Gtk.Button | None = None) -> None:
         if self._disposed:
             return
-        application = self.get_application()
-        if application:
-            application.show_settings()
+        if self._on_open_settings:
+            self._on_open_settings()
+        else:
+            application = self.get_application()
+            if application and hasattr(application, "show_settings"):
+                application.show_settings()
 
-    def _log_closed(self, _window: Gtk.Window) -> bool:
-        self.log_window = None
-        if not self.get_visible() and not self._disposed:
-            GLib.idle_add(self.close)
-        return False
+    def open_folder(self) -> None:
+        if self.account_view:
+            self.account_view.open_folder()
 
     def _show_about(self, _button: Gtk.Button) -> None:
         application = self.get_application()
@@ -480,16 +664,9 @@ class MainWindow(Adw.ApplicationWindow):
         if self._disposed:
             return
         self._disposed = True
-        self._state_unsubscribe()
-        self._log_unsubscribe()
-        if self._activity_idle_source:
-            GLib.source_remove(self._activity_idle_source)
-            self._activity_idle_source = 0
-        with self._activity_lock:
-            self._pending_activity_lines.clear()
-        if self.log_window:
-            self.log_window.close()
-            self.log_window = None
+        if self.account_view:
+            self.account_view.dispose()
+            self.account_view = None
 
     def dispose_for_account_reset(self) -> None:
         self._dispose_ui()

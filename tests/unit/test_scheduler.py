@@ -208,6 +208,50 @@ class SchedulerTests(unittest.TestCase):
         self.assertFalse(scheduler.keyring_locked)
         self.assertEqual(len(engine.runs), 1)
 
+    def test_shared_permit_queues_a_second_account_until_release(self) -> None:
+        module = load_scheduler_module()
+        from pynextcloud_sync.core.sync_permit import SyncPermit
+
+        permit = SyncPermit()
+        first_engine = FakeEngine()
+        second_engine = FakeEngine()
+        first_credentials = FakeCredentials()
+        second_credentials = FakeCredentials()
+        first = module.SyncScheduler(
+            self._config(),
+            first_credentials,
+            first_engine,
+            StateController(AppState.IDLE_OK),
+            FakeLogger(),
+            sync_permit=permit,
+        )
+        second = module.SyncScheduler(
+            self._config(),
+            second_credentials,
+            second_engine,
+            StateController(AppState.IDLE_OK),
+            FakeLogger(),
+            sync_permit=permit,
+        )
+
+        first.request(Trigger.MANUAL)
+        FakeGLib.run_source(first._start_source)
+        first_credentials.callbacks[0]("secret", None)
+        first_engine.running = True
+        self.assertEqual(len(first_engine.runs), 1)
+
+        second.request(Trigger.MANUAL)
+        FakeGLib.run_source(second._start_source)
+        second_credentials.callbacks[0]("secret", None)
+        self.assertEqual(len(second_engine.runs), 0)
+        self.assertTrue(second.queue)
+
+        permit.release()
+        self.assertEqual(len(FakeGLib.callbacks), 1)
+        FakeGLib.run_source(second._start_source)
+        second_credentials.callbacks[1]("secret", None)
+        self.assertEqual(len(second_engine.runs), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

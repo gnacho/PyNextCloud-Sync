@@ -26,6 +26,7 @@ from pynextcloud_sync.nextcloud.command import (
     NextcloudCmdMissingError,
     build_command,
 )
+from pynextcloud_sync.storage.config import account_fingerprint
 from pynextcloud_sync.util.paths import config_dir, ensure_private_directory, state_dir
 from pynextcloud_sync.util.i18n import _
 
@@ -360,7 +361,9 @@ class BootstrapRunner:
                 raise BootstrapError(
                     _("The final verification found differences; automatic synchronization remains blocked.")
                 )
-            SafetyManifest().save(self.config.data["account"], final_snapshot)
+            SafetyManifest.for_account(self.config.data["account"]).save(
+                self.config.data["account"], final_snapshot
+            )
             self._cleanup_staging(analysis.staging_root)
             callback(BootstrapResult(len(final_snapshot.files), archive), None)
         except Exception as exc:
@@ -371,7 +374,10 @@ class BootstrapRunner:
         account = dict(self.config.data["account"])
         account["local_root"] = str(root)
         matcher = self._matcher()
-        exclude_path = matcher.write_nextcloudcmd_file(config_dir() / "excludes.lst")
+        fingerprint = account_fingerprint(self.config.data["account"])
+        exclude_path = matcher.write_nextcloudcmd_file(
+            config_dir() / f"excludes-{fingerprint}.lst"
+        )
         try:
             spec = build_command(
                 account,

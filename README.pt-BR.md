@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Relatar um problema</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/versão-0.1.19-6557e8?style=flat-square" alt="Versão 0.1.19">
+    <img src="https://img.shields.io/badge/versão-2.0.0-6557e8?style=flat-square" alt="Versão 2.0.0">
     <img src="https://img.shields.io/badge/plataforma-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -27,13 +27,14 @@
 
 ## Um aplicativo pequeno com uma função muito clara
 
-O PyNextCloud Sync mantém **uma conta Nextcloud** espelhada em **uma pasta local**. Ele evita intencionalmente sincronização seletiva, arquivos virtuais, várias árvores de contas, painéis de métricas e recursos sem relação direta com a sincronização.
+O PyNextCloud Sync espelha **uma ou mais contas Nextcloud**, cada uma em **sua própria pasta local**. Ele evita intencionalmente sincronização seletiva, arquivos virtuais, painéis de métricas e recursos sem relação direta com a sincronização.
 
 A reconciliação bidirecional é realizada pelo motor oficial [`nextcloudcmd`](https://github.com/nextcloud/desktop). O PyNextCloud Sync acrescenta a experiência de desktop: login seguro, gatilhos automáticos, janela compacta de estado, integração com o GNOME, logs e menu na bandeja.
 
 ### Destaques
 
 - **Espelho físico completo:** todos os arquivos elegíveis da conta permanecem disponíveis localmente.
+- **Várias contas:** cada conta mantém suas próprias configurações de sincronização, segurança e runtime, com uma barra lateral dedicada e ações por conta na bandeja.
 - **Motor oficial de sincronização:** sem algoritmo WebDAV próprio para reconciliar arquivos.
 - **Interface nativa do GNOME:** GTK 4 e Libadwaita, com layout compacto e familiar.
 - **Login seguro:** Nextcloud Login Flow v2 ou credenciais manuais armazenadas pelo Secret Service / GNOME Keyring.
@@ -115,7 +116,7 @@ Baixe o `.deb` na [versão mais recente](https://github.com/ehstbr/PyNextCloud-S
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.19_all.deb
+sudo apt install ./pynextcloud-sync_2.0.0_all.deb
 ```
 
 Durante uma atualização interativa iniciada com `sudo apt install`, o pacote solicita que uma instância aberta do PyNextCloud Sync seja encerrada normalmente, aguarda a sincronização atual terminar e reinicia o aplicativo atualizado na mesma sessão gráfica. O processo de sincronização nunca é encerrado à força. Atualizações automáticas ou instalações sem uma sessão gráfica identificável deixam o controle do processo para o usuário ou administrador do sistema.
@@ -138,8 +139,8 @@ sudo apt install \
 Depois, extraia e execute:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.19.zip
-cd PyNextCloud-Sync-0.1.19
+unzip PyNextCloud-Sync-2.0.0.zip
+cd PyNextCloud-Sync-2.0.0
 ./run.sh
 ```
 
@@ -203,12 +204,15 @@ atualização**. O changelog detalhado permanece recolhido até ser solicitado.
 
 | Área | O que controla |
 | --- | --- |
+| Contas | Uma entrada por conta Nextcloud: servidor, login, pasta local e suas próprias configurações de sincronização, segurança e runtime |
 | Geral | Inicialização automática, bateria, pasta local, favorito no Arquivos, atalho na Área de Trabalho e ícone especial |
 | Sincronização | `inotify`, intervalo local, `notify_push`, intervalo remoto de segurança e exclusões de arquivos descartáveis |
 | Rede | Remoção da conta, proxy HTTP opcional e permissão explícita para certificados inválidos ou autoassinados |
 | Avançado | Logs diários, retenção, saída detalhada, limites da trava de exclusões e diagnóstico do runtime |
 
-Os quatro gatilhos automáticos podem ser combinados ou desativados. Com monitoramento local, intervalo local, push e intervalo remoto desligados, o aplicativo funciona somente por sincronização manual.
+Cada conta pode ser pausada, sincronizada ou removida de forma independente. A bandeja mostra o estado que exige atenção e oferece ações por conta.
+
+Os quatro gatilhos automáticos podem ser combinados ou desativados por conta. Com monitoramento local, intervalo local, push e intervalo remoto desligados, o aplicativo funciona somente por sincronização manual.
 
 ## Compatibilidade
 
@@ -225,11 +229,14 @@ Padrões contendo `/`, `\` ou `..` são rejeitados. A versão 1 não permite exc
 ## Arquivos, credenciais e privacidade
 
 - Configuração: `$XDG_CONFIG_HOME/pynextcloud-sync/settings.json`
-- Exclusões geradas: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes.lst`
+- Exclusões geradas: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes-<conta>.lst` (uma por conta)
 - Logs diários: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
-- Manifesto de segurança: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest.json`
+- Manifesto de segurança: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest-<conta>.json` (uma por conta)
+- Marcadores de execução: `$XDG_STATE_HOME/pynextcloud-sync/sync-run-<conta>.json` (uma por conta)
 - Bancos antigos arquivados: `$XDG_STATE_HOME/pynextcloud-sync/safety-archives/`
 - Segredo da conta: GNOME Keyring ou outro provedor compatível com Secret Service
+
+O sufixo `<conta>` é um hash curto da URL do servidor, do nome de usuário e da pasta local, então duas contas nunca compartilham a mesma linha de base de segurança ou arquivo de exclusões.
 
 Os logs permanecem no computador, usam um arquivo por dia e são mantidos por 30 dias por padrão. Valores sensíveis são ocultados das mensagens de log geradas pelo aplicativo. Se o login biométrico deixar a carteira `Login` bloqueada, o GNOME exibe sua solicitação nativa de desbloqueio antes da sincronização. A senha do computador é tratada somente pelo GNOME; o PyNextCloud Sync não a recebe nem armazena. Cancelar a solicitação deixa o aplicativo aguardando o comando explícito **Desbloquear carteira de senhas**, sem repetir diálogos ou acusar credenciais inválidas do Nextcloud.
 
@@ -254,7 +261,7 @@ Contribuições são bem-vindas quando preservam o escopo enxuto, baixo consumo 
 
 ## Estado do projeto
 
-A versão `0.1.19` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
+A versão `2.0.0` é uma versão de desenvolvimento destinada à avaliação. Teste primeiro com dados não críticos e mantenha sempre backups independentes dos arquivos importantes.
 
 ---
 

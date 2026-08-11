@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.0 — 2026-08-11
+
+- Add support for multiple Nextcloud accounts, each with its own
+  synchronization, safety, and runtime settings.
+- Migrate existing single-account configurations to the multi-account schema
+  automatically on first launch.
+- Add an accounts sidebar and a per-account status, activity, and
+  synchronization panel to the main window.
+- Serialize reconciliations across accounts through a global gate so concurrent
+  `nextcloudcmd` runs do not saturate the network.
+- Name synchronization failure and safety notifications per account.
+- Extend the tray with a per-account submenu for Sync Now, Open Folder, and
+  Pause actions.
+- Extract the local-change debounce and post-sync cooldown into a small,
+  independently tested component.
+
 ## 0.1.19 — 2026-08-11
 
 - Relicensed PyNextCloud Sync under the GNU General Public License version 3

@@ -1,6 +1,6 @@
 project(
   'pynextcloud-sync',
-  version: '0.1.19',
+  version: '2.0.0',
   meson_version: '>= 1.0.0',
 )
 
@@ -13,7 +13,10 @@ python_sources = files(
   'src/pynextcloud_sync/__main__.py',
   'src/pynextcloud_sync/application.py',
   'src/pynextcloud_sync/core/__init__.py',
+  'src/pynextcloud_sync/core/account.py',
+  'src/pynextcloud_sync/core/account_manager.py',
   'src/pynextcloud_sync/core/autostart.py',
+  'src/pynextcloud_sync/core/debounce.py',
   'src/pynextcloud_sync/core/bootstrap.py',
   'src/pynextcloud_sync/core/desktop_integration.py',
   'src/pynextcloud_sync/core/exclusions.py',
@@ -25,6 +28,7 @@ python_sources = files(
   'src/pynextcloud_sync/core/safety.py',
   'src/pynextcloud_sync/core/state.py',
   'src/pynextcloud_sync/core/suspend.py',
+  'src/pynextcloud_sync/core/sync_permit.py',
   'src/pynextcloud_sync/core/sync_engine.py',
   'src/pynextcloud_sync/core/sync_run_marker.py',
   'src/pynextcloud_sync/core/timers.py',
@@ -72,7 +76,10 @@ python.install_sources(
 python.install_sources(
   files(
     'src/pynextcloud_sync/core/__init__.py',
+    'src/pynextcloud_sync/core/account.py',
+    'src/pynextcloud_sync/core/account_manager.py',
     'src/pynextcloud_sync/core/autostart.py',
+    'src/pynextcloud_sync/core/debounce.py',
     'src/pynextcloud_sync/core/bootstrap.py',
     'src/pynextcloud_sync/core/desktop_integration.py',
     'src/pynextcloud_sync/core/exclusions.py',
@@ -84,6 +91,7 @@ python.install_sources(
     'src/pynextcloud_sync/core/safety.py',
     'src/pynextcloud_sync/core/state.py',
     'src/pynextcloud_sync/core/suspend.py',
+    'src/pynextcloud_sync/core/sync_permit.py',
     'src/pynextcloud_sync/core/sync_engine.py',
     'src/pynextcloud_sync/core/sync_run_marker.py',
     'src/pynextcloud_sync/core/timers.py',

@@ -1,10 +1,12 @@
-pynextcloud-sync (0.1.19) stable; urgency=medium
+pynextcloud-sync (2.0.0) stable; urgency=medium
 
-  * Relicense PyNextCloud Sync under GPL-3.0-or-later.
-  * Show the GPLv3 license through GTK's native About presentation.
-  * Update project and package metadata, documentation, terms, and translations.
+  * Add support for multiple Nextcloud accounts with independent settings.
+  * Migrate existing single-account configurations on first launch.
+  * Add an accounts sidebar and per-account status and activity panels.
+  * Serialize synchronization across accounts to protect the network.
+  * Name sync failure and safety notifications per account.
 
- -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 09:30:00 -0300
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 22:00:00 -0300
 
 pynextcloud-sync (0.1.18) stable; urgency=medium
 

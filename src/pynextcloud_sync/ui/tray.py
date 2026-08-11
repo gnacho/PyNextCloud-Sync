@@ -79,8 +79,12 @@ class StatusNotifier:
         open_settings: Callable[[], None],
         quit_app: Callable[[], None],
         logger: object,
+        account_provider: Callable[[], list[tuple[str, str]]] | None = None,
+        on_account_action: Callable[[str, str], None] | None = None,
     ) -> None:
         self.state_controller = state_controller
+        self.account_provider = account_provider or (lambda: [])
+        self.on_account_action = on_account_action or (lambda _account_id, _action: None)
         self.actions = {
             1: open_window,
             2: sync_now,
@@ -292,10 +296,37 @@ class StatusNotifier:
         ]
         return [str(path) for path in candidates if path.is_dir()]
 
+    ACCOUNTS_MENU_ID = 100
+    ACCOUNT_MENU_BASE = 200
+    ACCOUNT_ACTION_SYNC = 1
+    ACCOUNT_ACTION_OPEN = 2
+    ACCOUNT_ACTION_PAUSE = 3
+
+    def _account_menu_ids(self) -> list[tuple[int, str]]:
+        return [
+            (self.ACCOUNT_MENU_BASE + index * 10, name)
+            for index, (_account_id, name) in enumerate(self.account_provider())
+        ]
+
     def _properties(self, item_id: int) -> dict[str, GLib.Variant]:
         presentation = presentation_for(self.snapshot.state)
         paused = presentation.user_paused
         safety_review = self.snapshot.state.value == "safety_review"
+        if item_id == self.ACCOUNTS_MENU_ID:
+            return {
+                "label": GLib.Variant("s", _("Accounts")),
+                "enabled": GLib.Variant("b", True),
+                "visible": GLib.Variant("b", True),
+            }
+        if item_id >= self.ACCOUNT_MENU_BASE:
+            menu_id, _name = self._account_menu_for(item_id)
+            label, icon = self._account_item(item_id, menu_id)
+            return {
+                "label": GLib.Variant("s", label),
+                "enabled": GLib.Variant("b", True),
+                "visible": GLib.Variant("b", True),
+                "icon-name": GLib.Variant("s", icon),
+            }
         labels = {
             0: "PyNextCloud Sync",
             1: _("Open PyNextCloud Sync"),
@@ -329,6 +360,35 @@ class StatusNotifier:
             properties["icon-name"] = GLib.Variant("s", icon_names[item_id])
         return properties
 
+    def _account_menu_for(self, item_id: int) -> tuple[int, str]:
+        pairs = self._account_menu_ids()
+        for index, (menu_id, name) in enumerate(pairs):
+            base = menu_id
+            if base <= item_id < base + 10:
+                return menu_id, name
+        return 0, ""
+
+    def _account_item(self, item_id: int, menu_id: int) -> tuple[str, str]:
+        kind = item_id - menu_id
+        labels = {
+            self.ACCOUNT_ACTION_SYNC: _("Sync Now"),
+            self.ACCOUNT_ACTION_OPEN: _("Open Folder"),
+            self.ACCOUNT_ACTION_PAUSE: _("Pause Sync"),
+        }
+        icons = {
+            self.ACCOUNT_ACTION_SYNC: "emblem-synchronizing-symbolic",
+            self.ACCOUNT_ACTION_OPEN: "folder-symbolic",
+            self.ACCOUNT_ACTION_PAUSE: "media-playback-pause-symbolic",
+        }
+        return labels.get(kind, ""), icons.get(kind, "")
+
+    def _account_children(self, menu_id: int) -> list[int]:
+        return [
+            menu_id + self.ACCOUNT_ACTION_SYNC,
+            menu_id + self.ACCOUNT_ACTION_OPEN,
+            menu_id + self.ACCOUNT_ACTION_PAUSE,
+        ]
+
     def _layout_data(
         self, item_id: int
     ) -> tuple[int, dict[str, GLib.Variant], list[GLib.Variant]]:
@@ -336,9 +396,55 @@ class StatusNotifier:
         if item_id == 0:
             children = [
                 GLib.Variant("(ia{sv}av)", self._layout_data(child))
-                for child in range(1, 9)
+                for child in (1, 2, 3, 4, 5, 6, 7, 8)
             ]
+            account_menus = self._account_menu_ids()
+            if account_menus:
+                children.append(
+                    GLib.Variant(
+                        "(ia{sv}av)",
+                        self._layout_data(self.ACCOUNTS_MENU_ID),
+                    )
+                )
+        elif item_id == self.ACCOUNTS_MENU_ID:
+            children = [
+                GLib.Variant("(ia{sv}av)", self._layout_data(menu_id))
+                for menu_id, _name in self._account_menu_ids()
+            ]
+        elif item_id >= self.ACCOUNT_MENU_BASE:
+            menu_id, _name = self._account_menu_for(item_id)
+            if item_id == menu_id:
+                children = [
+                    GLib.Variant("(ia{sv}av)", self._layout_data(child))
+                    for child in self._account_children(menu_id)
+                ]
         return item_id, self._properties(item_id), children
+
+    def _dispatch_click(self, item_id: int) -> None:
+        if item_id in self.actions:
+            self.actions[item_id]()
+            return
+        if item_id >= self.ACCOUNT_MENU_BASE:
+            menu_id, _name = self._account_menu_for(item_id)
+            accounts = self.account_provider()
+            index = 0
+            for cursor, (menu_base, _account_name) in enumerate(
+                self._account_menu_ids()
+            ):
+                if menu_base == menu_id:
+                    index = cursor
+                    break
+            if index >= len(accounts):
+                return
+            account_id = accounts[index][0]
+            action = item_id - menu_id
+            name = {
+                self.ACCOUNT_ACTION_SYNC: "sync",
+                self.ACCOUNT_ACTION_OPEN: "open",
+                self.ACCOUNT_ACTION_PAUSE: "pause",
+            }.get(action)
+            if name:
+                self.on_account_action(account_id, name)
 
     def _menu_method(
         self,
@@ -359,7 +465,13 @@ class StatusNotifier:
             )
         elif method == "GetGroupProperties":
             ids = values[0] or list(range(9))
-            result = [(item_id, self._properties(item_id)) for item_id in ids if 0 <= item_id <= 8]
+            result = [
+                (item_id, self._properties(item_id))
+                for item_id in ids
+                if 0 <= item_id <= 8
+                or item_id == self.ACCOUNTS_MENU_ID
+                or item_id >= self.ACCOUNT_MENU_BASE
+            ]
             invocation.return_value(GLib.Variant("(a(ia{sv}))", (result,)))
         elif method == "GetProperty":
             item_id, name = values
@@ -367,13 +479,13 @@ class StatusNotifier:
             invocation.return_value(GLib.Variant("(v)", (value,)))
         elif method == "Event":
             item_id, event_id, _data, _timestamp = values
-            if event_id == "clicked" and item_id in self.actions:
-                self.actions[item_id]()
+            if event_id == "clicked":
+                self._dispatch_click(item_id)
             invocation.return_value(None)
         elif method == "EventGroup":
             for item_id, event_id, _data, _timestamp in values[0]:
-                if event_id == "clicked" and item_id in self.actions:
-                    self.actions[item_id]()
+                if event_id == "clicked":
+                    self._dispatch_click(item_id)
             invocation.return_value(GLib.Variant("(ai)", ([],)))
         elif method == "AboutToShow":
             invocation.return_value(GLib.Variant("(b)", (False,)))

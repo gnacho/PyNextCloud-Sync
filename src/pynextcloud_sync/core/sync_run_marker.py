@@ -24,6 +24,10 @@ class SyncRunMarker:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or (state_dir() / "sync-run.json")
 
+    @classmethod
+    def for_account(cls, account: dict[str, Any]) -> SyncRunMarker:
+        return cls(state_dir() / f"sync-run-{account_fingerprint(account)}.json")
+
     def load(self) -> dict[str, Any] | None:
         try:
             payload = json.loads(self.path.read_text(encoding="utf-8"))

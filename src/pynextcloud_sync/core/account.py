@@ -38,6 +38,19 @@ class AccountSession:
             runtime=config.data["runtime"],
         )
 
+    @classmethod
+    def from_config_value(cls, account: dict[str, Any]) -> AccountSession:
+        return cls(
+            account_id=account.get("id", ""),
+            server_url=account["server_url"],
+            login_name=account["login_name"],
+            authentication_type=account.get("authentication_type", "manual"),
+            local_root=account["local_root"],
+            sync=account.get("sync", {}),
+            safety=account.get("safety", {}),
+            runtime=account.get("runtime", {}),
+        )
+
     @property
     def local_root_path(self) -> Path:
         return Path(self.local_root).expanduser().absolute()

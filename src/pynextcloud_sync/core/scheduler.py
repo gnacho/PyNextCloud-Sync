@@ -8,11 +8,12 @@ from gi.repository import GLib
 
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
 from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard
+from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard, SafetyManifest
 from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.core.triggers import CoalescingQueue, Trigger, manual_only
 from pynextcloud_sync.nextcloud.command import NextcloudCmdMissingError, build_command
 from pynextcloud_sync.nextcloud.credentials import KeyringLockedError
+from pynextcloud_sync.storage.config import account_fingerprint
 from pynextcloud_sync.util.paths import config_dir
 from pynextcloud_sync.util.i18n import _
 
@@ -53,8 +54,17 @@ class SyncScheduler:
         self._safety_checking = False
         self._safety_bypass_once = False
         self.safety_alert: SafetyAlert | None = None
-        self.safety_guard = SafetyGuard(config, logger)
-        self.run_marker = SyncRunMarker()
+        account = config.data.get("account")
+        if account:
+            self.safety_guard = SafetyGuard(
+                config, logger, manifest=SafetyManifest.for_account(account)
+            )
+            self.run_marker = SyncRunMarker.for_account(account)
+            self._account_fingerprint = account_fingerprint(account)
+        else:
+            self.safety_guard = SafetyGuard(config, logger)
+            self.run_marker = SyncRunMarker()
+            self._account_fingerprint = None
         self._run_marker_active = False
         self._keyring_locked = False
         self._stopped = False
@@ -253,7 +263,12 @@ class SyncScheduler:
             matcher = ExclusionMatcher(
                 sync.get("exclude_patterns", []), sync.get("exclude_patterns_enabled", True)
             )
-            exclude_path = matcher.write_nextcloudcmd_file(config_dir() / "excludes.lst")
+            excludes_name = (
+                f"excludes-{self._account_fingerprint}.lst"
+                if self._account_fingerprint
+                else "excludes.lst"
+            )
+            exclude_path = matcher.write_nextcloudcmd_file(config_dir() / excludes_name)
             try:
                 spec = build_command(
                     account,

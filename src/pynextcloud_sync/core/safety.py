@@ -176,6 +176,10 @@ class SafetyManifest:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or (state_dir() / "safety-manifest.json")
 
+    @classmethod
+    def for_account(cls, account: dict[str, Any]) -> SafetyManifest:
+        return cls(state_dir() / f"safety-manifest-{account_fingerprint(account)}.json")
+
     def load(self) -> dict[str, Any] | None:
         try:
             payload = json.loads(self.path.read_text(encoding="utf-8"))

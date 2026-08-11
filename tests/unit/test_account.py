@@ -51,6 +51,19 @@ class AccountSessionTests(unittest.TestCase):
         )
         self.assertEqual(validated["accounts"][0]["login_name"], "alice")
 
+    def test_from_config_value_defaults_remote_path_to_root(self) -> None:
+        session = AccountSession.from_config_value(_account_value())
+        self.assertEqual(session.remote_path, "")
+        self.assertIsNone(session.remote_path_argument)
+
+    def test_from_config_value_carries_remote_path(self) -> None:
+        value = _account_value()
+        value["remote_path"] = "/Documents"
+        session = AccountSession.from_config_value(value)
+        self.assertEqual(session.remote_path, "/Documents")
+        self.assertEqual(session.remote_path_argument, "/Documents")
+        self.assertEqual(session.account_dict["remote_path"], "/Documents")
+
 
 if __name__ == "__main__":
     unittest.main()

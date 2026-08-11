@@ -15,6 +15,16 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="2.1.0" date="2026-08-11">
+      <description>
+        <ul>
+          <li>Added an optional remote folder field so each account can mirror a specific Nextcloud folder instead of the account root.</li>
+          <li>Passed the --path argument to nextcloudcmd when a remote folder is configured; the root-to-root behaviour is unchanged when the field is left as /.</li>
+          <li>Migrated existing configurations to schema version 4 transparently with the remote path defaulting to the account root.</li>
+          <li>Treated two accounts against the same server, user, and local folder but different remote folders as distinct.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.0.0" date="2026-08-11">
       <description>
         <ul>

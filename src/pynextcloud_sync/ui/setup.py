@@ -14,7 +14,11 @@ from pynextcloud_sync.core.autostart import AutostartManager
 from pynextcloud_sync.nextcloud.api import NextcloudApi
 from pynextcloud_sync.nextcloud.command import find_nextcloudcmd
 from pynextcloud_sync.nextcloud.login_flow import LoginFlowResult, LoginFlowV2
-from pynextcloud_sync.storage.config import ConfigurationError, normalize_server_url
+from pynextcloud_sync.storage.config import (
+    ConfigurationError,
+    normalize_remote_path,
+    normalize_server_url,
+)
 from pynextcloud_sync.util.i18n import _
 from pynextcloud_sync.util.paths import default_sync_root
 
@@ -38,6 +42,7 @@ class SetupWindow(Adw.ApplicationWindow):
         self.server = ""
         self.username = ""
         self.authentication_type = "manual"
+        self.remote_path = ""
 
         toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar(show_title=False)
@@ -183,7 +188,7 @@ class SetupWindow(Adw.ApplicationWindow):
         content.append(Gtk.Label(label=_("Choose Local Folder"), xalign=0, css_classes=["title-1"]))
         content.append(
             Gtk.Label(
-                label=_("The complete file tree from your account will be mirrored into this single folder."),
+                label=_("The file tree from the selected remote folder will be mirrored into this local folder."),
                 wrap=True,
                 xalign=0,
                 css_classes=["dim-label"],
@@ -196,6 +201,9 @@ class SetupWindow(Adw.ApplicationWindow):
         choose.connect("clicked", self._choose_folder)
         self.folder_entry.add_suffix(choose)
         group.add(self.folder_entry)
+        self.remote_entry = Adw.EntryRow(title=_("Remote folder (optional, default /)"))
+        self.remote_entry.set_text("/")
+        group.add(self.remote_entry)
         content.append(group)
         self.folder_error = Gtk.Label(xalign=0, wrap=True, css_classes=["error"])
         content.append(self.folder_error)
@@ -317,13 +325,21 @@ class SetupWindow(Adw.ApplicationWindow):
         if not root.is_absolute():
             self.folder_error.set_text(_("Choose an absolute local folder."))
             return
+        try:
+            remote = normalize_remote_path(self.remote_entry.get_text())
+        except ConfigurationError as exc:
+            self.folder_error.set_text(str(exc))
+            return
+        self.remote_path = remote
         self.folder_error.set_text("")
         while row := self.summary_list.get_first_child():
             self.summary_list.remove(row)
+        remote_label = remote if remote else "/"
         for title, subtitle, icon in (
             (_("Server"), self.server, "network-server-symbolic"),
             (_("Account"), self.username, "avatar-default-symbolic"),
             (_("Local Folder"), str(root), "folder-symbolic"),
+            (_("Remote Folder"), remote_label, "folder-remote-symbolic"),
             (_("Local Detection"), _("Filesystem monitor"), "folder-saved-search-symbolic"),
             (_("Remote Detection"), _("Server push + every 10 minutes"), "network-transmit-receive-symbolic"),
         ):
@@ -341,6 +357,7 @@ class SetupWindow(Adw.ApplicationWindow):
             "login_name": self.username,
             "authentication_type": self.authentication_type,
             "local_root": str(root),
+            "remote_path": self.remote_path,
         }
         self.config.data["network"]["trust_invalid_certificates"] = (
             self.trust_invalid.get_active()

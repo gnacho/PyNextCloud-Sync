@@ -162,6 +162,15 @@ class SettingsWindow(Adw.PreferencesWindow):
                 icon_name="folder-symbolic",
             )
         )
+        remote_path = account.get("remote_path", "") or ""
+        if remote_path:
+            folder.add(
+                Adw.ActionRow(
+                    title=_("Remote folder"),
+                    subtitle=remote_path,
+                    icon_name="folder-remote-symbolic",
+                )
+            )
         integration_state = self.desktop_integration.state
         self.nautilus_bookmark = Adw.SwitchRow(
             title=_("Show in Files sidebar"),

@@ -679,8 +679,15 @@ class PyNextCloudApplication(Adw.Application):
         self.config.save()
         self._ensure_bootstrap(recovery=True, initialize_integrations=False)
 
+    def _any_engine_running(self) -> bool:
+        if self.account_manager:
+            for runtime in self.account_manager.runtimes.values():
+                if runtime.runtime.engine.running:
+                    return True
+        return bool(self.runtime and self.runtime.engine.running)
+
     def request_quit(self) -> None:
-        if self.runtime and self.runtime.engine.running:
+        if self._any_engine_running():
             notification = Gio.Notification.new(_("Finishing synchronization"))
             notification.set_body(
                 _("PyNextCloud Sync will quit when the current synchronization finishes.")
@@ -706,8 +713,7 @@ class PyNextCloudApplication(Adw.Application):
                 self.desktop_integration.close()
                 self.desktop_integration = None
             if self.account_manager:
-                self.account_manager.stop()
-                self.account_manager = None
+                self.account_manager.remove(account_id)
             if self.tray:
                 self.tray.stop()
                 self.tray = None
@@ -748,7 +754,7 @@ class PyNextCloudApplication(Adw.Application):
         )
 
     def _quit_when_ready(self) -> bool:
-        if self.runtime and self.runtime.engine.running:
+        if self._any_engine_running():
             return GLib.SOURCE_CONTINUE
         self.quit()
         return GLib.SOURCE_REMOVE

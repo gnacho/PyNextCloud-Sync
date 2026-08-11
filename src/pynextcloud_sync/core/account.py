@@ -23,22 +23,6 @@ class AccountSession:
     runtime: dict[str, Any]
 
     @classmethod
-    def from_config(cls, config: Any) -> AccountSession | None:
-        account = config.data.get("account")
-        if not account:
-            return None
-        return cls(
-            account_id=account.get("id", ""),
-            server_url=account["server_url"],
-            login_name=account["login_name"],
-            authentication_type=account.get("authentication_type", "manual"),
-            local_root=account["local_root"],
-            sync=config.data["sync"],
-            safety=config.data["safety"],
-            runtime=config.data["runtime"],
-        )
-
-    @classmethod
     def from_config_value(cls, account: dict[str, Any]) -> AccountSession:
         return cls(
             account_id=account.get("id", ""),

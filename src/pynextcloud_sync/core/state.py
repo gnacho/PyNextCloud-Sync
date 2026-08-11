@@ -75,6 +75,7 @@ _STATE_SEVERITY: dict[AppState, int] = {
     AppState.PAUSED_USER: 20,
     AppState.IDLE_MANUAL_ONLY: 10,
     AppState.IDLE_OK: 0,
+    AppState.UNCONFIGURED: -10,
 }
 
 

@@ -212,5 +212,15 @@ class AccountManager:
         self._runtimes.clear()
         self._aggregate.clear()
 
+    def remove(self, account_id: str) -> bool:
+        """Stop and drop a single account runtime, leaving the rest running."""
+        runtime = self._runtimes.pop(account_id, None)
+        if runtime is None:
+            return False
+        runtime.stop()
+        self._aggregate.remove(runtime.state)
+        self._session_cache.pop(account_id, None)
+        return True
+
     def get(self, account_id: str) -> AccountRuntime | None:
         return self._runtimes.get(account_id)

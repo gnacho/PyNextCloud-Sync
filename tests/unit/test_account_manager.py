@@ -143,6 +143,23 @@ class AccountManagerTests(unittest.TestCase):
             manager.stop()
             self.assertEqual(manager.runtimes, {})
 
+    def test_remove_drops_one_runtime_and_keeps_the_rest(self) -> None:
+        store = _store_with([ACCOUNT_A, ACCOUNT_B])
+        with patch(
+            "pynextcloud_sync.core.account_manager.RuntimeController",
+            FakeRuntimeController,
+        ):
+            manager = AccountManager(store, None, None)
+            manager.start()
+            kept_id, dropped_id = tuple(manager.runtimes)
+            removed = manager.remove(dropped_id)
+            self.assertTrue(removed)
+            self.assertNotIn(dropped_id, manager.runtimes)
+            self.assertIn(kept_id, manager.runtimes)
+            dropped = manager.runtimes[dropped_id] if dropped_id in manager.runtimes else None
+            self.assertIsNone(dropped)
+            self.assertFalse(manager.remove("nonexistent"))
+
 
 if __name__ == "__main__":
     unittest.main()

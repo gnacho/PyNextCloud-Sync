@@ -47,6 +47,12 @@ class AggregateStateControllerTests(unittest.TestCase):
         first.set(AppState.SYNCING)
         self.assertEqual(seen[-1], AppState.SYNCING)
 
+    def test_idle_ok_outranks_unconfigured(self) -> None:
+        configured = StateController(AppState.IDLE_OK)
+        fresh = StateController(AppState.UNCONFIGURED)
+        aggregate = AggregateStateController([configured, fresh])
+        self.assertEqual(aggregate.snapshot.state, AppState.IDLE_OK)
+
 
 if __name__ == "__main__":
     unittest.main()

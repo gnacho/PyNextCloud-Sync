@@ -33,10 +33,8 @@ class SyncPermit:
     def release(self) -> None:
         if self._in_use > 0:
             self._in_use -= 1
-        waiters = self._waiters
-        self._waiters = []
-        for waiter in waiters:
-            waiter()
+        if self._waiters:
+            self._waiters.pop(0)()
 
     def wait_for_release(self, callback: Callable[[], None]) -> None:
         self._waiters.append(callback)

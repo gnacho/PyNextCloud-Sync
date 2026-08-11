@@ -15,12 +15,15 @@ class SyncPermitTests(unittest.TestCase):
         permit.release()
         self.assertTrue(permit.available)
 
-    def test_waiters_run_when_the_permit_is_released(self) -> None:
+    def test_release_wakes_one_waiter_in_fifo_order(self) -> None:
         permit = SyncPermit()
         fired: list[int] = []
         permit.try_acquire()
         permit.wait_for_release(lambda: fired.append(1))
         permit.wait_for_release(lambda: fired.append(2))
+        permit.release()
+        self.assertEqual(fired, [1])
+        permit.try_acquire()
         permit.release()
         self.assertEqual(fired, [1, 2])
 

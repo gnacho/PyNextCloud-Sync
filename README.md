@@ -13,7 +13,7 @@
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-0.1.19-6557e8?style=flat-square" alt="Version 0.1.19">
+    <img src="https://img.shields.io/badge/version-2.0.0-6557e8?style=flat-square" alt="Version 2.0.0">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -34,6 +34,7 @@ The actual bidirectional reconciliation is performed by the official [`nextcloud
 ### Highlights
 
 - **Complete physical mirror:** every eligible file in the account is kept locally.
+- **Multiple accounts:** each account keeps its own synchronization, safety, and runtime settings, shown in a dedicated sidebar and per-account tray menu.
 - **Official synchronization engine:** no custom WebDAV reconciliation algorithm.
 - **GNOME-native interface:** GTK 4 and Libadwaita, with a compact and familiar layout.
 - **Secure sign-in:** Nextcloud Login Flow v2 or manual credentials, stored through Secret Service / GNOME Keyring.
@@ -115,7 +116,7 @@ Download the `.deb` from the [latest release](https://github.com/ehstbr/PyNextCl
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_0.1.19_all.deb
+sudo apt install ./pynextcloud-sync_2.0.0_all.deb
 ```
 
 During an interactive upgrade started with `sudo apt install`, the package asks a running PyNextCloud Sync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
@@ -138,8 +139,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip PyNextCloud-Sync-0.1.19.zip
-cd PyNextCloud-Sync-0.1.19
+unzip PyNextCloud-Sync-2.0.0.zip
+cd PyNextCloud-Sync-2.0.0
 ./run.sh
 ```
 
@@ -202,12 +203,15 @@ Check for Updates**. The detailed changelog remains collapsed until requested.
 
 | Area | What it controls |
 | --- | --- |
+| Accounts | One entry per Nextcloud account: server, login, local folder, and its own synchronization, safety, and runtime settings |
 | General | Autostart, battery behavior, local folder, Files bookmark, Desktop shortcut, and branded folder icon |
 | Synchronization | `inotify`, local interval, `notify_push`, remote safety interval, and disposable-file exclusions |
 | Network | Account removal, optional HTTP proxy, and explicit opt-in for invalid/self-signed certificates |
 | Advanced | Daily logs, retention, detailed output, deletion-guard limits, and runtime diagnostics |
 
-All four automatic triggers can be combined or disabled. With local monitoring, local interval, server push, and remote interval all disabled, the application operates in manual-only mode.
+Each account can be paused, synchronized, or removed independently. The tray shows the state that needs attention and offers per-account actions.
+
+All four automatic triggers can be combined or disabled per account. With local monitoring, local interval, server push, and remote interval all disabled, the application operates in manual-only mode.
 
 ## Compatibility
 
@@ -253,7 +257,7 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `0.1.19` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `2.0.0` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 

@@ -400,8 +400,13 @@ class PyNextCloudApplication(Adw.Application):
         self.runtime = runtime.runtime if runtime else None
 
     def set_active_account(self, account_id: str | None) -> None:
+        if account_id == self.active_account_id:
+            return
         self.active_account_id = account_id
         self.config.set_active_view(account_id)
+        if self.settings_window:
+            self.settings_window.close()
+            self.settings_window = None
         if not self.account_manager:
             return
         runtime = self.account_manager.get(account_id) if account_id else None

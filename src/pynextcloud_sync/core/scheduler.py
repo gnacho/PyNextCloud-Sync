@@ -8,6 +8,7 @@ from gi.repository import GLib
 
 from pynextcloud_sync.core.debounce import DebounceGate
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
+from pynextcloud_sync.core.sync_permit import SyncPermit
 from pynextcloud_sync.core.state import AppState, StateController
 from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard, SafetyManifest
 from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
@@ -34,6 +35,7 @@ class SyncScheduler:
         logger: Any,
         on_completed: Callable[[SyncResult], None] | None = None,
         on_safety_alert: Callable[[SafetyAlert], None] | None = None,
+        sync_permit: SyncPermit | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
@@ -42,6 +44,7 @@ class SyncScheduler:
         self.logger = logger
         self.on_completed = on_completed
         self.on_safety_alert = on_safety_alert
+        self.sync_permit = sync_permit
         self.queue = CoalescingQueue()
         self.online = True
         self.user_paused = False
@@ -292,6 +295,11 @@ class SyncScheduler:
                     return
             feedback_followup = self._feedback_followup_pending
             self._feedback_followup_pending = False
+            if self.sync_permit and not self.sync_permit.try_acquire():
+                self.queue.extend(reasons)
+                self.state.set(AppState.SYNC_QUEUED, _("Waiting for another account to finish…"))
+                self.sync_permit.wait_for_release(self._schedule_start)
+                return
             self.engine.run(
                 spec,
                 lambda result: self._finished(result, reasons, feedback_followup),
@@ -358,6 +366,8 @@ class SyncScheduler:
                 self.queue.add(Trigger.LOCAL_INOTIFY)
             queued = bool(self.queue)
         self._inotify_during_sync = False
+        if self.sync_permit:
+            self.sync_permit.release()
         self._debounce.begin_cooldown(lambda: self._cooldown_finished(queued))
 
     def _baseline_recorded(self, recorded: bool) -> bool:

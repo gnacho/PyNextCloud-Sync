@@ -9,6 +9,7 @@ from pynextcloud_sync.core.state import (
     AppState,
     StateController,
 )
+from pynextcloud_sync.core.sync_permit import SyncPermit
 
 
 class AccountConfigView:
@@ -86,15 +87,27 @@ class AccountRuntime:
         session: AccountSession,
         notify_failure: Callable[[Any], None] | None = None,
         notify_safety_alert: Callable[[Any], None] | None = None,
+        sync_permit: SyncPermit | None = None,
     ) -> None:
         self.session = session
         self.view = AccountConfigView(config, session)
+        wrapped_failure = (
+            (lambda result: notify_failure(self.display_name, result))
+            if notify_failure
+            else None
+        )
+        wrapped_safety = (
+            (lambda alert: notify_safety_alert(self.display_name, alert))
+            if notify_safety_alert
+            else None
+        )
         self.runtime = RuntimeController(
             self.view,
             credentials,
             logger,
-            notify_failure,
-            notify_safety_alert,
+            wrapped_failure,
+            wrapped_safety,
+            sync_permit=sync_permit,
         )
 
     @property
@@ -135,6 +148,7 @@ class AccountManager:
         self._runtimes: dict[str, AccountRuntime] = {}
         self._session_cache: dict[str, AccountSession] = {}
         self._aggregate = AggregateStateController()
+        self.sync_permit = SyncPermit()
         self._refresh_sessions()
 
     @property
@@ -177,6 +191,7 @@ class AccountManager:
             session,
             self.notify_failure,
             self.notify_safety_alert,
+            self.sync_permit,
         )
         runtime.start()
         self._runtimes[account_id] = runtime

@@ -589,38 +589,44 @@ class PyNextCloudApplication(Adw.Application):
         if self.main_window is window:
             self.main_window = None
 
-    def _notify_sync_failure(self, result: object) -> None:
+    def _notify_sync_failure(self, account_name: str, result: object) -> None:
         if getattr(result, "classification", "") == "authentication":
             notification = Gio.Notification.new(_("Nextcloud account needs attention"))
-            notification.set_body(_("Open PyNextCloud Sync to check the account credential."))
+            notification.set_body(
+                _("{account}: open PyNextCloud Sync to check the account credential.").format(
+                    account=account_name
+                )
+            )
             notification.set_default_action("app.show")
-            self.send_notification("auth-failure", notification)
+            self.send_notification(f"auth-failure-{account_name}", notification)
         else:
             notification = Gio.Notification.new(_("Synchronization failed"))
             retries = self.config.data["sync"]["max_sync_retries"]
             notification.set_body(
-                _("Synchronization failed after {retries} retries. Open the log for details.").format(
-                    retries=retries
+                _("{account}: synchronization failed after {retries} retries. Open the log for details.").format(
+                    account=account_name, retries=retries
                 )
             )
             notification.set_default_action("app.log")
-            self.send_notification("sync-failure", notification)
+            self.send_notification(f"sync-failure-{account_name}", notification)
 
-    def _notify_safety_alert(self, alert: object) -> None:
+    def _notify_safety_alert(self, account_name: str, alert: object) -> None:
         notification = Gio.Notification.new(_("Safety review required"))
         count = int(getattr(alert, "missing_count", 0))
         if count:
             notification.set_body(
-                _("{count} local files disappeared. Synchronization was blocked before Nextcloud could be changed.").format(
-                    count=count
+                _("{account}: {count} local files disappeared. Synchronization was blocked before Nextcloud could be changed.").format(
+                    account=account_name, count=count
                 )
             )
         else:
             notification.set_body(
-                _("The local synchronization folder changed unexpectedly. Synchronization was blocked.")
+                _("{account}: the local synchronization folder changed unexpectedly. Synchronization was blocked.").format(
+                    account=account_name
+                )
             )
         notification.set_default_action("app.show")
-        self.send_notification("safety-review", notification)
+        self.send_notification(f"safety-review-{account_name}", notification)
 
     def review_safety_alert(self, parent: Gtk.Window | None = None) -> None:
         if not self.runtime or not self.runtime.scheduler.safety_alert:

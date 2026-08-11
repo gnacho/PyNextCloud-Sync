@@ -28,6 +28,7 @@ class RuntimeController:
         logger: Any,
         notify_failure: Callable[[SyncResult], None] | None = None,
         notify_safety_alert: Callable[[SafetyAlert], None] | None = None,
+        sync_permit: Any | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
@@ -47,6 +48,7 @@ class RuntimeController:
             logger,
             self._sync_completed,
             notify_safety_alert,
+            sync_permit=sync_permit,
         )
         self.timers = SyncTimers(self.scheduler.request)
         self.network = NetworkWatcher(self._network_changed)

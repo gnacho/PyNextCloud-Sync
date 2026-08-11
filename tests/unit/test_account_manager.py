@@ -12,6 +12,7 @@ from pynextcloud_sync.core.account_manager import (
     AccountManager,
     AccountRuntime,
 )
+from pynextcloud_sync.core.state import AppState, StateController
 from pynextcloud_sync.core.safety import SafetyManifest
 from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.storage.config import (
@@ -110,6 +111,7 @@ class FakeRuntimeController:
     def __init__(self, *args: object, **kwargs: object) -> None:
         self.started = False
         self.stopped = False
+        self.state = StateController(AppState.IDLE_OK)
 
     def start(self) -> None:
         self.started = True

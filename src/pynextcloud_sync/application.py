@@ -431,10 +431,10 @@ class PyNextCloudApplication(Adw.Application):
             self.desktop_integration = DesktopIntegration(root)
 
     def _ensure_tray(self) -> None:
-        if self.tray or not self.runtime:
+        if self.tray or not self.account_manager or not self.runtime:
             return
         self.tray = StatusNotifier(
-            self.runtime.state,
+            self.account_manager.aggregate_state,
             self.present_main,
             self._tray_sync,
             lambda: self.runtime.set_paused(not self.runtime.scheduler.user_paused),
@@ -732,8 +732,8 @@ class PyNextCloudApplication(Adw.Application):
             self.settings_window.close()
         if self.tray:
             self.tray.stop()
-        if self.runtime:
-            self.runtime.stop()
+        if self.account_manager:
+            self.account_manager.stop()
         if self.desktop_integration:
             self.desktop_integration.close()
         self.logger.close()

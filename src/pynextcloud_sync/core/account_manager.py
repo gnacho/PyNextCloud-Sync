@@ -4,7 +4,11 @@ from typing import Any, Callable
 
 from pynextcloud_sync.core.account import AccountSession
 from pynextcloud_sync.core.runtime import RuntimeController
-from pynextcloud_sync.core.state import AppState, StateController
+from pynextcloud_sync.core.state import (
+    AggregateStateController,
+    AppState,
+    StateController,
+)
 
 
 class AccountConfigView:
@@ -85,9 +89,6 @@ class AccountRuntime:
     ) -> None:
         self.session = session
         self.view = AccountConfigView(config, session)
-        self.state = StateController(
-            AppState.IDLE_OK if config.configured else AppState.UNCONFIGURED
-        )
         self.runtime = RuntimeController(
             self.view,
             credentials,
@@ -95,6 +96,10 @@ class AccountRuntime:
             notify_failure,
             notify_safety_alert,
         )
+
+    @property
+    def state(self) -> StateController:
+        return self.runtime.state
 
     @property
     def account_id(self) -> str:
@@ -129,11 +134,16 @@ class AccountManager:
         self.notify_safety_alert = notify_safety_alert
         self._runtimes: dict[str, AccountRuntime] = {}
         self._session_cache: dict[str, AccountSession] = {}
+        self._aggregate = AggregateStateController()
         self._refresh_sessions()
 
     @property
     def runtimes(self) -> dict[str, AccountRuntime]:
         return self._runtimes
+
+    @property
+    def aggregate_state(self) -> AggregateStateController:
+        return self._aggregate
 
     @property
     def sessions(self) -> dict[str, AccountSession]:
@@ -170,6 +180,7 @@ class AccountManager:
         )
         runtime.start()
         self._runtimes[account_id] = runtime
+        self._aggregate.add(runtime.state)
 
     def ensure_account_runtime(self, account_id: str) -> None:
         """Start the runtime for one account after its bootstrap completes."""
@@ -184,6 +195,7 @@ class AccountManager:
         for runtime in tuple(self._runtimes.values()):
             runtime.stop()
         self._runtimes.clear()
+        self._aggregate.clear()
 
     def get(self, account_id: str) -> AccountRuntime | None:
         return self._runtimes.get(account_id)

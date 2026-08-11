@@ -52,6 +52,34 @@ class FakeNextcloudCmdTests(unittest.TestCase):
         result = self._run("conflict")
         self.assertEqual(classify_output(result.stdout, result.returncode), "conflict")
 
+    def test_remote_path_argument_reaches_nextcloudcmd(self) -> None:
+        spec = build_command(
+            {
+                "server_url": "https://cloud.example.com",
+                "login_name": "alice",
+                "local_root": "/tmp/NextCloud",
+                "remote_path": "/Documents",
+            },
+            {"max_sync_retries": 3, "detailed_output": True},
+            {"custom_proxy": None, "trust_invalid_certificates": False},
+            "integration-secret",
+            executable=str(self.fake),
+        )
+        environment = os.environ.copy()
+        environment.update(spec.environment)
+        environment["FAKE_NEXTCLOUDCMD_MODE"] = "success"
+        result = subprocess.run(
+            spec.argv,
+            env=environment,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("--path /Documents", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

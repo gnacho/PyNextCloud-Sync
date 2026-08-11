@@ -4,7 +4,7 @@
   <name>PyNextCloud Sync</name>
   <summary>Lightweight Nextcloud file synchronization for Linux</summary>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>MIT</project_license>
+  <project_license>GPL-3.0-or-later</project_license>
   <description>
     <p>PyNextCloud Sync keeps one complete physical local mirror of a Nextcloud account synchronized through the official nextcloudcmd engine.</p>
     <p>It adds GNOME integration, filesystem monitoring, server push notifications, safety intervals, secure account setup, exclusions, and logs.</p>
@@ -15,12 +15,21 @@
   <url type="bugtracker">https://github.com/ehstbr/PyNextCloud-Sync/issues</url>
   <url type="vcs-browser">https://github.com/ehstbr/PyNextCloud-Sync</url>
   <releases>
+    <release version="0.1.19" date="2026-08-11">
+      <description>
+        <ul>
+          <li>Relicensed PyNextCloud Sync under the GNU General Public License version 3 or later.</li>
+          <li>About now identifies and displays GPLv3 through GTK's native license presentation.</li>
+          <li>Updated project, Debian, AppStream, documentation, terms, and translation metadata for the new license.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.18" date="2026-08-10">
       <description>
         <ul>
-          <li>Recover explicitly from inotify queue overflow by rebuilding monitoring and requesting a protected nextcloudcmd reconciliation.</li>
-          <li>Record a minimal durable marker around nextcloudcmd so interrupted wrapper runs remain visible until a new safety baseline is committed.</li>
-          <li>Keep synchronization semantics inside nextcloudcmd; the desktop wrapper adds no custom reconciliation engine.</li>
+          <li>Recovered explicitly from inotify queue overflow by rebuilding monitoring and requesting a protected nextcloudcmd reconciliation.</li>
+          <li>Recorded a minimal durable marker around nextcloudcmd so interrupted wrapper runs remain visible until a new safety baseline is committed.</li>
+          <li>Kept synchronization semantics inside nextcloudcmd; the desktop wrapper adds no custom reconciliation engine.</li>
         </ul>
       </description>
     </release>

@@ -1,3 +1,11 @@
+pynextcloud-sync (0.1.19) stable; urgency=medium
+
+  * Relicense PyNextCloud Sync under GPL-3.0-or-later.
+  * Show the GPLv3 license through GTK's native About presentation.
+  * Update project and package metadata, documentation, terms, and translations.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 09:30:00 -0300
+
 pynextcloud-sync (0.1.18) stable; urgency=medium
 
   * Detect and recover from inotify queue overflow before trusting new local events.

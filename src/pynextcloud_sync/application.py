@@ -443,8 +443,27 @@ class PyNextCloudApplication(Adw.Application):
             self.show_settings,
             self.request_quit,
             self.logger,
+            account_provider=lambda: [
+                (runtime.account_id, runtime.display_name)
+                for runtime in self.account_manager.runtimes.values()
+            ],
+            on_account_action=self._tray_account_action,
         )
         self.tray.start()
+
+    def _tray_account_action(self, account_id: str, action: str) -> None:
+        if not self.account_manager:
+            return
+        runtime = self.account_manager.get(account_id)
+        if not runtime:
+            return
+        if action == "sync":
+            runtime.runtime.sync_now()
+        elif action == "open":
+            self.set_active_account(account_id)
+            self.open_folder()
+        elif action == "pause":
+            runtime.runtime.set_paused(not runtime.runtime.scheduler.user_paused)
 
     def _tray_sync(self) -> None:
         if self.runtime and self.runtime.scheduler.safety_alert:

@@ -122,6 +122,15 @@ class AccountView(Gtk.Box):
         folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
         folder_row.connect("activated", lambda _row: self.open_folder())
         account_list.append(folder_row)
+        remote_path = getattr(self.session, "remote_path", "") or ""
+        if remote_path:
+            account_list.append(
+                _compact_action_row(
+                    title=_("Remote Folder"),
+                    subtitle=remote_path,
+                    icon_name="folder-remote-symbolic",
+                )
+            )
         self.last_row = _compact_action_row(
             title=_("Last Successful Sync"),
             subtitle=self._format_last_sync(),

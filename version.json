@@ -1,16 +1,14 @@
 {
   "schema_version": 1,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "mandatory": false,
-  "released_at": "2026-08-11T22:00:00Z",
-  "summary": "Multi-account support with per-account settings, an account sidebar, per-account tray actions, and a global one-at-a-time synchronization gate.",
+  "released_at": "2026-08-11T22:30:00Z",
+  "summary": "Folder mapping: each account can now target a specific remote folder instead of always mirroring the account root.",
   "changelog": [
-    "Adds support for multiple Nextcloud accounts, each with its own synchronization, safety, and runtime settings.",
-    "Automatically migrates existing single-account configurations on first launch without losing data.",
-    "The main window gains an accounts sidebar and a per-account status, activity, and synchronization panel.",
-    "The tray shows an aggregated state and a per-account menu with Sync Now, Open Folder, and Pause actions.",
-    "Synchronizations are serialized across accounts so concurrent reconciliations do not saturate the network.",
-    "Sync failure and safety notifications identify the account that needs attention.",
-    "Extracts the debounce and cooldown scheduling into a small, tested component."
+    "Adds an optional Remote Folder field to the setup wizard so an account can mirror a specific Nextcloud folder instead of the entire account root.",
+    "Passes the new --path argument to nextcloudcmd when a remote folder is configured; the account root is still used when the field is left as /.",
+    "Config schema bumps to version 4; existing single-account and multi-account configurations migrate transparently with the remote path defaulting to the account root.",
+    "Account identities now include the remote path, so two accounts against the same server, user, and local folder but different remote folders are treated as distinct.",
+    "Setup wizard, summary screen, and account metadata surface the chosen remote folder so users can review the mapping before the safety baseline runs."
   ]
 }

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.1.0 — 2026-08-11
+
+- Add an optional Remote Folder field to the setup wizard so an account mirrors
+  a specific Nextcloud folder instead of the entire account root.
+- Pass `--path` to `nextcloudcmd` when a remote folder is configured; the account
+  root (`/`) is used when the field is left blank.
+- Bump the config schema to version 4. Existing single-account and multi-account
+  configurations migrate transparently, defaulting the remote path to the
+  account root (no behaviour change).
+- Account identities now include the remote path, so two accounts against the
+  same server, user, and local folder but different remote folders are treated
+  as distinct.
+- Surface the chosen remote folder in the setup summary and the in-memory
+  account metadata so users can review the mapping before the safety baseline
+  runs.
+
 ## 2.0.0 — 2026-08-11
 
 - Add support for multiple Nextcloud accounts, each with its own

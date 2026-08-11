@@ -35,6 +35,26 @@ class CommandTests(unittest.TestCase):
         self.assertIn("--silent", spec.argv)
         self.assertIn("--trust", spec.argv)
         self.assertIn("--httpproxy", spec.argv)
+        self.assertNotIn("--path", spec.argv)
+
+    def test_remote_path_adds_path_argument(self) -> None:
+        account = dict(self.account)
+        account["remote_path"] = "/Documents"
+        spec = build_command(account, self.sync, self.network, "secret", executable="/bin/true")
+        self.assertIn("--path", spec.argv)
+        path_index = spec.argv.index("--path")
+        self.assertEqual(spec.argv[path_index + 1], "/Documents")
+        positional_local = spec.argv.index("/tmp/NextCloud")
+        positional_server = spec.argv.index("https://cloud.example.com")
+        self.assertLess(path_index, positional_local)
+        self.assertLess(path_index, positional_server)
+
+    def test_root_remote_path_omits_path_argument(self) -> None:
+        for raw in ("", "/", None):
+            account = dict(self.account)
+            account["remote_path"] = raw
+            spec = build_command(account, self.sync, self.network, "secret", executable="/bin/true")
+            self.assertNotIn("--path", spec.argv)
 
     def test_result_classification(self) -> None:
         self.assertEqual(classify_output("", 0), "success")

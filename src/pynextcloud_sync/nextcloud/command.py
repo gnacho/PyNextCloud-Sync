@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from pynextcloud_sync.storage.config import normalize_remote_path
+
 
 class NextcloudCmdMissingError(FileNotFoundError):
     pass
@@ -50,6 +52,9 @@ def build_command(
         argv.extend(("--httpproxy", str(proxy)))
     if exclude_file:
         argv.extend(("--exclude", str(exclude_file)))
+    remote_path = normalize_remote_path(account.get("remote_path", ""))
+    if remote_path:
+        argv.extend(("--path", remote_path))
     argv.extend((str(account["local_root"]), str(account["server_url"])))
     environment = {"NC_USER": str(account["login_name"]), "NC_PASSWORD": password}
     return CommandSpec(tuple(argv), environment)

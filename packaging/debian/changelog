@@ -1,3 +1,16 @@
+pynextcloud-sync (2.1.0) stable; urgency=medium
+
+  * Add an optional remote folder field so each account can mirror a specific
+    Nextcloud folder instead of the account root.
+  * Pass the --path argument to nextcloudcmd when a remote folder is configured;
+    root-to-root behaviour is unchanged when the field is left as /.
+  * Migrate existing configurations to schema version 4 transparently with the
+    remote path defaulting to the account root.
+  * Treat two accounts against the same server, user, and local folder but
+    different remote folders as distinct.
+
+ -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 22:30:00 -0300
+
 pynextcloud-sync (2.0.0) stable; urgency=medium
 
   * Add support for multiple Nextcloud accounts with independent settings.

@@ -11,6 +11,7 @@ from pynextcloud_sync.storage.config import (
     ConfigStore,
     ConfigurationError,
     account_fingerprint,
+    normalize_remote_path,
     normalize_server_url,
     validate_config,
 )
@@ -167,6 +168,68 @@ class ConfigTests(unittest.TestCase):
         other = dict(ACCOUNT)
         other["local_root"] = "/tmp/Other"
         self.assertNotEqual(first, account_fingerprint(other))
+
+    def test_remote_path_root_is_empty_after_normalize(self) -> None:
+        self.assertEqual(normalize_remote_path(""), "")
+        self.assertEqual(normalize_remote_path("/"), "")
+        self.assertEqual(normalize_remote_path(None), "")
+
+    def test_remote_path_strips_trailing_slash_and_prepends_leading_slash(self) -> None:
+        self.assertEqual(normalize_remote_path("Documents"), "/Documents")
+        self.assertEqual(normalize_remote_path("/Documents/"), "/Documents")
+        self.assertEqual(normalize_remote_path("/Photos/2026/Summer/"), "/Photos/2026/Summer")
+
+    def test_remote_path_rejects_parent_references_and_query(self) -> None:
+        for bad in ("/../etc", "/Documents/../Secrets", "/a?b", "/x#y", "https://host/nc"):
+            with self.assertRaises(ConfigurationError):
+                normalize_remote_path(bad)
+
+    def test_remote_path_persists_through_validate_config(self) -> None:
+        account = dict(ACCOUNT)
+        account["remote_path"] = "/Documents"
+        validated = validate_config(
+            {"schema_version": 3, "accounts": [account]}
+        )
+        self.assertEqual(validated["accounts"][0]["remote_path"], "/Documents")
+        self.assertEqual(validated["account"]["remote_path"], "/Documents")
+
+    def test_remote_path_defaults_to_root_for_legacy_accounts(self) -> None:
+        legacy = {
+            "schema_version": 2,
+            "account": dict(ACCOUNT),
+            "sync": {"max_sync_retries": 9},
+        }
+        validated = validate_config(legacy)
+        self.assertEqual(validated["accounts"][0]["remote_path"], "")
+        self.assertEqual(validated["account"]["remote_path"], "")
+
+    def test_accounts_with_same_local_root_distinct_remote_path_are_distinct(self) -> None:
+        base = dict(ACCOUNT)
+        root_only = account_fingerprint(base)
+        with_remote = dict(base)
+        with_remote["remote_path"] = "/Documents"
+        self.assertNotEqual(root_only, account_fingerprint(with_remote))
+
+    def test_add_same_folder_distinct_remote_path_coexist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ConfigStore(Path(directory) / "settings.json")
+            store.add_account(dict(ACCOUNT))
+            twin = dict(ACCOUNT)
+            twin["remote_path"] = "/Documents"
+            store.add_account(twin)
+            self.assertEqual(len(store.accounts), 2)
+            self.assertEqual(
+                {a["remote_path"] for a in store.accounts}, {"", "/Documents"}
+            )
+
+    def test_add_duplicate_account_with_same_remote_path_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ConfigStore(Path(directory) / "settings.json")
+            twin = dict(ACCOUNT)
+            twin["remote_path"] = "/Documents"
+            store.add_account(twin)
+            with self.assertRaises(ConfigurationError):
+                store.add_account(dict(twin))
 
 
 if __name__ == "__main__":

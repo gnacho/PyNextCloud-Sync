@@ -18,9 +18,10 @@ class AccountSession:
     login_name: str
     authentication_type: str
     local_root: str
-    sync: dict[str, Any]
-    safety: dict[str, Any]
-    runtime: dict[str, Any]
+    remote_path: str = ""
+    sync: dict[str, Any] = field(default_factory=dict)
+    safety: dict[str, Any] = field(default_factory=dict)
+    runtime: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_config_value(cls, account: dict[str, Any]) -> AccountSession:
@@ -30,6 +31,7 @@ class AccountSession:
             login_name=account["login_name"],
             authentication_type=account.get("authentication_type", "manual"),
             local_root=account["local_root"],
+            remote_path=account.get("remote_path", ""),
             sync=account.get("sync", {}),
             safety=account.get("safety", {}),
             runtime=account.get("runtime", {}),
@@ -40,12 +42,18 @@ class AccountSession:
         return Path(self.local_root).expanduser().absolute()
 
     @property
+    def remote_path_argument(self) -> str | None:
+        """Return the ``--path`` argument for ``nextcloudcmd`` or ``None`` for root mirror."""
+        return self.remote_path or None
+
+    @property
     def account_dict(self) -> dict[str, Any]:
         return {
             "server_url": self.server_url,
             "login_name": self.login_name,
             "authentication_type": self.authentication_type,
             "local_root": self.local_root,
+            "remote_path": self.remote_path,
         }
 
     def as_account(self) -> dict[str, Any]:

@@ -12,7 +12,7 @@ from pynextcloud_sync.core.exclusions import DEFAULT_PATTERNS, validate_pattern
 from pynextcloud_sync.util.paths import config_dir, default_sync_root, ensure_private_directory
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 DEFAULT_SYNC: dict[str, Any] = {
     "local_inotify_enabled": True,
@@ -70,12 +70,44 @@ def normalize_server_url(value: str) -> str:
     return urlunsplit((parsed.scheme.lower(), parsed.netloc, path, "", ""))
 
 
+def normalize_remote_path(value: Any) -> str:
+    """Normalize a remote folder path.
+
+    Returns an empty string for the account root (the Nextcloud server root),
+    which the sync layer treats as a plain root-to-root mirror (no ``--path``
+    argument passed to ``nextcloudcmd``). Any non-root value is returned as an
+    absolute Unix-style path without trailing slash, e.g. ``/Documents``.
+    """
+    raw = str(value or "").strip()
+    if not raw or raw == "/":
+        return ""
+    if "\\" in raw or "\0" in raw:
+        raise ConfigurationError("The remote folder may not contain backslashes or null bytes.")
+    if raw.startswith("http://") or raw.startswith("https://"):
+        raise ConfigurationError("The remote folder must be a path, not a full URL.")
+    if any(token in raw for token in ("?", "#")):
+        raise ConfigurationError("The remote folder may not include query parameters or fragments.")
+    if not raw.startswith("/"):
+        raw = "/" + raw
+    segments: list[str] = []
+    for segment in raw.split("/"):
+        if segment in ("", "."):
+            continue
+        if segment == "..":
+            raise ConfigurationError("The remote folder may not contain parent directory references.")
+        segments.append(segment)
+    if not segments:
+        return ""
+    return "/" + "/".join(segments)
+
+
 def account_fingerprint(account: dict[str, Any]) -> str:
     identity = "\n".join(
         (
             str(account.get("server_url", "")).rstrip("/").casefold(),
             str(account.get("login_name", "")).casefold(),
             str(Path(str(account.get("local_root", ""))).expanduser().absolute()),
+            str(account.get("remote_path", "")),
         )
     )
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()
@@ -146,6 +178,7 @@ def _migrate_to_v3(data: dict[str, Any]) -> dict[str, Any]:
                 "login_name": account.get("login_name", ""),
                 "authentication_type": account.get("authentication_type", "manual"),
                 "local_root": account.get("local_root", ""),
+                "remote_path": account.get("remote_path", ""),
                 "sync": data.get("sync", DEFAULT_SYNC),
                 "safety": data.get("safety", DEFAULT_SAFETY),
                 "runtime": data.get("runtime", DEFAULT_RUNTIME),
@@ -174,6 +207,7 @@ def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     if not root.is_absolute():
         raise ConfigurationError("The local synchronization folder must be absolute.")
     validated["local_root"] = str(root)
+    validated["remote_path"] = normalize_remote_path(account.get("remote_path", ""))
     validated["sync"] = _validate_sync(account.get("sync", DEFAULT_SYNC))
     validated["safety"] = _validate_safety(account.get("safety", DEFAULT_SAFETY))
     validated["runtime"] = _validate_runtime(account.get("runtime", DEFAULT_RUNTIME))
@@ -197,6 +231,7 @@ def _refresh_legacy_view(
             "login_name": first["login_name"],
             "authentication_type": first["authentication_type"],
             "local_root": first["local_root"],
+            "remote_path": first["remote_path"],
         }
         data["sync"] = first["sync"]
         data["safety"] = first["safety"]
@@ -321,7 +356,8 @@ class ConfigStore:
         accounts = list(self.data.get("accounts", []))
         if any(item.get("id") == validated["id"] for item in accounts):
             raise ConfigurationError(
-                "An account with the same server, username, and folder already exists."
+                "An account with the same server, username, local folder and "
+                "remote path already exists."
             )
         accounts.append(validated)
         self.data["accounts"] = accounts

@@ -31,6 +31,15 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 2.1.0"),
+            [
+                _("Added an optional Remote Folder field to the setup wizard so an account can mirror a specific Nextcloud folder instead of the entire account root."),
+                _("When a remote folder is configured, the --path argument is passed to nextcloudcmd; leaving the field as / keeps the previous root-to-root behaviour."),
+                _("Existing configurations migrate transparently to schema version 4 with the remote path defaulting to the account root."),
+                _("Two accounts against the same server, user, and local folder but different remote folders are now treated as distinct accounts."),
+            ],
+        ),
+        (
             _("Version 2.0.0"),
             [
                 _("Added support for multiple Nextcloud accounts, each with its own synchronization, safety, and runtime settings."),

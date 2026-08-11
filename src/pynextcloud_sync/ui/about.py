@@ -12,7 +12,7 @@ from gi.repository import Adw, GLib, Gtk
 from pynextcloud_sync import APP_ID, APP_NAME, VERSION
 from pynextcloud_sync.util.i18n import _
 
-from .about_content import MIT_LICENSE_TEXT, release_notes_markup, terms_text
+from .about_content import release_notes_markup, terms_text
 
 
 WEBSITE_URL = "https://eduhcommerce.com.br"
@@ -38,8 +38,7 @@ def show_about_dialog(
         issue_url=ISSUES_URL,
         copyright="© 2026 EduhCommerce",
     )
-    about.set_license_type(Gtk.License.CUSTOM)
-    about.set_license(MIT_LICENSE_TEXT)
+    about.set_license_type(Gtk.License.GPL_3_0)
     about.set_release_notes(release_notes_markup())
     if hasattr(about, "set_release_notes_version"):
         about.set_release_notes_version(VERSION)

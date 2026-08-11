@@ -1,8 +1,8 @@
 # Terms of Use
 
-Last updated: August 7, 2026
+Last updated: August 11, 2026
 
-These Terms of Use apply to PyNextCloud Sync (the “Software”). By installing, running, copying, modifying, or distributing the Software, you acknowledge and accept the conditions below together with the [MIT License](LICENSE).
+These Terms of Use apply to PyNextCloud Sync (the “Software”). By installing, running, copying, modifying, or distributing the Software, you acknowledge and accept the conditions below together with the [GNU General Public License version 3 or later](LICENSE).
 
 ## 1. Independent and unofficial project
 
@@ -54,7 +54,7 @@ Use of a Nextcloud server may also be subject to terms, privacy policies, quotas
 
 ## 9. License
 
-The original PyNextCloud Sync source code and project assets are distributed under the [MIT License](LICENSE). The MIT warranty and liability disclaimer remains fully applicable. External dependencies are not relicensed by this project.
+PyNextCloud Sync version `0.1.19` and subsequent releases are distributed under the [GNU General Public License version 3 or later](LICENSE). Its warranty and liability disclaimer remains fully applicable. External dependencies are not relicensed by this project, and earlier PyNextCloud Sync releases remain available under the license distributed with each respective release.
 
 ## 10. Changes to these terms
 

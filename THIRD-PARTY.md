@@ -1,6 +1,6 @@
 # Third-party projects and licenses
 
-PyNextCloud Sync is original software distributed under the [MIT License](LICENSE). It relies on system packages, protocols, and independently maintained projects listed below.
+PyNextCloud Sync is original software distributed under the [GNU General Public License version 3 or later](LICENSE). It relies on system packages, protocols, and independently maintained projects listed below.
 
 The source ZIP does **not** bundle the source code or binaries of these runtime dependencies. The Debian package declares them as dependencies or recommendations, and the operating system package manager installs them separately. Each external component remains governed by its own upstream license; nothing in this repository relicenses it.
 

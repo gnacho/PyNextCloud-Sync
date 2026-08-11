@@ -1,6 +1,6 @@
 # Projetos de terceiros e licenças
 
-O PyNextCloud Sync é um software original distribuído sob a [Licença MIT](LICENSE). Seu funcionamento utiliza pacotes de sistema, protocolos e projetos independentes relacionados abaixo.
+O PyNextCloud Sync é um software original distribuído sob a [Licença Pública Geral GNU versão 3 ou posterior](LICENSE). Seu funcionamento utiliza pacotes de sistema, protocolos e projetos independentes relacionados abaixo.
 
 O ZIP do código-fonte **não** incorpora o código nem os binários dessas dependências de execução. O pacote Debian as declara como dependências ou recomendações, e o gerenciador de pacotes do sistema operacional faz a instalação separadamente. Cada componente externo continua sujeito à respectiva licença; este repositório não o relicencia.
 

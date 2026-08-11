@@ -171,6 +171,15 @@ class AccountManager:
         runtime.start()
         self._runtimes[account_id] = runtime
 
+    def ensure_account_runtime(self, account_id: str) -> None:
+        """Start the runtime for one account after its bootstrap completes."""
+        if account_id in self._runtimes:
+            return
+        self._refresh_sessions()
+        session = self._session_cache.get(account_id)
+        if session:
+            self._ensure_runtime(account_id, session)
+
     def stop(self) -> None:
         for runtime in tuple(self._runtimes.values()):
             runtime.stop()

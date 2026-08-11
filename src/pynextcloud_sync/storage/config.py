@@ -181,9 +181,15 @@ def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     return validated
 
 
-def _refresh_legacy_view(data: dict[str, Any]) -> dict[str, Any]:
+def _refresh_legacy_view(
+    data: dict[str, Any], active_id: str | None = None
+) -> dict[str, Any]:
     accounts = data.get("accounts", [])
-    first = accounts[0] if accounts else None
+    first = None
+    if active_id:
+        first = next((a for a in accounts if a.get("id") == active_id), None)
+    if first is None and accounts:
+        first = accounts[0]
     if first:
         data["account"] = {
             "id": first["id"],
@@ -203,7 +209,9 @@ def _refresh_legacy_view(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def validate_config(data: dict[str, Any]) -> dict[str, Any]:
+def validate_config(
+    data: dict[str, Any], active_id: str | None = None
+) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ConfigurationError("Configuration root must be an object.")
     version = data.get("schema_version", 1)
@@ -241,13 +249,14 @@ def validate_config(data: dict[str, Any]) -> dict[str, Any]:
             raise ConfigurationError(
                 "The custom proxy must be an HTTP(S) URL without embedded credentials."
             )
-    return _refresh_legacy_view(merged)
+    return _refresh_legacy_view(merged, active_id)
 
 
 class ConfigStore:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or (config_dir() / "settings.json")
         self.data = copy.deepcopy(DEFAULT_CONFIG)
+        self._active_view_id: str | None = None
         self._listeners: list[Callable[[dict[str, Any]], None]] = []
 
     @property
@@ -280,7 +289,7 @@ class ConfigStore:
 
     def save(self, *, notify: bool = True) -> None:
         payload = self._payload()
-        self.data = validate_config(payload)
+        self.data = validate_config(payload, active_id=self._active_view_id)
         ensure_private_directory(self.path.parent)
         temporary = self.path.with_suffix(".tmp")
         content = json.dumps(self.data, indent=2, ensure_ascii=False) + "\n"
@@ -316,6 +325,7 @@ class ConfigStore:
             )
         accounts.append(validated)
         self.data["accounts"] = accounts
+        self._active_view_id = validated["id"]
         self.save()
         return validated["id"]
 
@@ -326,9 +336,16 @@ class ConfigStore:
         if len(accounts) == len(self.data.get("accounts", [])):
             return False
         self.data["accounts"] = accounts
+        if self._active_view_id == account_id:
+            self._active_view_id = accounts[0]["id"] if accounts else None
         self.save()
         return True
 
+    def set_active_view(self, account_id: str | None) -> None:
+        self._active_view_id = account_id
+        self.data = _refresh_legacy_view(self.data, account_id)
+
     def reset_account(self) -> None:
+        self._active_view_id = None
         self.data = validate_config(copy.deepcopy(DEFAULT_CONFIG))
         self.save()

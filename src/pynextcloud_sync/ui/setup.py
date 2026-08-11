@@ -336,7 +336,7 @@ class SetupWindow(Adw.ApplicationWindow):
     def _finish_setup(self) -> None:
         root = Path(self.folder_entry.get_text()).expanduser()
         root.mkdir(parents=True, exist_ok=True)
-        self.config.data["account"] = {
+        account = {
             "server_url": self.server,
             "login_name": self.username,
             "authentication_type": self.authentication_type,
@@ -345,8 +345,6 @@ class SetupWindow(Adw.ApplicationWindow):
         self.config.data["network"]["trust_invalid_certificates"] = (
             self.trust_invalid.get_active()
         )
-        self.config.data["safety"]["bootstrap_complete"] = False
-        self.config.data["safety"]["bootstrap_completed_at"] = None
-        self.config.save()
+        self.config.add_account(account)
         AutostartManager().set_enabled(self.config.data["general"]["autostart"])
         self.on_complete()

@@ -13,6 +13,7 @@ python_sources = files(
   'src/pynextcloud_sync/__main__.py',
   'src/pynextcloud_sync/application.py',
   'src/pynextcloud_sync/core/__init__.py',
+  'src/pynextcloud_sync/core/account.py',
   'src/pynextcloud_sync/core/autostart.py',
   'src/pynextcloud_sync/core/bootstrap.py',
   'src/pynextcloud_sync/core/desktop_integration.py',
@@ -72,6 +73,7 @@ python.install_sources(
 python.install_sources(
   files(
     'src/pynextcloud_sync/core/__init__.py',
+    'src/pynextcloud_sync/core/account.py',
     'src/pynextcloud_sync/core/autostart.py',
     'src/pynextcloud_sync/core/bootstrap.py',
     'src/pynextcloud_sync/core/desktop_integration.py',

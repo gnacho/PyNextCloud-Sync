@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from gi.repository import GLib
 
+from pynextcloud_sync.core.debounce import DebounceGate
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
 from pynextcloud_sync.core.state import AppState, StateController
 from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard, SafetyManifest
@@ -47,9 +48,12 @@ class SyncScheduler:
         self.battery_paused = False
         self.local_dirty = False
         self.remote_pending = False
-        self._debounce_source = 0
+        self._debounce = DebounceGate(
+            debounce_ms=self.DEBOUNCE_MS,
+            cooldown_seconds=self.COOLDOWN_SECONDS,
+            on_ready=self._schedule_start,
+        )
         self._start_source = 0
-        self._cooldown_source = 0
         self._preparing = False
         self._safety_checking = False
         self._safety_bypass_once = False
@@ -131,22 +135,15 @@ class SyncScheduler:
             self._schedule_start()
 
     def _schedule_debounce(self) -> None:
-        if self._debounce_source:
-            GLib.source_remove(self._debounce_source)
         self.state.set(AppState.SYNC_QUEUED, _("Waiting for local changes to settle"))
-        self._debounce_source = GLib.timeout_add(self.DEBOUNCE_MS, self._debounce_elapsed)
-
-    def _debounce_elapsed(self) -> bool:
-        self._debounce_source = 0
-        self._schedule_start()
-        return GLib.SOURCE_REMOVE
+        self._debounce.kick()
 
     def _schedule_start(self) -> None:
         if (
             self._stopped
-            or self._debounce_source
+            or self._debounce.debounce_source
             or self._start_source
-            or self._cooldown_source
+            or self._debounce.in_cooldown
             or self._preparing
             or self._safety_checking
             or self.engine.running
@@ -361,9 +358,7 @@ class SyncScheduler:
                 self.queue.add(Trigger.LOCAL_INOTIFY)
             queued = bool(self.queue)
         self._inotify_during_sync = False
-        self._cooldown_source = GLib.timeout_add_seconds(
-            self.COOLDOWN_SECONDS, self._cooldown_finished, queued
-        )
+        self._debounce.begin_cooldown(lambda: self._cooldown_finished(queued))
 
     def _baseline_recorded(self, recorded: bool) -> bool:
         self._preparing = False
@@ -382,7 +377,7 @@ class SyncScheduler:
                 )
         if (
             not self._stopped
-            and not self._cooldown_source
+            and not self._debounce.in_cooldown
             and self.queue
             and self.online
             and not self.paused
@@ -390,16 +385,14 @@ class SyncScheduler:
             self._schedule_start()
         return GLib.SOURCE_REMOVE
 
-    def _cooldown_finished(self, run_pending: bool) -> bool:
-        self._cooldown_source = 0
+    def _cooldown_finished(self, run_pending: bool) -> None:
         if self._stopped:
-            return GLib.SOURCE_REMOVE
+            return
         if run_pending and self.queue and self.online and not self.paused:
             self._schedule_start()
         else:
             if not self.paused:
                 self._set_idle_state()
-        return GLib.SOURCE_REMOVE
 
     def set_user_paused(self, paused: bool) -> None:
         self.user_paused = paused
@@ -470,11 +463,10 @@ class SyncScheduler:
 
     def stop(self) -> None:
         self._stopped = True
-        for attribute in ("_debounce_source", "_start_source", "_cooldown_source"):
-            source = getattr(self, attribute)
-            if source:
-                GLib.source_remove(source)
-                setattr(self, attribute, 0)
+        self._debounce.stop()
+        if self._start_source:
+            GLib.source_remove(self._start_source)
+            self._start_source = 0
         self.queue.clear()
         self.local_dirty = False
         self.remote_pending = False

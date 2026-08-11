@@ -146,6 +146,8 @@ class AccountManager:
     def _refresh_sessions(self) -> None:
         cache: dict[str, AccountSession] = {}
         for account in self.config.accounts:
+            if not account.get("safety", {}).get("bootstrap_complete", False):
+                continue
             session = AccountSession.from_config_value(account)
             cache[session.account_id] = session
         self._session_cache = cache

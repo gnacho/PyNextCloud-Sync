@@ -387,9 +387,14 @@ class PyNextCloudApplication(Adw.Application):
             return
         active = self.active_account_id
         if active not in self.account_manager.runtimes:
-            active = accounts[0]["id"]
+            for account in accounts:
+                if account["id"] in self.account_manager.runtimes:
+                    active = account["id"]
+                    break
+            else:
+                active = None
         self.active_account_id = active
-        runtime = self.account_manager.get(active)
+        runtime = self.account_manager.get(active) if active else None
         self.runtime = runtime.runtime if runtime else None
 
     def _ensure_desktop_integration(self) -> None:

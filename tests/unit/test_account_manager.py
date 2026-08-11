@@ -36,12 +36,14 @@ ACCOUNT_A = {
     "login_name": "alice",
     "authentication_type": "browser",
     "local_root": "/tmp/NextCloud",
+    "safety": {"bootstrap_complete": True},
 }
 ACCOUNT_B = {
     "server_url": "https://work.example.com",
     "login_name": "bob",
     "authentication_type": "manual",
     "local_root": "/tmp/WorkCloud",
+    "safety": {"bootstrap_complete": True},
 }
 
 

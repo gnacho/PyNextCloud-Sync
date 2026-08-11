@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.19 — 2026-08-11
+
+- Relicensed PyNextCloud Sync under the GNU General Public License version 3
+  or later.
+- Replaced the custom MIT text in About with GTK's native GPLv3 license
+  presentation.
+- Updated Python, Debian, AppStream, documentation, terms, third-party notices,
+  and translation metadata to identify the new license consistently.
+- No synchronization, safety, authentication, update-checking, or desktop
+  integration behavior was changed.
+
 ## 0.1.18 — 2026-08-10
 
 - Detect Linux `IN_Q_OVERFLOW` explicitly. When the inotify queue loses events,

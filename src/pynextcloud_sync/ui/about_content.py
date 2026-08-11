@@ -5,29 +5,6 @@ from html import escape
 from pynextcloud_sync.util.i18n import _
 
 
-MIT_LICENSE_TEXT = """MIT License
-
-Copyright (c) 2026 EduhCommerce
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE."""
-
-
 def terms_text() -> str:
     return _(
         "PyNextCloud Sync is an independent, unofficial third-party project. "
@@ -46,12 +23,29 @@ def terms_text() -> str:
         "Nextcloud versions is not guaranteed.\n\n"
         "No telemetry, advertising, or usage tracking is included. Credentials are "
         "stored through the desktop Secret Service. Use of this software is also "
-        "subject to the MIT License and its warranty disclaimer."
+        "subject to the GNU General Public License version 3 or later and its "
+        "warranty disclaimer."
     )
 
 
 def release_notes_markup() -> str:
     sections = [
+        (
+            _("Version 0.1.19"),
+            [
+                _("Relicensed PyNextCloud Sync under the GNU General Public License version 3 or later."),
+                _("About now identifies and displays the GPLv3 license using GTK's native license presentation."),
+                _("Updated project, Debian, AppStream, documentation, terms, and translation metadata to consistently identify the new license."),
+            ],
+        ),
+        (
+            _("Version 0.1.18"),
+            [
+                _("Recovered explicitly from Linux inotify queue overflow by rebuilding filesystem monitoring and requesting a protected nextcloudcmd reconciliation."),
+                _("Added a durable marker around nextcloudcmd that is cleared only after a successful safety baseline commit."),
+                _("Retained the previous last-known-good safety baseline after interrupted runs."),
+            ],
+        ),
         (
             _("Version 0.1.17"),
             [

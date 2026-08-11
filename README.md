@@ -228,11 +228,14 @@ Patterns containing `/`, `\`, or `..` are rejected. Version 1 does not support f
 ## Files, credentials, and privacy
 
 - Configuration: `$XDG_CONFIG_HOME/pynextcloud-sync/settings.json`
-- Generated exclusions: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes.lst`
+- Generated exclusions: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes-<account>.lst` (one per account)
 - Daily logs: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
-- Safety manifest: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest.json`
+- Safety manifest: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest-<account>.json` (one per account)
+- Sync run markers: `$XDG_STATE_HOME/pynextcloud-sync/sync-run-<account>.json` (one per account)
 - Archived old state databases: `$XDG_STATE_HOME/pynextcloud-sync/safety-archives/`
 - Account secret: GNOME Keyring or another compatible Secret Service provider
+
+The `<account>` suffix is a short hash of the server URL, login name, and local folder, so two accounts never share the same safety baseline or exclusion file.
 
 Logs remain local, use one file per day, and are retained for 30 days by default. Sensitive values are redacted from application-owned log messages. If biometric desktop login leaves the Login keyring locked, GNOME shows its native unlock prompt before synchronization. The desktop password is handled only by GNOME; PyNextCloud Sync does not receive or store it. Canceling the prompt leaves the app waiting for an explicit **Unlock Password Keyring** request instead of repeatedly prompting or reporting invalid Nextcloud credentials.
 

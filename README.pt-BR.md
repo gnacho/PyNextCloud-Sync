@@ -229,11 +229,14 @@ Padrões contendo `/`, `\` ou `..` são rejeitados. A versão 1 não permite exc
 ## Arquivos, credenciais e privacidade
 
 - Configuração: `$XDG_CONFIG_HOME/pynextcloud-sync/settings.json`
-- Exclusões geradas: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes.lst`
+- Exclusões geradas: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes-<conta>.lst` (uma por conta)
 - Logs diários: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
-- Manifesto de segurança: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest.json`
+- Manifesto de segurança: `$XDG_STATE_HOME/pynextcloud-sync/safety-manifest-<conta>.json` (uma por conta)
+- Marcadores de execução: `$XDG_STATE_HOME/pynextcloud-sync/sync-run-<conta>.json` (uma por conta)
 - Bancos antigos arquivados: `$XDG_STATE_HOME/pynextcloud-sync/safety-archives/`
 - Segredo da conta: GNOME Keyring ou outro provedor compatível com Secret Service
+
+O sufixo `<conta>` é um hash curto da URL do servidor, do nome de usuário e da pasta local, então duas contas nunca compartilham a mesma linha de base de segurança ou arquivo de exclusões.
 
 Os logs permanecem no computador, usam um arquivo por dia e são mantidos por 30 dias por padrão. Valores sensíveis são ocultados das mensagens de log geradas pelo aplicativo. Se o login biométrico deixar a carteira `Login` bloqueada, o GNOME exibe sua solicitação nativa de desbloqueio antes da sincronização. A senha do computador é tratada somente pelo GNOME; o PyNextCloud Sync não a recebe nem armazena. Cancelar a solicitação deixa o aplicativo aguardando o comando explícito **Desbloquear carteira de senhas**, sem repetir diálogos ou acusar credenciais inválidas do Nextcloud.
 

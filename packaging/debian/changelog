@@ -1,3 +1,15 @@
+nextsync (0.2.5) stable; urgency=medium
+
+  * Fix the Settings window crashes that kept it closed (RuntimeController-only
+    attributes read off an AccountRuntime; legacy view missing delete_guard),
+    so folders can be added and synchronization actually runs.
+  * Settings and About buttons use the Lucide settings-2 and info icons.
+  * Publish the monochrome Lucide cloud glyph on a transparent background as
+    the tray icon (cloud-off when no account is configured), rendered as an
+    ARGB pixmap so the tray host never shows it black.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 01:30:00 +0200
+
 nextsync (0.2.4) stable; urgency=medium
 
   * Open Settings for accounts without sync folders; hide desktop-integration
@@ -6,7 +18,7 @@ nextsync (0.2.4) stable; urgency=medium
   * Trim the tray menu to Open NextSync, Settings, and Quit.
   * Replace the remaining hand-drawn SVGs with Lucide icons.
 
- -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:05:00 -0300
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:05:00 +0200
 
 nextsync (0.2.3) stable; urgency=medium
 

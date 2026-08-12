@@ -1,13 +1,12 @@
 {
   "schema_version": 1,
-  "version": "0.2.4",
+  "version": "0.2.5",
   "mandatory": false,
-  "released_at": "2026-08-13T00:05:00Z",
-  "summary": "NextSync 0.2.4: Settings opens for zero-folder accounts, themed tray icon, trimmed tray menu, and Lucide-unified icons.",
+  "released_at": "2026-08-13T01:30:00Z",
+  "summary": "NextSync 0.2.5: Settings now actually opens (two crashes fixed) so folders can be added, Lucide settings-2/info icons, and a monochrome transparent tray icon.",
   "changelog": [
-    "Settings now opens for accounts with no sync folders; desktop-integration switches are hidden when there is no folder (fixes the silent no-op).",
-    "The tray icon publishes a bare symbolic icon name resolved through the icon theme, so it follows the theme instead of rendering black.",
-    "The tray menu is trimmed to Open NextSync, Settings, and Quit; per-account submenu and redundant actions removed.",
-    "All shipped icons now come from Lucide (folder and symbolic variants replaced)."
+    "Fixed the Settings window crashes that kept it closed: SettingsWindow received an AccountRuntime that did not expose the attributes it reads (push_message, push_state, watched_directories, reconfigure, logger), and the legacy config view never copied delete_guard. Both fixed, so you can now open Settings, add sync folders, and actually synchronize.",
+    "Settings and About buttons now use the Lucide settings-2 and info icons.",
+    "The tray icon is now the monochrome Lucide cloud glyph on a transparent background (cloud-off when no account is configured), rendered as an ARGB pixmap so the tray host shows it identically and never black."
   ]
 }

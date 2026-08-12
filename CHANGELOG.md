@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5 — 2026-08-13
+
+### Settings finally opens (two crashes fixed), Lucide icons, monochrome tray
+
+- **Settings now opens.** Two bugs kept it closed: `SettingsWindow` received an `AccountRuntime` that did not expose the attributes it reads (`push_message`, `push_state`, `watched_directories`, `reconfigure`, `logger`), and the legacy config view never copied `delete_guard` into `config.data`, so building the window raised `AttributeError`/`KeyError`. Both fixed. You can now open Settings, add sync folders, and actually synchronize.
+- **Settings and About buttons** use the Lucide `settings-2` and `info` icons, matching the unified Lucide icon set.
+- **Monochrome transparent tray icon**: the Lucide `cloud` glyph on a transparent background, published as an ARGB pixmap so the tray host renders it identically and never black (`cloud-off` when no account is configured).
+
 ## 0.2.4 — 2026-08-12
 
 ### Settings for zero-folder accounts, tray polish, Lucide icons

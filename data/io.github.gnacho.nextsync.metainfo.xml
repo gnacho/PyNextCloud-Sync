@@ -15,14 +15,12 @@
   <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
   <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
   <releases>
-    <release version="0.2.4" date="2026-08-12">
+    <release version="0.2.5" date="2026-08-13">
       <description>
         <ul>
-          <li>Removed the protected-initialization subsystem (bootstrap staging, safety baseline, run markers, deletion guard) so nextcloudcmd owns synchronization, conflict resolution, and safety; config schema bumps from v4 to v5 and drops the safety fields automatically.</li>
-          <li>Leftover bootstrap staging trees are removed and legacy safety manifests are archived on first run after upgrade.</li>
-          <li>Added a first-sync confirmation dialog before the initial run when the local folder, the remote folder, or both are empty, probing the remote side with a shallow WebDAV PROPFIND.</li>
-          <li>Added a recent-activity and conflict view with Keep Local, Keep Remote, and Open in Files actions, plus a deletion guard that blocks sync before nextcloudcmd starts when a large share of local files disappears.</li>
-          <li>Surfaced real nextcloudcmd per-file progress in the account view and tray tooltip during a sync.</li>
+          <li>Fixed the Settings window crashes that kept it closed: it read RuntimeController-only attributes off an AccountRuntime, and the legacy config view never exposed delete_guard. You can now open Settings, add sync folders, and actually synchronize.</li>
+          <li>Settings and About buttons use the Lucide settings-2 and info icons.</li>
+          <li>The tray icon is now the monochrome Lucide cloud glyph on a transparent background, rendered as an ARGB pixmap so the tray host shows it identically and never black (cloud-off when no account is configured).</li>
         </ul>
       </description>
     </release>

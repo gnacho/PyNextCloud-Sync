@@ -136,12 +136,16 @@ class StatusNotifier:
     def _icon_data(
         self, presentation: TrayPresentation
     ) -> tuple[str, str, list[tuple[int, int, bytes]]]:
-        # The status SVGs use stroke="currentColor", so the tray host must
-        # resolve them through the icon theme to recolor them. Publishing an
-        # absolute path made GNOME's AppIndicator host render the file as-is
-        # (black); a bare symbolic name under the indexed hicolor/symbolic/apps
-        # directory lets the theme tint it.
-        return f"nextsync-status-{presentation.icon_key}-symbolic", "", []
+        # Publish the Lucide application icon as an ARGB pixmap so the tray
+        # host renders it exactly as designed (blue background + white cloud),
+        # regardless of whether the host can recolor "currentColor" symbolic
+        # icons. The name is kept as a fallback for hosts that resolve the
+        # theme, and the pixmaps cover hosts that only draw IconPixmap.
+        return (
+            "io.github.gnacho.nextsync",
+            "",
+            self._load_application_pixmaps(self.application_icon),
+        )
 
     def _load_application_pixmaps(
         self, source: Path | None
@@ -317,7 +321,7 @@ class StatusNotifier:
         }
         icon_names = {
             1: "window-new-symbolic",
-            7: "emblem-system-symbolic",
+            7: "nextsync-settings-2-symbolic",
             8: "application-exit-symbolic",
         }
         if item_id in icon_names:

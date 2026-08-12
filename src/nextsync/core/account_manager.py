@@ -7,6 +7,7 @@ from nextsync.core.runtime import RuntimeController
 from nextsync.core.state import (
     AggregateStateController,
     AppState,
+    PushState,
     StateController,
 )
 from nextsync.core.sync_permit import SyncPermit
@@ -237,6 +238,38 @@ class AccountRuntime:
         if not self._folders:
             return _NeutralScheduler()
         return next(iter(self._folders.values())).runtime.scheduler
+
+    @property
+    def logger(self) -> Any:
+        """The shared application logger used by the settings window."""
+        return self._logger
+
+    @property
+    def push_message(self) -> str:
+        """Message of the first folder's notify_push client, or empty."""
+        if not self._folders:
+            return ""
+        return next(iter(self._folders.values())).runtime.push_message
+
+    @property
+    def push_state(self) -> PushState:
+        """Push state of the first folder's notify_push client."""
+        if not self._folders:
+            return PushState.DISABLED
+        return next(iter(self._folders.values())).runtime.push_state
+
+    @property
+    def watched_directories(self) -> int:
+        """Total inotify watch count across the account's folder runtimes."""
+        return sum(
+            folder_runtime.runtime.watched_directories
+            for folder_runtime in self._folders.values()
+        )
+
+    def reconfigure(self) -> None:
+        """Reconfigure every folder runtime of the account."""
+        for folder_runtime in self._folders.values():
+            folder_runtime.runtime.reconfigure()
 
     @property
     def engine(self) -> Any:

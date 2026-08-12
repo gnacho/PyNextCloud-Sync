@@ -555,12 +555,12 @@ class MainWindow(Adw.ApplicationWindow):
         header = Adw.HeaderBar()
         header.set_title_widget(Adw.WindowTitle(title=APP_NAME, subtitle=_("Nextcloud file synchronization")))
         settings = Gtk.Button(
-            icon_name="emblem-system-symbolic", tooltip_text=_("Settings"), css_classes=["flat"]
+            icon_name="nextsync-settings-2-symbolic", tooltip_text=_("Settings"), css_classes=["flat"]
         )
         settings.connect("clicked", self.show_settings)
         header.pack_end(settings)
         about = Gtk.Button(
-            icon_name="help-about-symbolic", tooltip_text=_("About"), css_classes=["flat"]
+            icon_name="nextsync-info-symbolic", tooltip_text=_("About"), css_classes=["flat"]
         )
         about.connect("clicked", self._show_about)
         header.pack_end(about)

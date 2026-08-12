@@ -106,6 +106,32 @@ class FakeRuntimeController:
 
 
 class AccountManagerTests(unittest.TestCase):
+    def test_account_runtime_exposes_settings_window_contract(self) -> None:
+        """SettingsWindow reads RuntimeController-style attributes off the
+        account runtime. Without these, Ajustes crashes with AttributeError and
+        folders can never be added. Guard the contract for the zero-folder case.
+        """
+        store = _store_with([{**ACCOUNT_A, "folders": []}])
+        with patch(
+            "nextsync.core.account_manager.RuntimeController",
+            FakeRuntimeController,
+        ):
+            manager = AccountManager(store, None, None)
+            manager.start()
+            runtime = next(iter(manager.runtimes.values()))
+            for attribute in (
+                "push_message",
+                "push_state",
+                "watched_directories",
+                "reconfigure",
+                "logger",
+            ):
+                self.assertTrue(
+                    hasattr(runtime, attribute),
+                    f"AccountRuntime must expose {attribute} for SettingsWindow",
+                )
+            runtime.reconfigure()
+
     def test_manager_starts_one_runtime_per_account_and_folder(self) -> None:
         store = _store_with(
             [

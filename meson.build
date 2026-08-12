@@ -184,6 +184,11 @@ install_data(
   install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'apps'),
 )
 install_data(
+  'data/icons/nextsync-settings-2-symbolic.svg',
+  'data/icons/nextsync-info-symbolic.svg',
+  install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'apps'),
+)
+install_data(
   'data/icons/io.github.gnacho.nextsync-folder.svg',
   install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'scalable', 'places'),
 )

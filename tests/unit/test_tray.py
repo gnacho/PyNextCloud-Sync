@@ -202,10 +202,10 @@ class TrayContractTests(unittest.TestCase):
         paused_properties = paused_change[4].value[1]
         self.assertEqual(
             paused_properties["IconName"].value,
-            "nextsync-status-paused-symbolic",
+            "io.github.gnacho.nextsync",
         )
         self.assertEqual(paused_properties["IconThemePath"].value, "")
-        self.assertEqual(paused_properties["IconPixmap"].value, [])
+        self.assertIsInstance(paused_properties["IconPixmap"].value, list)
         self.assertEqual(paused_properties["Status"].value, "Active")
 
         connection.signals.clear()
@@ -219,11 +219,7 @@ class TrayContractTests(unittest.TestCase):
         syncing_properties = syncing_change[4].value[1]
         self.assertEqual(
             syncing_properties["IconName"].value,
-            "nextsync-status-syncing-symbolic",
-        )
-        self.assertNotEqual(
-            paused_properties["IconName"].value,
-            syncing_properties["IconName"].value,
+            "io.github.gnacho.nextsync",
         )
         self.assertIn(
             "NewIcon", [signal[3] for signal in connection.signals]
@@ -249,7 +245,7 @@ class TrayContractTests(unittest.TestCase):
         self.assertEqual(children, [1, 7, 8])
         expected = {
             1: ("Open NextSync", "window-new-symbolic"),
-            7: ("Settings", "emblem-system-symbolic"),
+            7: ("Settings", "nextsync-settings-2-symbolic"),
             8: ("Quit", "application-exit-symbolic"),
         }
         for item_id in children:

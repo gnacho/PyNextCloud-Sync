@@ -116,8 +116,8 @@ class SettingsWindow(Adw.PreferencesWindow):
         application: Gtk.Application,
         config: object,
         runtime: object,
-        desktop_integration: object,
         on_remove_account: object,
+        desktop_integration: object | None = None,
     ) -> None:
         super().__init__(application=application, title=_("Settings"))
         self.set_default_size(720, 640)
@@ -125,15 +125,17 @@ class SettingsWindow(Adw.PreferencesWindow):
         self.runtime = runtime
         self.desktop_integration = desktop_integration
         self.on_remove_account = on_remove_account
+        self._integration_unsubscribe = None
         self._building = True
         self._build_general()
         self._build_sync()
         self._build_network()
         self._build_advanced()
         self._building = False
-        self._integration_unsubscribe = self.desktop_integration.subscribe(
-            self._integration_changed
-        )
+        if self.desktop_integration is not None:
+            self._integration_unsubscribe = self.desktop_integration.subscribe(
+                self._integration_changed
+            )
         self.connect("close-request", self._release_integration_subscription)
 
     def _build_general(self) -> None:
@@ -168,7 +170,41 @@ class SettingsWindow(Adw.PreferencesWindow):
         add_folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
         add_folder_row.connect("activated", self._add_folder)
         folder.add(add_folder_row)
+        self._build_desktop_integrations(folder)
         page.add(folder)
+        self.add(page)
+
+    def _build_desktop_integrations(self, folder: Adw.PreferencesGroup) -> None:
+        if self.desktop_integration is None:
+            return
+        integration_state = self.desktop_integration.state
+        self.nautilus_bookmark = Adw.SwitchRow(
+            title=_("Show in Files sidebar"),
+            subtitle=_("Adds the synchronized folder to the file manager sidebar."),
+            active=integration_state.nautilus_bookmark,
+        )
+        self.nautilus_bookmark.connect(
+            "notify::active", self._toggle_nautilus_bookmark
+        )
+        folder.add(self.nautilus_bookmark)
+        self.desktop_shortcut = Adw.SwitchRow(
+            title=_("Show on Desktop"),
+            subtitle=_("Creates a link to the synchronized folder on the desktop."),
+            active=integration_state.desktop_shortcut,
+        )
+        self.desktop_shortcut.connect(
+            "notify::active", self._toggle_desktop_shortcut
+        )
+        folder.add(self.desktop_shortcut)
+        self.special_folder_icon = Adw.SwitchRow(
+            title=_("Use special folder icon"),
+            subtitle=_("Identifies the synchronized folder and its shortcuts in Files."),
+            active=integration_state.special_icon,
+        )
+        self.special_folder_icon.connect(
+            "notify::active", self._toggle_special_folder_icon
+        )
+        folder.add(self.special_folder_icon)
 
     def _populate_folder_rows(self, group: Adw.PreferencesGroup, account: dict) -> None:
         for row in self._folder_rows:
@@ -284,36 +320,6 @@ class SettingsWindow(Adw.PreferencesWindow):
             overlay.add_toast(toast)
         elif message:
             self.present()
-        integration_state = self.desktop_integration.state
-        self.nautilus_bookmark = Adw.SwitchRow(
-            title=_("Show in Files sidebar"),
-            subtitle=_("Adds the synchronized folder to the file manager sidebar."),
-            active=integration_state.nautilus_bookmark,
-        )
-        self.nautilus_bookmark.connect(
-            "notify::active", self._toggle_nautilus_bookmark
-        )
-        folder.add(self.nautilus_bookmark)
-        self.desktop_shortcut = Adw.SwitchRow(
-            title=_("Show on Desktop"),
-            subtitle=_("Creates a link to the synchronized folder on the desktop."),
-            active=integration_state.desktop_shortcut,
-        )
-        self.desktop_shortcut.connect(
-            "notify::active", self._toggle_desktop_shortcut
-        )
-        folder.add(self.desktop_shortcut)
-        self.special_folder_icon = Adw.SwitchRow(
-            title=_("Use special folder icon"),
-            subtitle=_("Identifies the synchronized folder and its shortcuts in Files."),
-            active=integration_state.special_icon,
-        )
-        self.special_folder_icon.connect(
-            "notify::active", self._toggle_special_folder_icon
-        )
-        folder.add(self.special_folder_icon)
-        page.add(folder)
-        self.add(page)
 
     def _toggle_nautilus_bookmark(self, *_args: object) -> None:
         if self._building:
@@ -340,6 +346,8 @@ class SettingsWindow(Adw.PreferencesWindow):
         self._integration_changed(self.desktop_integration.state)
 
     def _integration_changed(self, state: object) -> None:
+        if self.desktop_integration is None:
+            return
         self._building = True
         try:
             self.nautilus_bookmark.set_active(state.nautilus_bookmark)

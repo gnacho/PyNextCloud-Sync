@@ -1,3 +1,10 @@
+nextsync (0.2.3) stable; urgency=medium
+
+  * Fix the silent main-window crash on libadwaita 1.6+ (NavigationSplitView
+    now takes NavigationPage objects).
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:55:00 +0200
+
 nextsync (0.2.2) stable; urgency=medium
 
   * Fix a crash when an account has no sync folders (neutral scheduler for the

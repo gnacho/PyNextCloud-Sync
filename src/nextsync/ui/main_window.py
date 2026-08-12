@@ -580,7 +580,8 @@ class MainWindow(Adw.ApplicationWindow):
         clamp.set_child(self.content_stack)
         scroller.set_child(clamp)
         self.toast_overlay.set_child(scroller)
-        split.set_content(sidebar=sidebar, content=self.toast_overlay)
+        split.set_sidebar(Adw.NavigationPage.new(sidebar, _("Accounts")))
+        split.set_content(Adw.NavigationPage.new(self.toast_overlay, APP_NAME))
 
         toolbar.set_content(split)
         self.set_content(toolbar)

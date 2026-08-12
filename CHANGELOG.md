@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.3 — 2026-08-12
+
+### Fix: main window on libadwaita 1.6+
+
+- Fixed a silent crash that prevented the main window from opening on
+  libadwaita 1.6+: `Adw.NavigationSplitView` now receives `NavigationPage`
+  objects for the sidebar and content instead of the removed
+  `sidebar=`/`content=` keyword form.
+
 ## 0.2.2 — 2026-08-12
 
 ### Fix: zero-folder accounts, Add Folder row, Spanish

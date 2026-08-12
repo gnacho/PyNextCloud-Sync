@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "version": "0.2.5",
+  "version": "0.2.6",
   "mandatory": false,
-  "released_at": "2026-08-13T01:30:00Z",
-  "summary": "NextSync 0.2.5: Settings now actually opens (two crashes fixed) so folders can be added, Lucide settings-2/info icons, and a monochrome transparent tray icon.",
+  "released_at": "2026-08-13T02:00:00Z",
+  "summary": "NextSync 0.2.6: white tray glyphs and a remote-folder picker that lists existing server folders (blank field auto-names after the local folder).",
   "changelog": [
-    "Fixed the Settings window crashes that kept it closed: SettingsWindow received an AccountRuntime that did not expose the attributes it reads (push_message, push_state, watched_directories, reconfigure, logger), and the legacy config view never copied delete_guard. Both fixed, so you can now open Settings, add sync folders, and actually synchronize.",
-    "Settings and About buttons now use the Lucide settings-2 and info icons.",
-    "The tray icon is now the monochrome Lucide cloud glyph on a transparent background (cloud-off when no account is configured), rendered as an ARGB pixmap so the tray host shows it identically and never black."
+    "The tray icon glyphs now use a fixed white stroke, so the host renders the exact Lucide cloud/cloud-off design in white on the panel instead of black or a wrong color.",
+    "The Add Folder dialog now lists the remote folders that already exist on the server (WebDAV PROPFIND), so you can pick one instead of typing a path.",
+    "Leaving the remote folder field blank now creates a remote folder with the same name as the local folder (e.g. /home/user/NextCloud -> /NextCloud) instead of mapping to the account root."
   ]
 }

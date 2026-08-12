@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.6 — 2026-08-13
+
+### White tray glyphs, remote folder picker from the server
+
+- **Tray icon renders in white**: the Lucide `cloud`/`cloud-off` glyphs now use a fixed white stroke, so the tray host draws the exact design in white on the panel instead of black or a wrong color. Transparent background preserved.
+- **Remote folder picker**: the Add Folder dialog lists the remote folders that already exist on the server (via WebDAV PROPFIND), so you can pick one instead of typing a path.
+- **Blank remote folder auto-names**: leaving the remote folder field empty now creates a remote folder with the same name as the local folder (e.g. `/home/user/NextCloud` → `/NextCloud`); an explicit `/` still maps to the account root.
+
 ## 0.2.5 — 2026-08-13
 
 ### Settings finally opens (two crashes fixed), Lucide icons, monochrome tray

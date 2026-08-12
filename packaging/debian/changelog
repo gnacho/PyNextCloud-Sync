@@ -1,3 +1,14 @@
+nextsync (0.2.6) stable; urgency=medium
+
+  * Tray icon glyphs use a fixed white stroke so the host renders the exact
+    Lucide cloud/cloud-off design in white on the panel.
+  * The Add Folder dialog lists remote folders that already exist on the server
+    (WebDAV PROPFIND), so you can pick one instead of typing a path.
+  * Leaving the remote folder field blank creates a remote folder named after
+    the local folder; an explicit / still maps to the account root.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 02:00:00 +0200
+
 nextsync (0.2.5) stable; urgency=medium
 
   * Fix the Settings window crashes that kept it closed (RuntimeController-only

@@ -529,15 +529,15 @@ class NextSyncApplication(Adw.Application):
         self._ensure_runtime()
         self._ensure_tray()
         self._ensure_desktop_integration()
-        if not self.runtime or not self.desktop_integration:
+        if not self.runtime:
             return
         if not self.settings_window:
             self.settings_window = SettingsWindow(
                 self,
                 self.config,
                 self.runtime,
-                self.desktop_integration,
                 self.remove_account,
+                self.desktop_integration,
             )
             self.settings_window.connect("close-request", self._settings_window_closed)
         self.settings_window.unminimize()

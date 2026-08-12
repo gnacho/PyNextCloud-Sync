@@ -15,6 +15,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 from pynextcloud_sync import APP_NAME
 from pynextcloud_sync.core.account import AccountSession
 from pynextcloud_sync.core.state import AppState, StateSnapshot
+from pynextcloud_sync.nextcloud.nextcloudcmd_progress import SyncProgress
 from pynextcloud_sync.util.i18n import _
 
 from .about import show_about_dialog
@@ -96,8 +97,13 @@ class AccountView(Gtk.Box):
         self.status_description = Gtk.Label(xalign=0, css_classes=["dim-label"])
         self.status_description.set_ellipsize(Pango.EllipsizeMode.END)
         self.status_description.set_single_line_mode(True)
+        self.status_progress = Gtk.Label(xalign=0, css_classes=["dim-label"])
+        self.status_progress.set_ellipsize(Pango.EllipsizeMode.END)
+        self.status_progress.set_single_line_mode(True)
+        self.status_progress.set_visible(False)
         status_text.append(self.status_title)
         status_text.append(self.status_description)
+        status_text.append(self.status_progress)
         status_box.append(status_text)
         status_row.set_child(status_box)
         status_list.append(status_row)
@@ -185,6 +191,9 @@ class AccountView(Gtk.Box):
             self.add_breakpoint(breakpoint)
 
         self._state_unsubscribe = self.runtime.state.subscribe(self._state_changed)
+        self._progress_unsubscribe = self.runtime.state.subscribe_progress(
+            self._progress_changed
+        )
         self._log_unsubscribe = self.logger.subscribe(self._log_line)
 
     def _state_changed(self, snapshot: StateSnapshot) -> None:
@@ -194,6 +203,7 @@ class AccountView(Gtk.Box):
         description = _(snapshot.message) if snapshot.message else _("Your files are ready.")
         self.status_description.set_text(description)
         self.status_description.set_tooltip_text(description)
+        self.status_progress.set_visible(snapshot.state == AppState.SYNCING)
         paused = snapshot.state == AppState.PAUSED_USER
         self.pause_content.set_label(_("Resume Sync") if paused else _("Pause Sync"))
         self.pause_content.set_icon_name(
@@ -210,6 +220,28 @@ class AccountView(Gtk.Box):
             )
             self.sync_content.set_icon_name("emblem-synchronizing-symbolic")
         self.last_row.set_subtitle(self._format_last_sync())
+
+    def _progress_changed(self, progress: SyncProgress | None) -> None:
+        if progress is None or progress.path is None:
+            self.status_progress.set_visible(False)
+            return
+        action = {
+            "download": _("Downloading"),
+            "upload": _("Uploading"),
+            "delete": _("Deleting"),
+            "conflict": _("Conflict"),
+            "synced": _("Synchronized"),
+            "skipped": _("Skipped"),
+        }.get(progress.action, _("Synchronizing"))
+        if progress.processed > 0:
+            label = _("{action}: {path} ({count})").format(
+                action=action, path=progress.path, count=progress.processed
+            )
+        else:
+            label = _("{action}: {path}").format(action=action, path=progress.path)
+        self.status_progress.set_text(label)
+        self.status_progress.set_tooltip_text(label)
+        self.status_progress.set_visible(True)
 
     def _format_last_sync(self) -> str:
         value = self.session.runtime.get("last_successful_sync")
@@ -448,6 +480,7 @@ class AccountView(Gtk.Box):
             return
         self._disposed = True
         self._state_unsubscribe()
+        self._progress_unsubscribe()
         self._log_unsubscribe()
         if self._activity_idle_source:
             GLib.source_remove(self._activity_idle_source)

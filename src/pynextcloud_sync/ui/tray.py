@@ -9,6 +9,7 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import GdkPixbuf, Gio, GLib
 
 from pynextcloud_sync.core.state import StateSnapshot
+from pynextcloud_sync.nextcloud.nextcloudcmd_progress import SyncProgress
 from pynextcloud_sync.ui.tray_state import TrayPresentation, presentation_for
 from pynextcloud_sync.util.paths import project_root
 from pynextcloud_sync.util.i18n import _
@@ -81,10 +82,12 @@ class StatusNotifier:
         logger: object,
         account_provider: Callable[[], list[tuple[str, str]]] | None = None,
         on_account_action: Callable[[str, str], None] | None = None,
+        progress_provider: Callable[[], SyncProgress | None] | None = None,
     ) -> None:
         self.state_controller = state_controller
         self.account_provider = account_provider or (lambda: [])
         self.on_account_action = on_account_action or (lambda _account_id, _action: None)
+        self.progress_provider = progress_provider or (lambda: None)
         self.actions = {
             1: open_window,
             2: sync_now,
@@ -230,6 +233,14 @@ class StatusNotifier:
         icon_name, icon_theme_path, icon_pixmaps = self._icon_data(presentation)
         state_label = _(presentation.label)
         title = _("PyNextCloud Sync — {state}").format(state=state_label)
+        tooltip = self.snapshot.message or state_label
+        progress = self.progress_provider()
+        if progress is not None and progress.path:
+            action = _("Syncing")
+            if progress.processed > 0:
+                tooltip = f"{action}: {progress.path} ({progress.processed})"
+            else:
+                tooltip = f"{action}: {progress.path}"
         values = {
             "Category": GLib.Variant("s", "ApplicationStatus"),
             "Id": GLib.Variant("s", "pynextcloud-sync"),
@@ -252,7 +263,7 @@ class StatusNotifier:
                     icon_name,
                     icon_pixmaps,
                     title,
-                    self.snapshot.message or state_label,
+                    tooltip,
                 ),
             ),
             # GNOME AppIndicator hosts use this to open the exported menu on one click.

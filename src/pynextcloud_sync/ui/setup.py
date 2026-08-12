@@ -347,7 +347,73 @@ class SetupWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name("summary")
 
     def _start_syncing(self, _button: Gtk.Button) -> None:
-        self._finish_setup()
+        self._confirm_first_sync()
+
+    def _local_folder_is_empty(self) -> bool:
+        root = Path(self.folder_entry.get_text()).expanduser()
+        try:
+            return not any(root.iterdir())
+        except OSError:
+            return False
+
+    def _confirm_first_sync(self) -> None:
+        local_empty = self._local_folder_is_empty()
+        self.api.http.trust_invalid_certificates = self.trust_invalid.get_active()
+
+        def on_remote(remote_empty: bool, error: Exception | None) -> None:
+            if error:
+                self._finish_setup()
+                return
+            self._show_first_sync_dialog(local_empty, remote_empty)
+
+        def secret_ready(password: str | None, error: Exception | None) -> None:
+            if error or not password:
+                self._finish_setup()
+                return
+            self.api.probe_remote(
+                self.server, self.username, password, self.remote_path, on_remote
+            )
+
+        self.credentials.lookup(self.server, self.username, secret_ready)
+
+    def _show_first_sync_dialog(self, local_empty: bool, remote_empty: bool) -> None:
+        folder = Path(self.folder_entry.get_text()).expanduser()
+        account = f"{self.username}@{self.server}"
+        if local_empty and remote_empty:
+            body = _(
+                "Connect {account} and start syncing {folder} now? Both sides are "
+                "empty; synchronization will keep them in sync as an empty mirror."
+            ).format(account=account, folder=folder)
+        elif local_empty:
+            body = _(
+                "Connect {account} and start syncing {folder} now? The remote folder "
+                "already contains files; they will be downloaded."
+            ).format(account=account, folder=folder)
+        elif remote_empty:
+            body = _(
+                "Connect {account} and start syncing {folder} now? The local folder "
+                "already contains files; they will be uploaded."
+            ).format(account=account, folder=folder)
+        else:
+            body = _(
+                "Connect {account} and start syncing {folder} now? Files that changed "
+                "on both sides will be preserved as {conflict} (Nextcloud conflicted "
+                "copy <date>).<ext>."
+            ).format(account=account, folder=folder, conflict="{name}")
+        dialog = Adw.AlertDialog(heading=_("Start Synchronizing?"), body=body)
+        dialog.add_response("back", _("Back to setup"))
+        dialog.add_response("start", _("Start"))
+        dialog.set_response_appearance("start", Adw.ResponseAppearance.SUGGESTED)
+        dialog.choose(self, None, self._first_sync_choice)
+
+    def _first_sync_choice(
+        self, dialog: Adw.AlertDialog, result: Gio.AsyncResult
+    ) -> None:
+        response = dialog.choose_finish(result)
+        if response == "start":
+            self._finish_setup()
+        else:
+            self.stack.set_visible_child_name("folder")
 
     def _finish_setup(self) -> None:
         root = Path(self.folder_entry.get_text()).expanduser()

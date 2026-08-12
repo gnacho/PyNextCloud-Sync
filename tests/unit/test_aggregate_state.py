@@ -7,6 +7,7 @@ from pynextcloud_sync.core.state import (
     AppState,
     StateController,
 )
+from pynextcloud_sync.nextcloud.nextcloudcmd_progress import SyncProgress
 
 
 class AggregateStateControllerTests(unittest.TestCase):
@@ -52,6 +53,29 @@ class AggregateStateControllerTests(unittest.TestCase):
         fresh = StateController(AppState.UNCONFIGURED)
         aggregate = AggregateStateController([configured, fresh])
         self.assertEqual(aggregate.snapshot.state, AppState.IDLE_OK)
+
+    def test_progress_updates_and_subscribers_are_notified(self) -> None:
+        controller = StateController(AppState.IDLE_OK)
+        seen: list[SyncProgress | None] = []
+        unsubscribe = controller.subscribe_progress(lambda progress: seen.append(progress))
+        self.assertEqual(seen, [None])
+        progress = SyncProgress("download", "/tmp/a.pdf", 1)
+        controller.set_progress(progress)
+        self.assertEqual(seen[-1], progress)
+        controller.set_progress(None)
+        self.assertEqual(seen[-1], None)
+        unsubscribe()
+        controller.set_progress(SyncProgress("upload", "/tmp/b", 2))
+        self.assertEqual(len(seen), 3)
+
+    def test_duplicate_progress_is_not_resent(self) -> None:
+        controller = StateController(AppState.IDLE_OK)
+        seen: list[SyncProgress | None] = []
+        controller.subscribe_progress(lambda progress: seen.append(progress))
+        progress = SyncProgress("download", "/tmp/a.pdf", 1)
+        controller.set_progress(progress)
+        controller.set_progress(progress)
+        self.assertEqual(len(seen), 2)
 
 
 if __name__ == "__main__":

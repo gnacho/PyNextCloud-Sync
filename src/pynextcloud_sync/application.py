@@ -414,6 +414,9 @@ class PyNextCloudApplication(Adw.Application):
                 for runtime in self.account_manager.runtimes.values()
             ],
             on_account_action=self._tray_account_action,
+            progress_provider=lambda: (
+                self.runtime.state.progress if self.runtime else None
+            ),
         )
         self.tray.start()
 

@@ -62,14 +62,14 @@ class FakeCredentials:
 class FakeEngine:
     def __init__(self) -> None:
         self.running = False
-        self.runs: list[tuple[object, object]] = []
+        self.runs: list[tuple[object, object, object | None]] = []
         self.cancelled = False
 
-    def run(self, spec: object, callback: object) -> None:
+    def run(self, spec: object, callback: object, progress: object | None = None) -> None:
         if self.running:
             raise RuntimeError("overlapping process")
         self.running = True
-        self.runs.append((spec, callback))
+        self.runs.append((spec, callback, progress))
 
     def cancel(self) -> None:
         self.cancelled = True

@@ -154,6 +154,7 @@ class SyncScheduler:
         reasons: set[Trigger],
     ) -> None:
         self.state.set(AppState.SYNCING, _("Synchronizing files…"))
+        self.state.set_progress(None)
         self._preparing = True
 
         def secret_ready(password: str | None, error: Exception | None) -> None:
@@ -210,6 +211,7 @@ class SyncScheduler:
             self.engine.run(
                 spec,
                 lambda result: self._finished(result, reasons, feedback_followup),
+                progress=self.state.set_progress,
             )
 
         self.credentials.lookup(account["server_url"], account["login_name"], secret_ready)
@@ -257,6 +259,7 @@ class SyncScheduler:
                 self.queue.add(Trigger.LOCAL_INOTIFY)
             queued = bool(self.queue)
         self._inotify_during_sync = False
+        self.state.set_progress(None)
         if self.sync_permit:
             self.sync_permit.release()
         self._debounce.begin_cooldown(lambda: self._cooldown_finished(queued))

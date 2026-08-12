@@ -7,6 +7,10 @@ from typing import Any, Callable
 from gi.repository import Gio, GLib
 
 from pynextcloud_sync.nextcloud.command import BoundedOutputCapture, CommandSpec
+from pynextcloud_sync.nextcloud.nextcloudcmd_progress import (
+    SyncProgress,
+    parse_progress_line,
+)
 
 
 @dataclass(frozen=True)
@@ -31,7 +35,12 @@ class SyncEngine:
     def running(self) -> bool:
         return self.process is not None
 
-    def run(self, spec: CommandSpec, callback: Callable[[SyncResult], None]) -> None:
+    def run(
+        self,
+        spec: CommandSpec,
+        callback: Callable[[SyncResult], None],
+        progress: Callable[[SyncProgress], None] | None = None,
+    ) -> None:
         if self.process is not None:
             raise RuntimeError("A synchronization process is already running.")
         flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
@@ -52,7 +61,7 @@ class SyncEngine:
         self._cancellable = Gio.Cancellable()
         stream = Gio.DataInputStream.new(process.get_stdout_pipe())
         capture = BoundedOutputCapture(max_lines=200)
-        status = {"stream_done": False, "process_done": False}
+        status = {"stream_done": False, "process_done": False, "processed": 0}
 
         def maybe_finish() -> None:
             if not status["stream_done"] or not status["process_done"]:
@@ -81,6 +90,11 @@ class SyncEngine:
             safe = self.logger.redactor.redact(line)
             capture.feed(safe)
             self.logger.info("CMD %s", safe)
+            if progress is not None:
+                parsed = parse_progress_line(safe)
+                if parsed is not None:
+                    status["processed"] += 1
+                    progress(SyncProgress(parsed.action, parsed.path, status["processed"]))
             read_next()
 
         def process_ready(source: Gio.Subprocess, result: Gio.AsyncResult, _data: object = None) -> None:

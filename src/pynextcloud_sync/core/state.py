@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
+from pynextcloud_sync.nextcloud.nextcloudcmd_progress import SyncProgress
+
 
 class AppState(str, Enum):
     UNCONFIGURED = "unconfigured"
@@ -38,10 +40,16 @@ class StateController:
     def __init__(self, initial: AppState = AppState.UNCONFIGURED) -> None:
         self._snapshot = StateSnapshot(initial)
         self._listeners: list[Callable[[StateSnapshot], None]] = []
+        self._progress: SyncProgress | None = None
+        self._progress_listeners: list[Callable[[SyncProgress | None], None]] = []
 
     @property
     def snapshot(self) -> StateSnapshot:
         return self._snapshot
+
+    @property
+    def progress(self) -> SyncProgress | None:
+        return self._progress
 
     def subscribe(self, callback: Callable[[StateSnapshot], None]) -> Callable[[], None]:
         self._listeners.append(callback)
@@ -60,6 +68,25 @@ class StateController:
         self._snapshot = updated
         for listener in tuple(self._listeners):
             listener(updated)
+
+    def set_progress(self, progress: SyncProgress | None) -> None:
+        if progress == self._progress:
+            return
+        self._progress = progress
+        for listener in tuple(self._progress_listeners):
+            listener(progress)
+
+    def subscribe_progress(
+        self, callback: Callable[[SyncProgress | None], None]
+    ) -> Callable[[], None]:
+        self._progress_listeners.append(callback)
+        callback(self._progress)
+
+        def unsubscribe() -> None:
+            if callback in self._progress_listeners:
+                self._progress_listeners.remove(callback)
+
+        return unsubscribe
 
 
 _STATE_SEVERITY: dict[AppState, int] = {

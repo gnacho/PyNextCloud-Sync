@@ -228,7 +228,7 @@ class TrayContractTests(unittest.TestCase):
             "NewIcon", [signal[3] for signal in connection.signals]
         )
 
-    def test_account_submenu_items_are_rendered_in_layout(self) -> None:
+    def test_menu_is_trimmed_to_open_settings_and_quit(self) -> None:
         tray_module = load_tray_module()
         state = StateController(AppState.IDLE_OK)
         no_op = lambda: None
@@ -242,32 +242,29 @@ class TrayContractTests(unittest.TestCase):
             no_op,
             no_op,
             FakeLogger(),
-            account_provider=lambda: [("acc-1", "alice"), ("acc-2", "bob")],
         )
         layout = notifier._layout_data(0)
-        root_children = layout[2]
-        account_menus = [
-            child.unpack()
-            for child in root_children
-            if child.unpack()[0] == notifier.ACCOUNTS_MENU_ID
-        ]
-        self.assertEqual(len(account_menus), 1)
-        menu = account_menus[0]
-        self.assertEqual(menu[0], notifier.ACCOUNTS_MENU_ID)
-        account_ids = [child.unpack()[0] for child in menu[2]]
-        self.assertEqual(
-            account_ids,
-            [
-                notifier.ACCOUNT_MENU_BASE,
-                notifier.ACCOUNT_MENU_BASE + 10,
-            ],
-        )
+        children = [child.unpack()[0] for child in layout[2]]
+        self.assertEqual(children, [1, 7, 8])
+        expected = {
+            1: ("Open NextSync", "window-new-symbolic"),
+            7: ("Settings", "emblem-system-symbolic"),
+            8: ("Quit", "application-exit-symbolic"),
+        }
+        for item_id in children:
+            with self.subTest(item_id=item_id):
+                props = notifier._properties(item_id)
+                label, icon = expected[item_id]
+                self.assertEqual(props["label"].value, label)
+                self.assertEqual(props["icon-name"].value, icon)
+                self.assertTrue(props["enabled"].value)
+                self.assertTrue(props["visible"].value)
+                self.assertNotIn("type", props)
 
-    def test_account_action_click_dispatches_to_callback(self) -> None:
+    def test_actions_table_contains_only_open_settings_quit(self) -> None:
         tray_module = load_tray_module()
         state = StateController(AppState.IDLE_OK)
         no_op = lambda: None
-        received: list[tuple[str, str]] = []
         notifier = tray_module.StatusNotifier(
             state,
             no_op,
@@ -278,36 +275,31 @@ class TrayContractTests(unittest.TestCase):
             no_op,
             no_op,
             FakeLogger(),
-            account_provider=lambda: [("acc-1", "alice"), ("acc-2", "bob")],
-            on_account_action=lambda account_id, action: received.append(
-                (account_id, action)
-            ),
         )
-        notifier._dispatch_click(notifier.ACCOUNT_MENU_BASE + notifier.ACCOUNT_ACTION_SYNC)
-        self.assertEqual(received, [("acc-1", "sync")])
-        notifier._dispatch_click(
-            notifier.ACCOUNT_MENU_BASE + 10 + notifier.ACCOUNT_ACTION_OPEN
-        )
-        self.assertEqual(received[-1], ("acc-2", "open"))
+        self.assertEqual(sorted(notifier.actions.keys()), [1, 7, 8])
 
-    def test_global_action_click_still_uses_the_actions_table(self) -> None:
+    def test_global_action_click_dispatches_open_settings_quit(self) -> None:
         tray_module = load_tray_module()
         state = StateController(AppState.IDLE_OK)
         no_op = lambda: None
         fired: list[int] = []
         notifier = tray_module.StatusNotifier(
             state,
-            no_op,
-            lambda: fired.append(2),
-            no_op,
+            lambda: fired.append(1),
             no_op,
             no_op,
             no_op,
             no_op,
+            lambda: fired.append(7),
+            lambda: fired.append(8),
             FakeLogger(),
         )
-        notifier._dispatch_click(2)
-        self.assertEqual(fired, [2])
+        for item_id in (1, 7, 8):
+            notifier._dispatch_click(item_id)
+        self.assertEqual(fired, [1, 7, 8])
+        for account_item in (100, 200, 210):
+            notifier._dispatch_click(account_item)
+        self.assertEqual(fired, [1, 7, 8])
 
 
 if __name__ == "__main__":

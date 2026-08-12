@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 — 2026-08-12
+
+### Fix: zero-folder accounts, Add Folder row, Spanish
+
+- Fixed a crash when an account has no sync folders: the tray and account controls now use a neutral scheduler instead of dereferencing `None`.
+- Fixed the **Add Folder** row in the setup wizard: it is now inside a `ListBox` so the action actually opens the folder dialog.
+- Aggregated account state now exposes sync progress to the tray.
+- Spanish translations added for the folder UI and account states.
+
 ## 0.2.1 — 2026-08-12
 
 ### Fix: folder picker default location

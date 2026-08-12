@@ -1,3 +1,14 @@
+nextsync (0.2.2) stable; urgency=medium
+
+  * Fix a crash when an account has no sync folders (neutral scheduler for the
+    tray and account controls).
+  * Fix the Add Folder row in the setup wizard (wrap in a ListBox so the
+    activated signal fires).
+  * Expose aggregated sync progress to the tray.
+  * Add Spanish translations for the folder UI and account states.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:50:00 +0200
+
 nextsync (0.2.1) stable; urgency=medium
 
   * Let the folder picker open at its default location unless the pre-filled

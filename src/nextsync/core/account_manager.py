@@ -152,6 +152,32 @@ class FolderRuntime:
         self.runtime.stop()
 
 
+class _NeutralScheduler:
+    """Scheduler facade for an account without sync folders.
+
+    The tray and the account controls read ``scheduler.user_paused`` and
+    ``scheduler.delete_alert`` unconditionally; without folders there is no
+    real scheduler, so these return neutral values.
+    """
+
+    user_paused = False
+    battery_paused = False
+    delete_alert = None
+    queue = None
+
+    def sync_now(self) -> None:
+        pass
+
+    def set_paused(self, paused: bool) -> None:
+        pass
+
+    def approve_delete_once(self) -> None:
+        pass
+
+    def restore_from_server(self) -> None:
+        pass
+
+
 class _AccountEngines:
     """Aggregate ``running`` across every folder engine of an account."""
 
@@ -209,7 +235,7 @@ class AccountRuntime:
     def scheduler(self) -> Any:
         """First folder scheduler, kept for the active-account control API."""
         if not self._folders:
-            return None
+            return _NeutralScheduler()
         return next(iter(self._folders.values())).runtime.scheduler
 
     @property

@@ -198,6 +198,7 @@ class SetupWindow(Adw.ApplicationWindow):
         content.append(self.folder_list)
         self.folder_error = Gtk.Label(xalign=0, wrap=True, css_classes=["error"])
         content.append(self.folder_error)
+        add_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         add_row = Adw.ActionRow(
             title=_("Add Folder"),
             subtitle=_("Mirror another local folder from this account"),
@@ -206,7 +207,8 @@ class SetupWindow(Adw.ApplicationWindow):
         )
         add_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
         add_row.connect("activated", self._open_add_folder)
-        content.append(add_row)
+        add_list.append(add_row)
+        content.append(add_list)
         actions = Gtk.Box(spacing=12, homogeneous=True)
         back = Gtk.Button(label=_("Back"))
         back.connect("clicked", lambda _button: self.stack.set_visible_child_name("authentication"))

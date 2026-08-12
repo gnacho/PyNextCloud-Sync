@@ -113,6 +113,7 @@ class AggregateStateController:
         self._controllers: list[StateController] = []
         self._unsubscribes: list[Callable[[], None]] = []
         self._listeners: list[Callable[[StateSnapshot], None]] = []
+        self._progress_listeners: list[Callable[[SyncProgress | None], None]] = []
         self._snapshot = StateSnapshot(AppState.UNCONFIGURED)
         for controller in controllers or []:
             self.add(controller)
@@ -121,18 +122,45 @@ class AggregateStateController:
     def snapshot(self) -> StateSnapshot:
         return self._snapshot
 
+    @property
+    def progress(self) -> SyncProgress | None:
+        current = next(
+            (controller for controller in self._controllers if controller.progress),
+            None,
+        )
+        return current.progress if current else None
+
+    def subscribe_progress(
+        self, callback: Callable[[SyncProgress | None], None]
+    ) -> Callable[[], None]:
+        self._progress_listeners.append(callback)
+        callback(self.progress)
+
+        def unsubscribe() -> None:
+            if callback in self._progress_listeners:
+                self._progress_listeners.remove(callback)
+
+        return unsubscribe
+
     def add(self, controller: StateController) -> None:
         self._controllers.append(controller)
         self._unsubscribes.append(controller.subscribe(self._recompute))
+        self._unsubscribes.append(
+            controller.subscribe_progress(self._recompute_progress)
+        )
         self._recompute()
+        self._recompute_progress()
 
     def remove(self, controller: StateController) -> None:
         for index, current in enumerate(self._controllers):
             if current is controller:
                 self._controllers.pop(index)
-                unsubscribe = self._unsubscribes.pop(index)
+                unsubscribe = self._unsubscribes.pop(index * 2)
+                unsubscribe()
+                unsubscribe = self._unsubscribes.pop(index * 2)
                 unsubscribe()
                 self._recompute()
+                self._recompute_progress()
                 return
 
     def clear(self) -> None:
@@ -141,6 +169,7 @@ class AggregateStateController:
         self._unsubscribes.clear()
         self._controllers.clear()
         self._recompute()
+        self._recompute_progress()
 
     def subscribe(self, callback: Callable[[StateSnapshot], None]) -> Callable[[], None]:
         self._listeners.append(callback)
@@ -151,6 +180,11 @@ class AggregateStateController:
                 self._listeners.remove(callback)
 
         return unsubscribe
+
+    def _recompute_progress(self, _progress: SyncProgress | None = None) -> None:
+        progress = self.progress
+        for listener in tuple(self._progress_listeners):
+            listener(progress)
 
     def _recompute(self, _snapshot: StateSnapshot | None = None) -> None:
         if not self._controllers:

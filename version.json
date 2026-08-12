@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "version": "2.1.0",
+  "version": "3.0.0",
   "mandatory": false,
-  "released_at": "2026-08-11T22:30:00Z",
-  "summary": "Folder mapping: each account can now target a specific remote folder instead of always mirroring the account root.",
+  "released_at": "2026-08-12T00:00:00Z",
+  "summary": "Thin-wrapper redesign: nextcloudcmd now owns synchronization, conflict resolution, and safety; the app is a GNOME companion around it.",
   "changelog": [
-    "Adds an optional Remote Folder field to the setup wizard so an account can mirror a specific Nextcloud folder instead of the entire account root.",
-    "Passes the new --path argument to nextcloudcmd when a remote folder is configured; the account root is still used when the field is left as /.",
-    "Config schema bumps to version 4; existing single-account and multi-account configurations migrate transparently with the remote path defaulting to the account root.",
-    "Account identities now include the remote path, so two accounts against the same server, user, and local folder but different remote folders are treated as distinct.",
-    "Setup wizard, summary screen, and account metadata surface the chosen remote folder so users can review the mapping before the safety baseline runs."
+    "Removed the protected-initialization subsystem (bootstrap staging, safety baseline, run markers, deletion guard, and the review window). The first sync is now a single nextcloudcmd run with delta detection; config schema bumps from v4 to v5 and drops the safety fields automatically.",
+    "Leftover protected-* staging trees are removed and legacy safety manifests are archived on first run after upgrade.",
+    "Added a first-sync confirmation dialog before the initial run when the local folder, the remote folder, or both are empty (the remote side is probed with a shallow WebDAV PROPFIND that downloads no bodies).",
+    "Added a conflicted-copy resolver window that lists the files nextcloudcmd preserves as '* (Nextcloud conflicted copy <date>).*' with Keep Local, Keep Remote, and Open in Files actions.",
+    "Surfaced real nextcloudcmd per-file progress (current file and processed count) in the account view and the tray tooltip during a sync, with a fallback to the existing state label when the engine emits no per-file output."
   ]
 }

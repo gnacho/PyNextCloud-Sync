@@ -1,5 +1,46 @@
 # Changelog
 
+## 3.0.0 — 2026-08-12
+
+### Thin-wrapper redesign
+
+- Remove the protected-initialization subsystem (`core/bootstrap.py`,
+  `ui/bootstrap.py`, `core/safety.py`, `core/sync_run_marker.py`): no staging
+  tree, no three-run merge, no SHA-256 sweep, no deletion guard. `nextcloudcmd`
+  now owns synchronization, conflict resolution, and safety.
+- Bump the config schema from v4 to v5. The safety fields
+  (`bootstrap_complete`, `bootstrap_completed_at`, `guard_enabled`,
+  `deletion_count_threshold`, `deletion_percent_threshold`) are dropped from
+  every account automatically. Accounts that were stuck mid-bootstrap sync
+  immediately on upgrade.
+- On first run after upgrade, leftover `protected-*` staging trees under
+  `~/.local/state/pynextcloud-sync/bootstrap/` are removed and legacy safety
+  manifests are archived under `safety-archives/legacy-<ISO>/`.
+- Remove the `SAFETY_REVIEW` state, the safety review dialog, and the
+  "Deletion Safety Guard" settings group.
+
+### New features
+
+- **First-sync confirmation:** before the first `nextcloudcmd` run for a newly
+  configured account, the app probes the local folder and the remote folder
+  (shallow WebDAV PROPFIND, Depth 1, no bodies) and asks the user to confirm
+  when the local side, the remote side, or both are empty, with wording adapted
+  to download/upload/merge.
+- **Conflicted-copy resolver:** a window lists the files the engine preserves
+  as `* (Nextcloud conflicted copy <date>).*`, with Keep Local, Keep Remote,
+  and Open in Files actions. It only scans the local folder and never runs
+  `nextcloudcmd`.
+- **Live progress:** a defensive parser surfaces `nextcloudcmd` per-file lines
+  (download/upload/delete/conflict) as the current file plus a processed count
+  in the account view and the tray tooltip during a sync, falling back to the
+  existing state label when the engine emits no per-file output.
+
+### Removed behaviour
+
+- The review/merge window with merge policies no longer exists; the engine
+  applies its own conflict policy and leaves `* (Nextcloud conflicted copy
+  <date>).*` files in the user's folder.
+
 ## 2.1.0 — 2026-08-11
 
 - Add an optional Remote Folder field to the setup wizard so an account mirrors

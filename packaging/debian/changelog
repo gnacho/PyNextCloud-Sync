@@ -1,3 +1,19 @@
+pynextcloud-sync (3.0.0) stable; urgency=medium
+
+  * Thin-wrapper redesign: remove the protected-initialization subsystem
+    (bootstrap staging, safety baseline, run markers, deletion guard) and let
+    nextcloudcmd own synchronization, conflict resolution, and safety.
+  * Bump the config schema from v4 to v5, dropping the safety fields from every
+    account automatically. Leftover staging trees are removed and legacy safety
+    manifests are archived on first run after upgrade.
+  * Add a first-sync confirmation dialog before the initial run when the local
+    folder, the remote folder, or both are empty, probing the remote side with
+    a shallow WebDAV PROPFIND.
+  * Add a conflicted-copy resolver window with Keep Local, Keep Remote, and
+    Open in Files actions.
+  * Surface real nextcloudcmd per-file progress in the account view and tray
+    tooltip during a sync.
+
 pynextcloud-sync (2.1.0) stable; urgency=medium
 
   * Add an optional remote folder field so each account can mirror a specific

@@ -31,6 +31,16 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 3.0.0"),
+            [
+                _("Thin-wrapper redesign: the bootstrap staging, safety baseline, run markers, and deletion guard are removed. nextcloudcmd now owns synchronization, conflict resolution, and safety."),
+                _("The config schema bumps from v4 to v5 and drops the safety fields automatically; leftover staging trees are removed and legacy safety manifests are archived on first run after upgrade."),
+                _("A first-sync confirmation dialog appears before the initial run when the local folder, the remote folder, or both are empty, probing the remote side with a shallow WebDAV PROPFIND."),
+                _("A new conflicted-copy resolver window lists the files nextcloudcmd preserves as '* (Nextcloud conflicted copy <date>).*' with Keep Local, Keep Remote, and Open in Files actions."),
+                _("The account view and tray tooltip now show the current file and processed count during a sync, falling back to the state label when the engine emits no per-file output."),
+            ],
+        ),
+        (
             _("Version 2.1.0"),
             [
                 _("Added an optional Remote Folder field to the setup wizard so an account can mirror a specific Nextcloud folder instead of the entire account root."),

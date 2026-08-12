@@ -518,7 +518,7 @@ class SettingsWindow(Adw.PreferencesWindow):
         self.detailed.connect("notify::active", self._save_sync)
         group.add(self.detailed)
         page.add(group)
-        guard_config = self.config.data["delete_guard"]
+        guard_config = self.config.data.get("delete_guard", {})
         guard = Adw.PreferencesGroup(
             title=_("Deletion Guard"),
             description=_(

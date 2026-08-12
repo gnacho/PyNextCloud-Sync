@@ -53,16 +53,23 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(validated["logging"]["save_logs"])
         self.assertEqual(validated["logging"]["retention_days"], 30)
         self.assertEqual(validated["accounts"], [])
-        self.assertFalse(validated["safety"]["bootstrap_complete"])
-        self.assertTrue(validated["safety"]["guard_enabled"])
+        self.assertNotIn("safety", validated)
 
-    def test_rejects_invalid_safety_threshold(self) -> None:
+    def test_legacy_safety_fields_are_dropped(self) -> None:
         account = dict(ACCOUNT)
-        account["safety"] = {"deletion_percent_threshold": 0}
+        account["safety"] = {
+            "bootstrap_complete": True,
+            "guard_enabled": True,
+            "deletion_count_threshold": 10,
+        }
+        account["bootstrap_complete"] = False
         data = copy.deepcopy(DEFAULT_CONFIG)
+        data["schema_version"] = 4
         data["accounts"] = [account]
-        with self.assertRaises(ConfigurationError):
-            validate_config(data)
+        validated = validate_config(data)
+        self.assertEqual(validated["schema_version"], 5)
+        self.assertNotIn("safety", validated["accounts"][0])
+        self.assertNotIn("bootstrap_complete", validated["accounts"][0])
 
     def test_rejects_invalid_log_retention(self) -> None:
         data = copy.deepcopy(DEFAULT_CONFIG)
@@ -95,7 +102,8 @@ class ConfigTests(unittest.TestCase):
         migrated = validated["accounts"][0]
         self.assertEqual(migrated["login_name"], "alice")
         self.assertEqual(migrated["sync"]["local_interval_minutes"], 7)
-        self.assertTrue(migrated["safety"]["bootstrap_complete"])
+        self.assertNotIn("safety", migrated)
+        self.assertNotIn("bootstrap_complete", migrated)
         self.assertEqual(migrated["runtime"]["last_exit_code"], 3)
         self.assertFalse(validated["general"]["autostart"])
 

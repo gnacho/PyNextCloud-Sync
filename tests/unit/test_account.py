@@ -37,7 +37,6 @@ class AccountSessionTests(unittest.TestCase):
         value["sync"]["max_sync_retries"] = 5
         session = AccountSession.from_config_value(value)
         self.assertEqual(session.sync["max_sync_retries"], 5)
-        self.assertEqual(session.safety, value["safety"])
         self.assertEqual(session.runtime, value["runtime"])
 
     def test_local_root_path_is_expanded_absolute(self) -> None:

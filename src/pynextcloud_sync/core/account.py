@@ -9,8 +9,8 @@ from typing import Any
 class AccountSession:
     """Per-account data and settings passed to the sync runtime.
 
-    An account owns its synchronization, safety, and runtime settings so that
-    adding, removing, or reconfiguring one account never affects the others.
+    An account owns its synchronization and runtime settings so that adding,
+    removing, or reconfiguring one account never affects the others.
     """
 
     account_id: str
@@ -20,7 +20,6 @@ class AccountSession:
     local_root: str
     remote_path: str = ""
     sync: dict[str, Any] = field(default_factory=dict)
-    safety: dict[str, Any] = field(default_factory=dict)
     runtime: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -33,7 +32,6 @@ class AccountSession:
             local_root=account["local_root"],
             remote_path=account.get("remote_path", ""),
             sync=account.get("sync", {}),
-            safety=account.get("safety", {}),
             runtime=account.get("runtime", {}),
         )
 
@@ -60,6 +58,5 @@ class AccountSession:
         return {
             **self.account_dict,
             "sync": self.sync,
-            "safety": self.safety,
             "runtime": self.runtime,
         }

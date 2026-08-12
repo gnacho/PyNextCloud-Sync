@@ -13,8 +13,6 @@ from pynextcloud_sync.core.account_manager import (
     AccountRuntime,
 )
 from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.core.safety import SafetyManifest
-from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.storage.config import (
     DEFAULT_CONFIG,
     ConfigStore,
@@ -37,31 +35,13 @@ ACCOUNT_A = {
     "login_name": "alice",
     "authentication_type": "browser",
     "local_root": "/tmp/NextCloud",
-    "safety": {"bootstrap_complete": True},
 }
 ACCOUNT_B = {
     "server_url": "https://work.example.com",
     "login_name": "bob",
     "authentication_type": "manual",
     "local_root": "/tmp/WorkCloud",
-    "safety": {"bootstrap_complete": True},
 }
-
-
-class ManifestPerAccountTests(unittest.TestCase):
-    def test_manifest_paths_differ_per_account(self) -> None:
-        a = SafetyManifest.for_account(ACCOUNT_A)
-        b = SafetyManifest.for_account(ACCOUNT_B)
-        self.assertNotEqual(a.path, b.path)
-        self.assertTrue(a.path.name.startswith("safety-manifest-"))
-        self.assertTrue(a.path.name.endswith(".json"))
-
-    def test_run_marker_paths_differ_per_account(self) -> None:
-        a = SyncRunMarker.for_account(ACCOUNT_A)
-        b = SyncRunMarker.for_account(ACCOUNT_B)
-        self.assertNotEqual(a.path, b.path)
-        self.assertTrue(a.path.name.startswith("sync-run-"))
-        self.assertTrue(a.path.name.endswith(".json"))
 
 
 class AccountConfigViewTests(unittest.TestCase):
@@ -71,7 +51,6 @@ class AccountConfigViewTests(unittest.TestCase):
         view = AccountConfigView(config, session)
         self.assertEqual(view.data["account"]["login_name"], "alice")
         self.assertEqual(view.data["sync"], session.sync)
-        self.assertEqual(view.data["safety"], session.safety)
 
     def test_view_forwards_global_sections_from_the_store(self) -> None:
         config = _store_with([ACCOUNT_A])

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import threading
 from typing import Any, Callable
 
 from gi.repository import GLib
@@ -10,8 +9,6 @@ from pynextcloud_sync.core.debounce import DebounceGate
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
 from pynextcloud_sync.core.sync_permit import SyncPermit
 from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.core.safety import SafetyAlert, SafetyGuard, SafetyManifest
-from pynextcloud_sync.core.sync_run_marker import SyncRunMarker
 from pynextcloud_sync.core.triggers import CoalescingQueue, Trigger, manual_only
 from pynextcloud_sync.nextcloud.command import NextcloudCmdMissingError, build_command
 from pynextcloud_sync.nextcloud.credentials import KeyringLockedError
@@ -34,7 +31,6 @@ class SyncScheduler:
         state: StateController,
         logger: Any,
         on_completed: Callable[[SyncResult], None] | None = None,
-        on_safety_alert: Callable[[SafetyAlert], None] | None = None,
         sync_permit: SyncPermit | None = None,
     ) -> None:
         self.config = config
@@ -43,7 +39,6 @@ class SyncScheduler:
         self.state = state
         self.logger = logger
         self.on_completed = on_completed
-        self.on_safety_alert = on_safety_alert
         self.sync_permit = sync_permit
         self.queue = CoalescingQueue()
         self.online = True
@@ -58,21 +53,11 @@ class SyncScheduler:
         )
         self._start_source = 0
         self._preparing = False
-        self._safety_checking = False
-        self._safety_bypass_once = False
-        self.safety_alert: SafetyAlert | None = None
         account = config.data.get("account")
         if account:
-            self.safety_guard = SafetyGuard(
-                config, logger, manifest=SafetyManifest.for_account(account)
-            )
-            self.run_marker = SyncRunMarker.for_account(account)
             self._account_fingerprint = account_fingerprint(account)
         else:
-            self.safety_guard = SafetyGuard(config, logger)
-            self.run_marker = SyncRunMarker()
             self._account_fingerprint = None
-        self._run_marker_active = False
         self._keyring_locked = False
         self._stopped = False
         self._feedback_followup_pending = False
@@ -92,14 +77,6 @@ class SyncScheduler:
 
     def request(self, trigger: Trigger) -> None:
         if self._stopped:
-            return
-        if self.safety_alert and not self._safety_bypass_once:
-            self.queue.add(trigger)
-            self.state.set(AppState.SAFETY_REVIEW, _("Safety review required"))
-            self.logger.warning(
-                "Synchronization remains blocked by the safety guard: %s",
-                self.safety_alert.reason,
-            )
             return
         if self.engine.running or self._preparing:
             if trigger == Trigger.LOCAL_INOTIFY:
@@ -148,7 +125,6 @@ class SyncScheduler:
             or self._start_source
             or self._debounce.in_cooldown
             or self._preparing
-            or self._safety_checking
             or self.engine.running
         ):
             return
@@ -169,63 +145,6 @@ class SyncScheduler:
             return GLib.SOURCE_REMOVE
         reason_text = ", ".join(sorted(reason.value for reason in reasons))
         self.logger.info("Synchronization triggers: %s", reason_text)
-        safety = self.config.data.get("safety")
-        if safety and safety.get("guard_enabled", True) and not self._safety_bypass_once:
-            if self.run_marker.pending_for(account):
-                self.logger.warning(
-                    "A previous synchronization did not reach a committed safety baseline; validating the last known-good baseline before recovery."
-                )
-            self._preparing = True
-            self._safety_checking = True
-            self.state.set(AppState.SYNC_QUEUED, _("Checking the safety baseline…"))
-
-            def check_worker() -> None:
-                try:
-                    alert = self.safety_guard.check()
-                    error = None
-                except Exception as exc:
-                    alert = None
-                    error = exc
-                GLib.idle_add(
-                    lambda: self._safety_checked(alert, error, account, reasons)
-                )
-
-            threading.Thread(
-                target=check_worker,
-                name="pynextcloud-safety-check",
-                daemon=True,
-            ).start()
-            return GLib.SOURCE_REMOVE
-        self._safety_bypass_once = False
-        self._prepare_sync(account, reasons)
-        return GLib.SOURCE_REMOVE
-
-    def _safety_checked(
-        self,
-        alert: SafetyAlert | None,
-        error: Exception | None,
-        account: dict[str, Any],
-        reasons: set[Trigger],
-    ) -> bool:
-        if self._stopped:
-            return GLib.SOURCE_REMOVE
-        self._safety_checking = False
-        self._preparing = False
-        if error:
-            alert = SafetyAlert(
-                "guard_failed",
-                "The safety check failed, so synchronization was blocked.",
-            )
-            self.logger.error("Safety guard failed: %s", error)
-        if alert:
-            self.safety_alert = alert
-            for reason in reasons:
-                self.queue.add(reason)
-            self.state.set(AppState.SAFETY_REVIEW, _(alert.message))
-            self.logger.critical("Synchronization blocked by safety guard: %s", alert.reason)
-            if self.on_safety_alert:
-                self.on_safety_alert(alert)
-            return GLib.SOURCE_REMOVE
         self._prepare_sync(account, reasons)
         return GLib.SOURCE_REMOVE
 
@@ -281,18 +200,6 @@ class SyncScheduler:
                 self.state.set(AppState.ERROR, str(exc))
                 self.logger.error(exc)
                 return
-            safety = self.config.data.get("safety")
-            if safety and safety.get("guard_enabled", True):
-                try:
-                    self.run_marker.begin(account)
-                    self._run_marker_active = True
-                except OSError as exc:
-                    self.state.set(AppState.ERROR, _("Synchronization failed — view the log"))
-                    self.logger.error(
-                        "Synchronization blocked because the run marker could not be persisted: %s",
-                        exc,
-                    )
-                    return
             feedback_followup = self._feedback_followup_pending
             self._feedback_followup_pending = False
             if self.sync_permit and not self.sync_permit.try_acquire():
@@ -326,22 +233,6 @@ class SyncScheduler:
             else:
                 self._set_idle_state()
             self.logger.info("Synchronization completed successfully.")
-            self._preparing = True
-
-            def record_baseline() -> None:
-                recorded = False
-                try:
-                    recorded = self.safety_guard.record_current()
-                except Exception as exc:
-                    self.logger.error("Could not commit the safety baseline: %s", exc)
-                finally:
-                    GLib.idle_add(self._baseline_recorded, recorded)
-
-            threading.Thread(
-                target=record_baseline,
-                name="pynextcloud-safety-record",
-                daemon=True,
-            ).start()
         elif result.classification == "authentication":
             self.state.set(AppState.AUTH_REQUIRED, _("Your Nextcloud account needs attention"))
             self.logger.error("Synchronization failed because authentication was rejected.")
@@ -369,31 +260,6 @@ class SyncScheduler:
         if self.sync_permit:
             self.sync_permit.release()
         self._debounce.begin_cooldown(lambda: self._cooldown_finished(queued))
-
-    def _baseline_recorded(self, recorded: bool) -> bool:
-        self._preparing = False
-        if self._run_marker_active:
-            if recorded:
-                try:
-                    self.run_marker.clear()
-                    self._run_marker_active = False
-                except OSError as exc:
-                    self.logger.error(
-                        "Could not clear the completed synchronization run marker: %s", exc
-                    )
-            else:
-                self.logger.warning(
-                    "Synchronization run marker retained because the new safety baseline was not committed."
-                )
-        if (
-            not self._stopped
-            and not self._debounce.in_cooldown
-            and self.queue
-            and self.online
-            and not self.paused
-        ):
-            self._schedule_start()
-        return GLib.SOURCE_REMOVE
 
     def _cooldown_finished(self, run_pending: bool) -> None:
         if self._stopped:
@@ -442,9 +308,7 @@ class SyncScheduler:
                 self._set_idle_state()
 
     def _set_idle_state(self) -> None:
-        if self.safety_alert:
-            self.state.set(AppState.SAFETY_REVIEW, _("Safety review required"))
-        elif self.user_paused:
+        if self.user_paused:
             self.state.set(AppState.PAUSED_USER, _("Synchronization is paused"))
         elif self.battery_paused:
             self.state.set(AppState.PAUSED_BATTERY, _("Paused on battery"))
@@ -454,22 +318,6 @@ class SyncScheduler:
             self.state.set(AppState.IDLE_MANUAL_ONLY, _("Automatic synchronization is off"))
         else:
             self.state.set(AppState.IDLE_OK, _("Synchronized"))
-
-    def approve_safety_once(self) -> None:
-        if not self.safety_alert or not self.safety_alert.can_approve_once:
-            if self.safety_alert:
-                self.logger.warning(
-                    "Safety alert cannot be bypassed and requires protected recovery: %s",
-                    self.safety_alert.reason,
-                )
-            return
-        self.logger.warning(
-            "The user approved one synchronization despite safety alert: %s",
-            self.safety_alert.reason,
-        )
-        self.safety_alert = None
-        self._safety_bypass_once = True
-        self.request(Trigger.MANUAL)
 
     def stop(self) -> None:
         self._stopped = True
@@ -481,6 +329,5 @@ class SyncScheduler:
         self.local_dirty = False
         self.remote_pending = False
         self._feedback_followup_pending = False
-        self.safety_alert = None
         if self.engine.running:
             self.engine.cancel()

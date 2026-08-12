@@ -11,6 +11,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from pynextcloud_sync import APP_ID
 from pynextcloud_sync.core.account_manager import AccountManager
 from pynextcloud_sync.core.desktop_integration import DesktopIntegration
+from pynextcloud_sync.core.legacy_cleanup import cleanup_legacy_bootstrap
 from pynextcloud_sync.core.runtime import RuntimeController
 from pynextcloud_sync.core.updates import (
     UpdateCheckResult,
@@ -23,7 +24,6 @@ from pynextcloud_sync.nextcloud.api import NextcloudApi
 from pynextcloud_sync.storage.config import ConfigStore, ConfigurationError
 from pynextcloud_sync.storage.log import AppLogger
 from pynextcloud_sync.ui.main_window import MainWindow
-from pynextcloud_sync.ui.bootstrap import BootstrapWindow
 from pynextcloud_sync.ui.settings import SettingsWindow
 from pynextcloud_sync.ui.setup import SetupWindow
 from pynextcloud_sync.ui.tray import StatusNotifier
@@ -51,7 +51,6 @@ class PyNextCloudApplication(Adw.Application):
         self.runtime: RuntimeController | None = None
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None
-        self.bootstrap_window: BootstrapWindow | None = None
         self.settings_window: SettingsWindow | None = None
         self.setup_window: SetupWindow | None = None
         self.update_window: UpdateWindow | None = None
@@ -78,6 +77,7 @@ class PyNextCloudApplication(Adw.Application):
             save_to_disk=logging_config["save_logs"],
             retention_days=logging_config["retention_days"],
         )
+        cleanup_legacy_bootstrap(self.logger)
         self._install_actions()
 
     def _install_actions(self) -> None:
@@ -152,9 +152,6 @@ class PyNextCloudApplication(Adw.Application):
                     self, self.config, self.credentials, self._setup_complete
                 )
             self.setup_window.present()
-            return
-        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
-            self._ensure_bootstrap()
             return
         self._ensure_desktop_integration()
         self._ensure_runtime()
@@ -257,7 +254,6 @@ class PyNextCloudApplication(Adw.Application):
         candidates = (
             self.get_active_window(),
             self.main_window,
-            self.bootstrap_window,
             self.setup_window,
             self.settings_window,
         )
@@ -318,39 +314,8 @@ class PyNextCloudApplication(Adw.Application):
             old_setup.set_visible(False)
             self.remove_window(old_setup)
             self.setup_window = None
-        self._ensure_bootstrap(initialize_integrations=True)
-
-    def _ensure_bootstrap(
-        self,
-        *,
-        recovery: bool = False,
-        initialize_integrations: bool = False,
-    ) -> None:
-        if self.bootstrap_window:
-            self.bootstrap_window.present()
-            return
-        self._bootstrap_initialize_integrations = initialize_integrations
-        self.bootstrap_window = BootstrapWindow(
-            self,
-            self.config,
-            self.credentials,
-            self.logger,
-            self._bootstrap_complete,
-            recovery=recovery,
-        )
-        self.bootstrap_window.present()
-
-    def _bootstrap_complete(self) -> None:
-        if self.bootstrap_window:
-            old_bootstrap = self.bootstrap_window
-            self.bootstrap_window = None
-            old_bootstrap.completed = True
-            old_bootstrap.close()
-            self.remove_window(old_bootstrap)
         self._ensure_desktop_integration()
-        if self.desktop_integration and getattr(
-            self, "_bootstrap_initialize_integrations", False
-        ):
+        if self.desktop_integration:
             results = self.desktop_integration.initialize_defaults()
             failed = [name for name, succeeded in results.items() if not succeeded]
             if failed:
@@ -360,12 +325,9 @@ class PyNextCloudApplication(Adw.Application):
         self._ensure_runtime()
         self._ensure_tray()
         self.present_main()
-        self._bootstrap_initialize_integrations = False
 
     def _ensure_runtime(self) -> None:
         if self._mandatory_update_manifest:
-            return
-        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
             return
         if not self.account_manager:
             self.account_manager = AccountManager(
@@ -373,7 +335,6 @@ class PyNextCloudApplication(Adw.Application):
                 self.credentials,
                 self.logger,
                 self._notify_sync_failure,
-                self._notify_safety_alert,
             )
         self.account_manager.start()
         self._select_active_account()
@@ -471,10 +432,6 @@ class PyNextCloudApplication(Adw.Application):
             runtime.runtime.set_paused(not runtime.runtime.scheduler.user_paused)
 
     def _tray_sync(self) -> None:
-        if self.runtime and self.runtime.scheduler.safety_alert:
-            self.present_main()
-            self.review_safety_alert(self.main_window)
-            return
         if self.runtime:
             self.runtime.sync_now()
 
@@ -507,20 +464,12 @@ class PyNextCloudApplication(Adw.Application):
             self.activate()
             return
         active_account = self._active_account()
-        if active_account and not active_account.get("safety", {}).get(
-            "bootstrap_complete", False
-        ):
-            self._ensure_bootstrap()
-            return
         if not active_account:
             if not self.config.accounts:
                 self.activate()
                 return
             active_account = self.config.accounts[0]
             self.active_account_id = active_account["id"]
-            if not active_account.get("safety", {}).get("bootstrap_complete", False):
-                self._ensure_bootstrap()
-                return
         self._ensure_runtime()
         self._ensure_tray()
         self._ensure_main_window()
@@ -549,9 +498,6 @@ class PyNextCloudApplication(Adw.Application):
         if not self.config.configured:
             self.activate()
             return
-        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
-            self._ensure_bootstrap()
-            return
         self._ensure_runtime()
         self._ensure_tray()
         self._ensure_main_window()
@@ -564,9 +510,6 @@ class PyNextCloudApplication(Adw.Application):
             return
         if not self.config.configured:
             self.activate()
-            return
-        if not self.config.data.get("safety", {}).get("bootstrap_complete", False):
-            self._ensure_bootstrap()
             return
         self._ensure_runtime()
         self._ensure_tray()
@@ -614,70 +557,6 @@ class PyNextCloudApplication(Adw.Application):
             )
             notification.set_default_action("app.log")
             self.send_notification(f"sync-failure-{account_name}", notification)
-
-    def _notify_safety_alert(self, account_name: str, alert: object) -> None:
-        notification = Gio.Notification.new(_("Safety review required"))
-        count = int(getattr(alert, "missing_count", 0))
-        if count:
-            notification.set_body(
-                _("{account}: {count} local files disappeared. Synchronization was blocked before Nextcloud could be changed.").format(
-                    account=account_name, count=count
-                )
-            )
-        else:
-            notification.set_body(
-                _("{account}: the local synchronization folder changed unexpectedly. Synchronization was blocked.").format(
-                    account=account_name
-                )
-            )
-        notification.set_default_action("app.show")
-        self.send_notification(f"safety-review-{account_name}", notification)
-
-    def review_safety_alert(self, parent: Gtk.Window | None = None) -> None:
-        if not self.runtime or not self.runtime.scheduler.safety_alert:
-            return
-        alert = self.runtime.scheduler.safety_alert
-        examples = "\n".join(f"• {path}" for path in alert.missing_paths[:8])
-        body = _(alert.message)
-        if examples:
-            body += "\n\n" + examples
-        dialog = Adw.AlertDialog(
-            heading=_("Synchronization blocked for safety"),
-            body=body,
-        )
-        dialog.add_response("cancel", _("Keep Paused"))
-        dialog.add_response("restore", _("Restore from Nextcloud"))
-        dialog.set_response_appearance("restore", Adw.ResponseAppearance.SUGGESTED)
-        if alert.can_approve_once:
-            dialog.add_response("approve", _("Approve These Deletions Once"))
-            dialog.set_response_appearance("approve", Adw.ResponseAppearance.DESTRUCTIVE)
-        dialog.choose(parent, None, self._safety_choice)
-
-    def _safety_choice(self, dialog: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
-        response = dialog.choose_finish(result)
-        if response == "approve" and self.runtime:
-            self.runtime.approve_safety_once()
-        elif response == "restore":
-            self._start_safety_recovery()
-
-    def _start_safety_recovery(self) -> None:
-        if self.settings_window:
-            self.settings_window.close()
-            self.settings_window = None
-        if self.tray:
-            self.tray.stop()
-            self.tray = None
-        if self.runtime:
-            self.runtime.stop()
-            self.runtime = None
-        if self.main_window:
-            old_window = self.main_window
-            self.main_window = None
-            old_window.dispose_for_account_reset()
-            old_window.close()
-        self.config.data["safety"]["bootstrap_complete"] = False
-        self.config.save()
-        self._ensure_bootstrap(recovery=True, initialize_integrations=False)
 
     def _any_engine_running(self) -> bool:
         if self.account_manager:
@@ -762,8 +641,6 @@ class PyNextCloudApplication(Adw.Application):
     def do_shutdown(self) -> None:
         self._update_window_presenter.clear()
         self.update_checker.cancel()
-        if self.bootstrap_window:
-            self.bootstrap_window.runner.cancel()
         if self.settings_window:
             self.settings_window.close()
         if self.tray:

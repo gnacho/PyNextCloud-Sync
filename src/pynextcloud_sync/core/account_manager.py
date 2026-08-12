@@ -44,7 +44,6 @@ class AccountConfigView:
             "accounts": [session.as_account()],
             "account": session.account_dict,
             "sync": session.sync,
-            "safety": session.safety,
             "runtime": session.runtime,
             "general": store_data.get("general", {}),
             "logging": store_data.get("logging", {}),
@@ -71,7 +70,6 @@ class AccountConfigView:
         for account in self._store.data.get("accounts", []):
             if account.get("id") == self._session.account_id:
                 account["sync"] = self._session.sync
-                account["safety"] = self._session.safety
                 account["runtime"] = self._session.runtime
                 return
 
@@ -86,7 +84,6 @@ class AccountRuntime:
         logger: Any,
         session: AccountSession,
         notify_failure: Callable[[Any], None] | None = None,
-        notify_safety_alert: Callable[[Any], None] | None = None,
         sync_permit: SyncPermit | None = None,
     ) -> None:
         self.session = session
@@ -96,17 +93,11 @@ class AccountRuntime:
             if notify_failure
             else None
         )
-        wrapped_safety = (
-            (lambda alert: notify_safety_alert(self.display_name, alert))
-            if notify_safety_alert
-            else None
-        )
         self.runtime = RuntimeController(
             self.view,
             credentials,
             logger,
             wrapped_failure,
-            wrapped_safety,
             sync_permit=sync_permit,
         )
 
@@ -138,13 +129,11 @@ class AccountManager:
         credentials: Any,
         logger: Any,
         notify_failure: Callable[[Any], None] | None = None,
-        notify_safety_alert: Callable[[Any], None] | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
         self.logger = logger
         self.notify_failure = notify_failure
-        self.notify_safety_alert = notify_safety_alert
         self._runtimes: dict[str, AccountRuntime] = {}
         self._session_cache: dict[str, AccountSession] = {}
         self._aggregate = AggregateStateController()
@@ -170,8 +159,6 @@ class AccountManager:
     def _refresh_sessions(self) -> None:
         cache: dict[str, AccountSession] = {}
         for account in self.config.accounts:
-            if not account.get("safety", {}).get("bootstrap_complete", False):
-                continue
             session = AccountSession.from_config_value(account)
             cache[session.account_id] = session
         self._session_cache = cache
@@ -190,7 +177,6 @@ class AccountManager:
             self.logger,
             session,
             self.notify_failure,
-            self.notify_safety_alert,
             self.sync_permit,
         )
         runtime.start()
@@ -198,7 +184,7 @@ class AccountManager:
         self._aggregate.add(runtime.state)
 
     def ensure_account_runtime(self, account_id: str) -> None:
-        """Start the runtime for one account after its bootstrap completes."""
+        """Start the runtime for one account when it is not already running."""
         if account_id in self._runtimes:
             return
         self._refresh_sessions()

@@ -27,9 +27,9 @@ class AggregateStateControllerTests(unittest.TestCase):
 
     def test_removing_a_controller_recomputes(self) -> None:
         first = StateController(AppState.IDLE_OK)
-        second = StateController(AppState.SAFETY_REVIEW)
+        second = StateController(AppState.ERROR)
         aggregate = AggregateStateController([first, second])
-        self.assertEqual(aggregate.snapshot.state, AppState.SAFETY_REVIEW)
+        self.assertEqual(aggregate.snapshot.state, AppState.ERROR)
         aggregate.remove(second)
         self.assertEqual(aggregate.snapshot.state, AppState.IDLE_OK)
 

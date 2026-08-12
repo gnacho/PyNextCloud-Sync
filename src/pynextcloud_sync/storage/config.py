@@ -12,7 +12,7 @@ from pynextcloud_sync.core.exclusions import DEFAULT_PATTERNS, validate_pattern
 from pynextcloud_sync.util.paths import config_dir, default_sync_root, ensure_private_directory
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 DEFAULT_SYNC: dict[str, Any] = {
     "local_inotify_enabled": True,
@@ -25,14 +25,6 @@ DEFAULT_SYNC: dict[str, Any] = {
     "detailed_output": True,
     "exclude_patterns_enabled": True,
     "exclude_patterns": list(DEFAULT_PATTERNS),
-}
-
-DEFAULT_SAFETY: dict[str, Any] = {
-    "bootstrap_complete": False,
-    "bootstrap_completed_at": None,
-    "guard_enabled": True,
-    "deletion_count_threshold": 10,
-    "deletion_percent_threshold": 20,
 }
 
 DEFAULT_RUNTIME: dict[str, Any] = {
@@ -50,7 +42,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
     # account so existing code keeps working while sessions are introduced.
     "account": None,
     "sync": DEFAULT_SYNC,
-    "safety": DEFAULT_SAFETY,
     "runtime": DEFAULT_RUNTIME,
 }
 
@@ -143,24 +134,6 @@ def _validate_sync(sync: dict[str, Any]) -> dict[str, Any]:
     return merged
 
 
-def _validate_safety(safety: dict[str, Any]) -> dict[str, Any]:
-    merged = _deep_merge(DEFAULT_SAFETY, safety)
-    merged["bootstrap_complete"] = bool(merged.get("bootstrap_complete", False))
-    merged["guard_enabled"] = bool(merged.get("guard_enabled", True))
-    try:
-        deletion_count = int(merged.get("deletion_count_threshold", 10))
-        deletion_percent = int(merged.get("deletion_percent_threshold", 20))
-    except (TypeError, ValueError) as exc:
-        raise ConfigurationError("Invalid safety deletion threshold.") from exc
-    if not 1 <= deletion_count <= 100_000:
-        raise ConfigurationError("deletion_count_threshold must be between 1 and 100000.")
-    if not 1 <= deletion_percent <= 100:
-        raise ConfigurationError("deletion_percent_threshold must be between 1 and 100.")
-    merged["deletion_count_threshold"] = deletion_count
-    merged["deletion_percent_threshold"] = deletion_percent
-    return merged
-
-
 def _validate_runtime(runtime: dict[str, Any]) -> dict[str, Any]:
     return _deep_merge(DEFAULT_RUNTIME, runtime)
 
@@ -180,7 +153,6 @@ def _migrate_to_v3(data: dict[str, Any]) -> dict[str, Any]:
                 "local_root": account.get("local_root", ""),
                 "remote_path": account.get("remote_path", ""),
                 "sync": data.get("sync", DEFAULT_SYNC),
-                "safety": data.get("safety", DEFAULT_SAFETY),
                 "runtime": data.get("runtime", DEFAULT_RUNTIME),
             }
         ]
@@ -188,8 +160,43 @@ def _migrate_to_v3(data: dict[str, Any]) -> dict[str, Any]:
     migrated["accounts"] = accounts
     migrated.pop("account", None)
     migrated.pop("sync", None)
-    migrated.pop("safety", None)
     migrated.pop("runtime", None)
+    return migrated
+
+
+def _drop_safety_fields(account: dict[str, Any]) -> dict[str, Any]:
+    """Remove the safety-subsystem fields introduced in schema v3/v4.
+
+    The thin-wrapper redesign (v5) removes the safety baseline, run markers,
+    and deletion guard. Stale values such as ``bootstrap_complete`` must not
+    keep an account from syncing after upgrade.
+    """
+    clean = {key: value for key, value in account.items() if key != "safety"}
+    for key in (
+        "bootstrap_complete",
+        "bootstrap_completed_at",
+        "guard_enabled",
+        "deletion_count_threshold",
+        "deletion_percent_threshold",
+    ):
+        clean.pop(key, None)
+    return clean
+
+
+def _migrate_to_v5(data: dict[str, Any]) -> dict[str, Any]:
+    migrated = dict(data)
+    migrated["accounts"] = [
+        _drop_safety_fields(account) for account in migrated.get("accounts", [])
+    ]
+    migrated.pop("safety", None)
+    for key in (
+        "bootstrap_complete",
+        "bootstrap_completed_at",
+        "guard_enabled",
+        "deletion_count_threshold",
+        "deletion_percent_threshold",
+    ):
+        migrated.pop(key, None)
     return migrated
 
 
@@ -209,7 +216,6 @@ def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     validated["local_root"] = str(root)
     validated["remote_path"] = normalize_remote_path(account.get("remote_path", ""))
     validated["sync"] = _validate_sync(account.get("sync", DEFAULT_SYNC))
-    validated["safety"] = _validate_safety(account.get("safety", DEFAULT_SAFETY))
     validated["runtime"] = _validate_runtime(account.get("runtime", DEFAULT_RUNTIME))
     validated["id"] = account_fingerprint(validated)
     return validated
@@ -234,12 +240,10 @@ def _refresh_legacy_view(
             "remote_path": first["remote_path"],
         }
         data["sync"] = first["sync"]
-        data["safety"] = first["safety"]
         data["runtime"] = first["runtime"]
     else:
         data["account"] = None
         data["sync"] = data.get("sync") or _deep_merge(DEFAULT_SYNC, {})
-        data["safety"] = data.get("safety") or _deep_merge(DEFAULT_SAFETY, {})
         data["runtime"] = data.get("runtime") or _deep_merge(DEFAULT_RUNTIME, {})
     return data
 
@@ -254,7 +258,7 @@ def validate_config(
         raise ConfigurationError(
             f"Configuration schema {version} is newer than this application supports."
         )
-    merged = _deep_merge(DEFAULT_CONFIG, _migrate_to_v3(data))
+    merged = _deep_merge(DEFAULT_CONFIG, _migrate_to_v5(_migrate_to_v3(data)))
     merged["schema_version"] = SCHEMA_VERSION
 
     accounts: list[dict[str, Any]] = []

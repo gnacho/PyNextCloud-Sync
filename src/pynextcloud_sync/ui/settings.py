@@ -259,7 +259,7 @@ class SettingsWindow(Adw.PreferencesWindow):
             active=sync["local_inotify_enabled"],
         )
         self.local_timer = Adw.SwitchRow(
-            title=_("Run a local safety interval"), active=sync["local_interval_enabled"]
+            title=_("Run a local interval"), active=sync["local_interval_enabled"]
         )
         self.local_minutes = _spin_row(
             _("Local interval (minutes)"), 1, 1440, sync["local_interval_minutes"]
@@ -280,7 +280,7 @@ class SettingsWindow(Adw.PreferencesWindow):
             active=sync["remote_push_enabled"],
         )
         self.remote_timer = Adw.SwitchRow(
-            title=_("Run a remote safety interval"),
+            title=_("Run a remote interval"),
             subtitle=_("Recommended because push delivery is best effort."),
             active=sync["remote_interval_enabled"],
         )
@@ -397,37 +397,6 @@ class SettingsWindow(Adw.PreferencesWindow):
         self.detailed.connect("notify::active", self._save_sync)
         group.add(self.detailed)
         page.add(group)
-        safety_config = self.config.data["safety"]
-        safety = Adw.PreferencesGroup(
-            title=_("Deletion Safety Guard"),
-            description=_(
-                "Synchronization is blocked before nextcloudcmd starts when too many previously synchronized local files disappear."
-            ),
-        )
-        self.deletion_count = _spin_row(
-            _("Review after this many missing files"),
-            1,
-            100_000,
-            safety_config["deletion_count_threshold"],
-        )
-        self.deletion_percent = _spin_row(
-            _("Review after this percentage is missing"),
-            1,
-            100,
-            safety_config["deletion_percent_threshold"],
-        )
-        self.deletion_count.connect("notify::value", self._save_safety)
-        self.deletion_percent.connect("notify::value", self._save_safety)
-        safety.add(self.deletion_count)
-        safety.add(self.deletion_percent)
-        safety.add(
-            Adw.ActionRow(
-                title=_("Empty, missing, replaced, or unreadable folder"),
-                subtitle=_("Always requires a safety review regardless of the limits above."),
-                icon_name="security-high-symbolic",
-            )
-        )
-        page.add(safety)
         diagnostics = Adw.PreferencesGroup(title=_("Diagnostics"))
         diagnostics.add(
             Adw.ActionRow(
@@ -489,16 +458,6 @@ class SettingsWindow(Adw.PreferencesWindow):
             save_to_disk=enabled,
             retention_days=retention,
         )
-
-    def _save_safety(self, *_args: object) -> None:
-        if self._building:
-            return
-        safety = self.config.data["safety"]
-        safety["deletion_count_threshold"] = int(self.deletion_count.get_value())
-        safety["deletion_percent_threshold"] = int(
-            self.deletion_percent.get_value()
-        )
-        self.config.save()
 
     def _open_log_folder(self, _row: Adw.ActionRow) -> None:
         self.runtime.logger.directory.mkdir(parents=True, exist_ok=True)

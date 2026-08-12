@@ -13,7 +13,6 @@ from pynextcloud_sync.core.scheduler import SyncScheduler
 from pynextcloud_sync.core.state import AppState, PushState, StateController
 from pynextcloud_sync.core.suspend import SuspendWatcher
 from pynextcloud_sync.core.sync_engine import SyncEngine, SyncResult
-from pynextcloud_sync.core.safety import SafetyAlert
 from pynextcloud_sync.core.timers import SyncTimers
 from pynextcloud_sync.core.triggers import Trigger
 from pynextcloud_sync.nextcloud.push import NotifyPushClient
@@ -27,7 +26,6 @@ class RuntimeController:
         credentials: Any,
         logger: Any,
         notify_failure: Callable[[SyncResult], None] | None = None,
-        notify_safety_alert: Callable[[SafetyAlert], None] | None = None,
         sync_permit: Any | None = None,
     ) -> None:
         self.config = config
@@ -47,7 +45,6 @@ class RuntimeController:
             self.state,
             logger,
             self._sync_completed,
-            notify_safety_alert,
             sync_permit=sync_permit,
         )
         self.timers = SyncTimers(self.scheduler.request)
@@ -182,7 +179,7 @@ class RuntimeController:
         if isinstance(error, InotifyOverflowError):
             # Overflow means events were lost, not that synchronization failed.
             # Rebuild the watcher, then let nextcloudcmd perform one normal full
-            # reconciliation after the existing safety checks pass.
+            # reconciliation.
             self.state.set(AppState.SYNC_QUEUED, _("Synchronization scheduled"))
             if not self._inotify_recovery_source:
                 self._inotify_recovery_source = GLib.idle_add(self._recover_inotify_overflow)
@@ -194,7 +191,7 @@ class RuntimeController:
             )
         self.state.set(
             AppState.ERROR,
-            _("Filesystem watch limit reached; using a local safety interval for this session"),
+            _("Filesystem watch limit reached; using a local interval for this session"),
         )
 
     def _recover_inotify_overflow(self) -> bool:
@@ -271,7 +268,7 @@ class RuntimeController:
         ):
             self.state.set(
                 AppState.IDLE_OK,
-                _("Automatic remote detection is unavailable; use Sync Now or enable the remote safety interval."),
+                _("Automatic remote detection is unavailable; use Sync Now or enable the remote interval."),
             )
 
     def _sync_completed(self, result: SyncResult) -> None:
@@ -292,6 +289,3 @@ class RuntimeController:
 
     def set_paused(self, paused: bool) -> None:
         self.scheduler.set_user_paused(paused)
-
-    def approve_safety_once(self) -> None:
-        self.scheduler.approve_safety_once()

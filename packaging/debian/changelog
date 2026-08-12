@@ -1,3 +1,13 @@
+nextsync (0.2.4) stable; urgency=medium
+
+  * Open Settings for accounts without sync folders; hide desktop-integration
+    switches when there is no folder.
+  * Publish a themed symbolic tray icon name instead of a black pixmap.
+  * Trim the tray menu to Open NextSync, Settings, and Quit.
+  * Replace the remaining hand-drawn SVGs with Lucide icons.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:05:00 -0300
+
 nextsync (0.2.3) stable; urgency=medium
 
   * Fix the silent main-window crash on libadwaita 1.6+ (NavigationSplitView

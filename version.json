@@ -1,11 +1,13 @@
 {
   "schema_version": 1,
-  "version": "0.2.3",
+  "version": "0.2.4",
   "mandatory": false,
-  "released_at": "2026-08-12T23:55:00Z",
-  "summary": "NextSync 0.2.3: fixes the main window crash on libadwaita 1.6+.",
+  "released_at": "2026-08-13T00:05:00Z",
+  "summary": "NextSync 0.2.4: Settings opens for zero-folder accounts, themed tray icon, trimmed tray menu, and Lucide-unified icons.",
   "changelog": [
-    "Fixed the main window crash on libadwaita 1.6+: Adw.NavigationSplitView now takes NavigationPage objects for sidebar and content instead of the removed sidebar/content keyword form.",
-    "NextSync now opens its main window reliably on current GNOME/Libadwaita."
+    "Settings now opens for accounts with no sync folders; desktop-integration switches are hidden when there is no folder (fixes the silent no-op).",
+    "The tray icon publishes a bare symbolic icon name resolved through the icon theme, so it follows the theme instead of rendering black.",
+    "The tray menu is trimmed to Open NextSync, Settings, and Quit; per-account submenu and redundant actions removed.",
+    "All shipped icons now come from Lucide (folder and symbolic variants replaced)."
   ]
 }

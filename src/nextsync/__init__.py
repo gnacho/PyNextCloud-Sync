@@ -2,4 +2,4 @@
 
 APP_ID = "io.github.gnacho.nextsync"
 APP_NAME = "NextSync"
-VERSION = "0.2.3"
+VERSION = "0.2.4"

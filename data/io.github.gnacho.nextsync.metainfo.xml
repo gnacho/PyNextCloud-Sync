@@ -15,7 +15,7 @@
   <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
   <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
   <releases>
-    <release version="0.2.3" date="2026-08-12">
+    <release version="0.2.4" date="2026-08-12">
       <description>
         <ul>
           <li>Removed the protected-initialization subsystem (bootstrap staging, safety baseline, run markers, deletion guard) so nextcloudcmd owns synchronization, conflict resolution, and safety; config schema bumps from v4 to v5 and drops the safety fields automatically.</li>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4 — 2026-08-12
+
+### Settings for zero-folder accounts, tray polish, Lucide icons
+
+- **Settings opens for accounts with no sync folders** (fixes the silent no-op): desktop-integration switches are hidden when there is no folder, and the Synchronization Folders group (with Add Folder) is always shown.
+- **Themed tray icon**: the tray publishes a bare symbolic icon name resolved through the icon theme, so it follows the theme instead of rendering black.
+- **Trimmed tray menu**: now only Open NextSync, Settings, and Quit; the per-account submenu and redundant actions were removed.
+- **Lucide-unified icons**: the folder and symbolic SVGs now derive from the Lucide icon set like the rest.
+
 ## 0.2.3 — 2026-08-12
 
 ### Fix: main window on libadwaita 1.6+

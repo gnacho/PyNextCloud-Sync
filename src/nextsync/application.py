@@ -361,7 +361,7 @@ class NextSyncApplication(Adw.Application):
         self.active_account_id = active
         self.config.set_active_view(active)
         runtime = self.account_manager.get(active) if active else None
-        self.runtime = runtime.runtime if runtime else None
+        self.runtime = runtime if runtime else None
 
     def set_active_account(self, account_id: str | None) -> None:
         if account_id == self.active_account_id:
@@ -374,7 +374,7 @@ class NextSyncApplication(Adw.Application):
         if not self.account_manager:
             return
         runtime = self.account_manager.get(account_id) if account_id else None
-        self.runtime = runtime.runtime if runtime else None
+        self.runtime = runtime if runtime else None
         self._ensure_desktop_integration()
 
     def _active_account(self) -> dict | None:
@@ -385,14 +385,19 @@ class NextSyncApplication(Adw.Application):
                 return account
         return None
 
-    def _ensure_desktop_integration(self) -> None:
+    def _active_folder_root(self) -> Path | None:
         account = self._active_account()
-        if not account:
+        if not account or not account.get("folders"):
+            return None
+        return Path(account["folders"][0]["local_root"]).expanduser().absolute()
+
+    def _ensure_desktop_integration(self) -> None:
+        root = self._active_folder_root()
+        if not root:
             return
-        root = Path(account["local_root"])
         if (
             self.desktop_integration
-            and self.desktop_integration.sync_root != root.expanduser().absolute()
+            and self.desktop_integration.sync_root != root
         ):
             self.desktop_integration.close()
             self.desktop_integration = None
@@ -431,12 +436,12 @@ class NextSyncApplication(Adw.Application):
         if not runtime:
             return
         if action == "sync":
-            runtime.runtime.sync_now()
+            runtime.sync_now()
         elif action == "open":
             self.set_active_account(account_id)
             self.open_folder()
         elif action == "pause":
-            runtime.runtime.set_paused(not runtime.runtime.scheduler.user_paused)
+            runtime.set_paused(not runtime.scheduler.user_paused)
 
     def _tray_sync(self) -> None:
         if self.runtime and self.runtime.scheduler.delete_alert:
@@ -495,10 +500,9 @@ class NextSyncApplication(Adw.Application):
                 )
 
     def open_folder(self) -> None:
-        account = self._active_account()
-        if not account:
+        root = self._active_folder_root()
+        if not root:
             return
-        root = Path(account["local_root"])
         root.mkdir(parents=True, exist_ok=True)
         Gio.AppInfo.launch_default_for_uri(root.as_uri(), None)
 
@@ -548,8 +552,8 @@ class NextSyncApplication(Adw.Application):
         if self._mandatory_update_manifest:
             self._show_update_window(self._mandatory_update_manifest)
             return
-        account = self._active_account()
-        if not account:
+        root = self._active_folder_root()
+        if not root:
             return
         if self.conflicts_window:
             self.conflicts_window.present()
@@ -557,7 +561,7 @@ class NextSyncApplication(Adw.Application):
             return
         self.conflicts_window = ConflictResolverWindow(
             self,
-            account["local_root"],
+            str(root),
             self.logger,
             on_close=self._conflicts_window_closed,
         )
@@ -641,7 +645,7 @@ class NextSyncApplication(Adw.Application):
     def _any_engine_running(self) -> bool:
         if self.account_manager:
             for runtime in self.account_manager.runtimes.values():
-                if runtime.runtime.engine.running:
+                if runtime.engine.running:
                     return True
         return bool(self.runtime and self.runtime.engine.running)
 

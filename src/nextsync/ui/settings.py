@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, Gtk
+from gi.repository import Adw, Gio, GLib, Gtk
 
 from nextsync.core.autostart import AutostartManager
 from nextsync.core.exclusions import DEFAULT_PATTERNS, InvalidPattern, validate_pattern
@@ -153,24 +155,133 @@ class SettingsWindow(Adw.PreferencesWindow):
         self.pause_battery.connect("notify::active", self._save_general)
         power.add(self.pause_battery)
         page.add(power)
-        folder = Adw.PreferencesGroup(title=_("Local Folder"))
+        folder = Adw.PreferencesGroup(title=_("Synchronization Folders"))
         account = self.config.data["account"]
-        folder.add(
-            Adw.ActionRow(
-                title=_("NextCloud folder"),
-                subtitle=account["local_root"],
+        self._folder_rows: list[Adw.ActionRow] = []
+        self._populate_folder_rows(folder, account)
+        add_folder_row = Adw.ActionRow(
+            title=_("Add Folder"),
+            subtitle=_("Mirror another local folder from this account"),
+            icon_name="folder-new-symbolic",
+            activatable=True,
+        )
+        add_folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+        add_folder_row.connect("activated", self._add_folder)
+        folder.add(add_folder_row)
+        page.add(folder)
+
+    def _populate_folder_rows(self, group: Adw.PreferencesGroup, account: dict) -> None:
+        for row in self._folder_rows:
+            group.remove(row)
+        self._folder_rows.clear()
+        for folder_value in account.get("folders", []):
+            remote_label = folder_value.get("remote_path", "") or "/"
+            row = Adw.ActionRow(
+                title=folder_value.get("local_root", ""),
+                subtitle=_("Remote: {remote}").format(remote=remote_label),
                 icon_name="folder-symbolic",
             )
-        )
-        remote_path = account.get("remote_path", "") or ""
-        if remote_path:
-            folder.add(
-                Adw.ActionRow(
-                    title=_("Remote folder"),
-                    subtitle=remote_path,
-                    icon_name="folder-remote-symbolic",
-                )
+            remove = Gtk.Button(
+                icon_name="user-trash-symbolic",
+                valign=Gtk.Align.CENTER,
+                tooltip_text=_("Remove folder"),
+                css_classes=["flat"],
             )
+            remove.connect("clicked", self._remove_folder, folder_value.get("id"))
+            row.add_suffix(remove)
+            group.add(row)
+            self._folder_rows.append(row)
+
+    def _add_folder(self, _row: Adw.ActionRow) -> None:
+        account = self.config.data["account"]
+        if not account or not account.get("id"):
+            return
+        dialog = Adw.AlertDialog(
+            heading=_("Add Folder"),
+            body=_("Choose a local folder and an optional remote folder to mirror from this account."),
+        )
+        entry_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        local_box = Gtk.Box(spacing=6)
+        local_entry = Adw.EntryRow(title=_("Local folder"))
+        local_entry.set_text(str(Path.home() / "NextCloud"))
+        local_box.append(local_entry)
+        choose = Gtk.Button(
+            icon_name="folder-open-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"]
+        )
+        choose.connect("clicked", lambda _button: self._choose_folder(local_entry))
+        local_entry.add_suffix(choose)
+        entry_box.append(local_box)
+        remote_entry = Adw.EntryRow(title=_("Remote folder (optional, default /)"))
+        remote_entry.set_text("/")
+        entry_box.append(remote_entry)
+        dialog.set_extra_child(entry_box)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("add", _("Add"))
+        dialog.set_response_appearance("add", Adw.ResponseAppearance.SUGGESTED)
+
+        def chosen(source: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
+            if source.choose_finish(result) != "add":
+                return
+            root = Path(local_entry.get_text()).expanduser()
+            if not root.is_absolute():
+                self._folder_error(_("Choose an absolute local folder."))
+                return
+            try:
+                from nextsync.storage.config import normalize_remote_path
+
+                remote = normalize_remote_path(remote_entry.get_text())
+            except ConfigurationError as exc:
+                self._folder_error(str(exc))
+                return
+            try:
+                self.config.add_folder(account["id"], {"local_root": str(root), "remote_path": remote})
+            except ConfigurationError as exc:
+                self._folder_error(str(exc))
+                return
+            self._refresh_folders()
+
+        dialog.choose(self, None, chosen)
+
+    def _choose_folder(self, entry: Adw.EntryRow) -> None:
+        dialog = Gtk.FileDialog(title=_("Choose NextCloud Folder"), modal=True)
+        dialog.set_initial_folder(Gio.File.new_for_path(entry.get_text()))
+        dialog.select_folder(self, None, self._folder_chosen(entry))
+
+    def _folder_chosen(self, entry: Adw.EntryRow) -> object:
+        def chosen(dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
+            try:
+                folder = dialog.select_folder_finish(result)
+                if folder and folder.get_path():
+                    entry.set_text(folder.get_path())
+            except GLib.Error:
+                pass
+
+        return chosen
+
+    def _remove_folder(self, _button: Gtk.Button, folder_id: str) -> None:
+        account = self.config.data["account"]
+        if not account or not account.get("id"):
+            return
+        self.config.remove_folder(account["id"], folder_id)
+        self._refresh_folders()
+
+    def _refresh_folders(self) -> None:
+        account = self.config.data["account"]
+        group = None
+        if account and self._folder_rows:
+            parent = self._folder_rows[0].get_parent()
+            group = parent if isinstance(parent, Adw.PreferencesGroup) else None
+        if group and account:
+            self._populate_folder_rows(group, account)
+        self._folder_error(_(""))
+
+    def _folder_error(self, message: str) -> None:
+        toast = Adw.Toast(message) if message else None
+        overlay = self.get_ancestor(Adw.ToastOverlay) if hasattr(self, "get_ancestor") else None
+        if toast and overlay:
+            overlay.add_toast(toast)
+        elif message:
+            self.present()
         integration_state = self.desktop_integration.state
         self.nautilus_bookmark = Adw.SwitchRow(
             title=_("Show in Files sidebar"),

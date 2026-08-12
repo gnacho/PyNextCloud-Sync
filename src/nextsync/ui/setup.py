@@ -42,7 +42,7 @@ class SetupWindow(Adw.ApplicationWindow):
         self.server = ""
         self.username = ""
         self.authentication_type = "manual"
-        self.remote_path = ""
+        self.folders: list[dict[str, str]] = []
 
         toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar(show_title=False)
@@ -56,7 +56,7 @@ class SetupWindow(Adw.ApplicationWindow):
         self._build_welcome()
         self._build_server()
         self._build_authentication()
-        self._build_folder()
+        self._build_folders()
         self._build_summary()
         self.stack.set_visible_child_name("welcome")
 
@@ -183,59 +183,59 @@ class SetupWindow(Adw.ApplicationWindow):
         content.append(actions)
         self.stack.add_named(page, "authentication")
 
-    def _build_folder(self) -> None:
+    def _build_folders(self) -> None:
         page, content = self._page()
-        content.append(Gtk.Label(label=_("Choose Local Folder"), xalign=0, css_classes=["title-1"]))
+        content.append(Gtk.Label(label=_("Synchronization Folders"), xalign=0, css_classes=["title-1"]))
         content.append(
             Gtk.Label(
-                label=_("The file tree from the selected remote folder will be mirrored into this local folder."),
+                label=_("Choose the local folders to mirror from this account. You can add several, or finish now and add folders later from Settings."),
                 wrap=True,
                 xalign=0,
                 css_classes=["dim-label"],
             )
         )
-        group = Adw.PreferencesGroup()
-        self.folder_entry = Adw.EntryRow(title=_("Local NextCloud folder"))
-        self.folder_entry.set_text(str(default_sync_root()))
-        choose = Gtk.Button(icon_name="folder-open-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"])
-        choose.connect("clicked", self._choose_folder)
-        self.folder_entry.add_suffix(choose)
-        group.add(self.folder_entry)
-        self.remote_entry = Adw.EntryRow(title=_("Remote folder (optional, default /)"))
-        self.remote_entry.set_text("/")
-        group.add(self.remote_entry)
-        content.append(group)
+        self.folder_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
+        content.append(self.folder_list)
         self.folder_error = Gtk.Label(xalign=0, wrap=True, css_classes=["error"])
         content.append(self.folder_error)
+        add_row = Adw.ActionRow(
+            title=_("Add Folder"),
+            subtitle=_("Mirror another local folder from this account"),
+            icon_name="folder-new-symbolic",
+            activatable=True,
+        )
+        add_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+        add_row.connect("activated", self._open_add_folder)
+        content.append(add_row)
         actions = Gtk.Box(spacing=12, homogeneous=True)
         back = Gtk.Button(label=_("Back"))
         back.connect("clicked", lambda _button: self.stack.set_visible_child_name("authentication"))
         actions.append(back)
         next_button = Gtk.Button(label=_("Review Setup"), css_classes=["suggested-action"])
-        next_button.connect("clicked", self._folder_continue)
+        next_button.connect("clicked", self._folders_continue)
         actions.append(next_button)
         content.append(actions)
-        self.stack.add_named(page, "folder")
+        self.stack.add_named(page, "folders")
 
     def _build_summary(self) -> None:
         page, content = self._page()
         content.append(Gtk.Label(label=_("Ready to Synchronize"), xalign=0, css_classes=["title-1"]))
         self.summary_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         content.append(self.summary_list)
-        defaults = Gtk.Label(
-            label=_("The chosen folder will be mirrored in both directions using the Nextcloud synchronization engine. The first run downloads only the files that differ from what is already local."),
+        self.summary_hint = Gtk.Label(
+            label=_("The chosen folders will be mirrored in both directions using the Nextcloud synchronization engine."),
             wrap=True,
             xalign=0,
             css_classes=["dim-label"],
         )
-        content.append(defaults)
+        content.append(self.summary_hint)
         actions = Gtk.Box(spacing=12, homogeneous=True)
         back = Gtk.Button(label=_("Back"))
-        back.connect("clicked", lambda _button: self.stack.set_visible_child_name("folder"))
+        back.connect("clicked", lambda _button: self.stack.set_visible_child_name("folders"))
         actions.append(back)
-        start = Gtk.Button(label=_("Start Synchronizing"), css_classes=["suggested-action"])
-        start.connect("clicked", self._start_syncing)
-        actions.append(start)
+        self.start_button = Gtk.Button(label=_("Start Synchronizing"), css_classes=["suggested-action"])
+        self.start_button.connect("clicked", self._start_syncing)
+        actions.append(self.start_button)
         content.append(actions)
         self.stack.add_named(page, "summary")
 
@@ -303,103 +303,191 @@ class SetupWindow(Adw.ApplicationWindow):
                 return
             self.auth_error.set_text("")
             self.password_entry.set_text("")
-            self.stack.set_visible_child_name("folder")
+            self.stack.set_visible_child_name("folders")
 
         self.credentials.store(self.server, self.username, password, stored)
 
-    def _choose_folder(self, _button: Gtk.Button) -> None:
-        dialog = Gtk.FileDialog(title=_("Choose NextCloud Folder"), modal=True)
-        dialog.set_initial_folder(Gio.File.new_for_path(self.folder_entry.get_text()))
-        dialog.select_folder(self, None, self._folder_chosen)
+    def _open_add_folder(self, _row: Adw.ActionRow) -> None:
+        self.folder_error.set_text("")
+        dialog = Adw.AlertDialog(
+            heading=_("Add Folder"),
+            body=_("Choose a local folder and an optional remote folder to mirror from this account."),
+        )
+        entry_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        local_box = Gtk.Box(spacing=6)
+        self.add_local_entry = Adw.EntryRow(title=_("Local folder"))
+        self.add_local_entry.set_text(str(default_sync_root()))
+        local_box.append(self.add_local_entry)
+        choose = Gtk.Button(icon_name="folder-open-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"])
+        choose.connect("clicked", lambda _button: self._choose_folder_for_dialog(self.add_local_entry))
+        self.add_local_entry.add_suffix(choose)
+        entry_box.append(local_box)
+        self.add_remote_entry = Adw.EntryRow(title=_("Remote folder (optional, default /)"))
+        self.add_remote_entry.set_text("/")
+        entry_box.append(self.add_remote_entry)
+        dialog.set_extra_child(entry_box)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("add", _("Add"))
+        dialog.set_response_appearance("add", Adw.ResponseAppearance.SUGGESTED)
+        dialog.choose(self, None, self._add_folder_response)
 
-    def _folder_chosen(self, dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
-        try:
-            folder = dialog.select_folder_finish(result)
-            if folder and folder.get_path():
-                self.folder_entry.set_text(folder.get_path())
-        except GLib.Error:
-            pass
-
-    def _folder_continue(self, _button: Gtk.Button) -> None:
-        root = Path(self.folder_entry.get_text()).expanduser()
+    def _add_folder_response(
+        self, dialog: Adw.AlertDialog, result: Gio.AsyncResult
+    ) -> None:
+        response = dialog.choose_finish(result)
+        if response != "add":
+            return
+        root = Path(self.add_local_entry.get_text()).expanduser()
         if not root.is_absolute():
             self.folder_error.set_text(_("Choose an absolute local folder."))
             return
         try:
-            remote = normalize_remote_path(self.remote_entry.get_text())
+            remote = normalize_remote_path(self.add_remote_entry.get_text())
         except ConfigurationError as exc:
             self.folder_error.set_text(str(exc))
             return
-        self.remote_path = remote
+        pair = {"local_root": str(root), "remote_path": remote}
+        if any(item["local_root"] == pair["local_root"] for item in self.folders):
+            self.folder_error.set_text(_("This local folder is already added."))
+            return
+        self.folders.append(pair)
+        self._append_folder_row(pair)
+
+    def _append_folder_row(self, pair: dict[str, str]) -> None:
+        remote_label = pair["remote_path"] if pair["remote_path"] else "/"
+        row = Adw.ActionRow(
+            title=pair["local_root"],
+            subtitle=_("Remote: {remote}").format(remote=remote_label),
+            icon_name="folder-symbolic",
+        )
+        remove = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"])
+        remove.connect("clicked", lambda _button, _row=row: self._remove_folder_row(_row))
+        row.add_suffix(remove)
+        self.folder_list.append(row)
+        self.folder_list.show()
+
+    def _remove_folder_row(self, row: Adw.ActionRow) -> None:
+        title = row.get_title()
+        self.folder_list.remove(row)
+        self.folders = [item for item in self.folders if item["local_root"] != title]
+
+    def _choose_folder_for_dialog(self, entry: Adw.EntryRow) -> None:
+        dialog = Gtk.FileDialog(title=_("Choose NextCloud Folder"), modal=True)
+        dialog.set_initial_folder(Gio.File.new_for_path(entry.get_text()))
+        dialog.select_folder(self, None, self._dialog_folder_chosen(entry))
+
+    def _dialog_folder_chosen(self, entry: Adw.EntryRow) -> Callable[[Gtk.FileDialog, Gio.AsyncResult], None]:
+        def chosen(dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
+            try:
+                folder = dialog.select_folder_finish(result)
+                if folder and folder.get_path():
+                    entry.set_text(folder.get_path())
+            except GLib.Error:
+                pass
+
+        return chosen
+
+    def _folders_continue(self, _button: Gtk.Button) -> None:
         self.folder_error.set_text("")
         while row := self.summary_list.get_first_child():
             self.summary_list.remove(row)
-        remote_label = remote if remote else "/"
-        for title, subtitle, icon in (
-            (_("Server"), self.server, "network-server-symbolic"),
-            (_("Account"), self.username, "avatar-default-symbolic"),
-            (_("Local Folder"), str(root), "folder-symbolic"),
-            (_("Remote Folder"), remote_label, "folder-remote-symbolic"),
-            (_("Local Detection"), _("Filesystem monitor"), "folder-saved-search-symbolic"),
-            (_("Remote Detection"), _("Server push + every 10 minutes"), "network-transmit-receive-symbolic"),
-        ):
-            self.summary_list.append(Adw.ActionRow(title=title, subtitle=subtitle, icon_name=icon))
+        self.summary_list.append(Adw.ActionRow(title=_("Server"), subtitle=self.server, icon_name="network-server-symbolic"))
+        self.summary_list.append(Adw.ActionRow(title=_("Account"), subtitle=self.username, icon_name="avatar-default-symbolic"))
+        if not self.folders:
+            self.summary_list.append(
+                Adw.ActionRow(
+                    title=_("No Folders"),
+                    subtitle=_("Connected without synchronization folders. Add them later from Settings."),
+                    icon_name="folder-symbolic",
+                )
+            )
+            self.start_button.set_label(_("Finish Setup"))
+            self.summary_hint.set_text(
+                _("The account will be connected without synchronizing any folder. You can add folders later from Settings.")
+            )
+        else:
+            self.start_button.set_label(_("Start Synchronizing"))
+            self.summary_hint.set_text(
+                _("The chosen folders will be mirrored in both directions using the Nextcloud synchronization engine.")
+            )
+            for pair in self.folders:
+                remote_label = pair["remote_path"] if pair["remote_path"] else "/"
+                self.summary_list.append(
+                    Adw.ActionRow(
+                        title=_("Local Folder"),
+                        subtitle=pair["local_root"],
+                        icon_name="folder-symbolic",
+                    )
+                )
+                self.summary_list.append(
+                    Adw.ActionRow(
+                        title=_("Remote Folder"),
+                        subtitle=remote_label,
+                        icon_name="folder-remote-symbolic",
+                    )
+                )
+        self.summary_list.append(Adw.ActionRow(title=_("Local Detection"), subtitle=_("Filesystem monitor"), icon_name="folder-saved-search-symbolic"))
+        self.summary_list.append(Adw.ActionRow(title=_("Remote Detection"), subtitle=_("Server push + every 10 minutes"), icon_name="network-transmit-receive-symbolic"))
         self.stack.set_visible_child_name("summary")
 
     def _start_syncing(self, _button: Gtk.Button) -> None:
+        if not self.folders:
+            self._finish_setup()
+            return
         self._confirm_first_sync()
 
-    def _local_folder_is_empty(self) -> bool:
-        root = Path(self.folder_entry.get_text()).expanduser()
+    def _local_folder_is_empty(self, folder: dict[str, str]) -> bool:
+        root = Path(folder["local_root"]).expanduser()
         try:
             return not any(root.iterdir())
         except OSError:
             return False
 
     def _confirm_first_sync(self) -> None:
-        local_empty = self._local_folder_is_empty()
         self.api.http.trust_invalid_certificates = self.trust_invalid.get_active()
 
         def on_remote(remote_empty: bool, error: Exception | None) -> None:
             if error:
                 self._finish_setup()
                 return
-            self._show_first_sync_dialog(local_empty, remote_empty)
+            self._show_first_sync_dialog(remote_empty)
 
         def secret_ready(password: str | None, error: Exception | None) -> None:
             if error or not password:
                 self._finish_setup()
                 return
             self.api.probe_remote(
-                self.server, self.username, password, self.remote_path, on_remote
+                self.server, self.username, password, self.folders[0]["remote_path"], on_remote
             )
 
         self.credentials.lookup(self.server, self.username, secret_ready)
 
-    def _show_first_sync_dialog(self, local_empty: bool, remote_empty: bool) -> None:
-        folder = Path(self.folder_entry.get_text()).expanduser()
+    def _show_first_sync_dialog(self, remote_empty: bool) -> None:
         account = f"{self.username}@{self.server}"
+        local_empty = all(self._local_folder_is_empty(item) for item in self.folders)
+        count = len(self.folders)
+        folder_label = ", ".join(Path(item["local_root"]).name for item in self.folders)
         if local_empty and remote_empty:
             body = _(
-                "Connect {account} and start syncing {folder} now? Both sides are "
-                "empty; synchronization will keep them in sync as an empty mirror."
-            ).format(account=account, folder=folder)
+                "Connect {account} and start syncing {count} folder(s) ({folders}) now? "
+                "Both sides are empty; synchronization will keep them in sync as empty mirrors."
+            ).format(account=account, count=count, folders=folder_label)
         elif local_empty:
             body = _(
-                "Connect {account} and start syncing {folder} now? The remote folder "
-                "already contains files; they will be downloaded."
-            ).format(account=account, folder=folder)
+                "Connect {account} and start syncing {count} folder(s) ({folders}) now? "
+                "The remote folders already contain files; they will be downloaded."
+            ).format(account=account, count=count, folders=folder_label)
         elif remote_empty:
             body = _(
-                "Connect {account} and start syncing {folder} now? The local folder "
-                "already contains files; they will be uploaded."
-            ).format(account=account, folder=folder)
+                "Connect {account} and start syncing {count} folder(s) ({folders}) now? "
+                "The local folders already contain files; they will be uploaded."
+            ).format(account=account, count=count, folders=folder_label)
         else:
             body = _(
-                "Connect {account} and start syncing {folder} now? Files that changed "
-                "on both sides will be preserved as {conflict} (Nextcloud conflicted "
-                "copy <date>).<ext>."
-            ).format(account=account, folder=folder, conflict="{name}")
+                "Connect {account} and start syncing {count} folder(s) ({folders}) now? Files "
+                "that changed on both sides will be preserved as {conflict} (Nextcloud "
+                "conflicted copy <date>).<ext>."
+            ).format(account=account, count=count, folders=folder_label, conflict="{name}")
         dialog = Adw.AlertDialog(heading=_("Start Synchronizing?"), body=body)
         dialog.add_response("back", _("Back to setup"))
         dialog.add_response("start", _("Start"))
@@ -413,17 +501,19 @@ class SetupWindow(Adw.ApplicationWindow):
         if response == "start":
             self._finish_setup()
         else:
-            self.stack.set_visible_child_name("folder")
+            self.stack.set_visible_child_name("folders")
 
     def _finish_setup(self) -> None:
-        root = Path(self.folder_entry.get_text()).expanduser()
-        root.mkdir(parents=True, exist_ok=True)
+        for pair in self.folders:
+            Path(pair["local_root"]).expanduser().mkdir(parents=True, exist_ok=True)
         account = {
             "server_url": self.server,
             "login_name": self.username,
             "authentication_type": self.authentication_type,
-            "local_root": str(root),
-            "remote_path": self.remote_path,
+            "folders": [
+                {"local_root": pair["local_root"], "remote_path": pair["remote_path"]}
+                for pair in self.folders
+            ],
         }
         self.config.data["network"]["trust_invalid_certificates"] = (
             self.trust_invalid.get_active()

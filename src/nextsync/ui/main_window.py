@@ -119,22 +119,31 @@ class AccountView(Gtk.Box):
                 icon_name="avatar-default-symbolic",
             )
         )
-        folder_row = _compact_action_row(
-            title=_("Local Folder"),
-            subtitle=self.session.local_root,
-            icon_name="folder-symbolic",
-            activatable=True,
-        )
-        folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-        folder_row.connect("activated", lambda _row: self.open_folder())
-        account_list.append(folder_row)
-        remote_path = getattr(self.session, "remote_path", "") or ""
-        if remote_path:
+        if self.session.folders:
+            for folder in self.session.folders:
+                folder_row = _compact_action_row(
+                    title=_("Local Folder"),
+                    subtitle=folder.local_root,
+                    icon_name="folder-symbolic",
+                    activatable=True,
+                )
+                folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+                folder_row.connect("activated", lambda _row, _folder=folder: self.open_folder(_folder))
+                account_list.append(folder_row)
+                if folder.remote_path:
+                    account_list.append(
+                        _compact_action_row(
+                            title=_("Remote Folder"),
+                            subtitle=folder.remote_path,
+                            icon_name="folder-remote-symbolic",
+                        )
+                    )
+        else:
             account_list.append(
                 _compact_action_row(
-                    title=_("Remote Folder"),
-                    subtitle=remote_path,
-                    icon_name="folder-remote-symbolic",
+                    title=_("No Synchronization Folders"),
+                    subtitle=_("Add folders from Settings"),
+                    icon_name="folder-symbolic",
                 )
             )
         self.last_row = _compact_action_row(
@@ -475,8 +484,13 @@ class AccountView(Gtk.Box):
     def _pause_clicked(self, _button: Gtk.Button) -> None:
         self.runtime.set_paused(not self.runtime.scheduler.user_paused)
 
-    def open_folder(self) -> None:
-        root = Path(self.session.local_root)
+    def open_folder(self, folder: object | None = None) -> None:
+        if folder is not None:
+            root = Path(getattr(folder, "local_root", str(folder)))
+        elif self.session.folders:
+            root = Path(self.session.folders[0].local_root)
+        else:
+            return
         root.mkdir(parents=True, exist_ok=True)
         Gio.AppInfo.launch_default_for_uri(root.as_uri(), None)
 
@@ -652,7 +666,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.get_application(),
             self.config,
             session,
-            runtime.runtime,
+            runtime,
             self.logger,
         )
         self.account_view = view

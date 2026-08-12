@@ -10,7 +10,8 @@ from nextsync.storage.config import (
     DEFAULT_CONFIG,
     ConfigStore,
     ConfigurationError,
-    account_fingerprint,
+    account_id,
+    folder_fingerprint,
     normalize_remote_path,
     normalize_server_url,
     validate_config,
@@ -21,7 +22,7 @@ ACCOUNT = {
     "server_url": "https://cloud.example.com",
     "login_name": "alice",
     "authentication_type": "browser",
-    "local_root": "/tmp/NextCloud",
+    "folders": [{"local_root": "/tmp/NextCloud"}],
 }
 
 
@@ -67,7 +68,7 @@ class ConfigTests(unittest.TestCase):
         data["schema_version"] = 4
         data["accounts"] = [account]
         validated = validate_config(data)
-        self.assertEqual(validated["schema_version"], 5)
+        self.assertEqual(validated["schema_version"], 6)
         self.assertNotIn("safety", validated["accounts"][0])
         self.assertNotIn("bootstrap_complete", validated["accounts"][0])
 
@@ -91,7 +92,12 @@ class ConfigTests(unittest.TestCase):
     def test_legacy_single_account_migrates_to_accounts_list(self) -> None:
         legacy = {
             "schema_version": 2,
-            "account": dict(ACCOUNT),
+            "account": {
+                "server_url": "https://cloud.example.com",
+                "login_name": "alice",
+                "authentication_type": "browser",
+                "local_root": "/tmp/NextCloud",
+            },
             "sync": {"local_interval_minutes": 7},
             "safety": {"bootstrap_complete": True},
             "runtime": {"last_exit_code": 3},
@@ -106,10 +112,21 @@ class ConfigTests(unittest.TestCase):
         self.assertNotIn("bootstrap_complete", migrated)
         self.assertEqual(migrated["runtime"]["last_exit_code"], 3)
         self.assertFalse(validated["general"]["autostart"])
+        self.assertEqual(len(migrated["folders"]), 1)
+        self.assertEqual(migrated["folders"][0]["local_root"], "/tmp/NextCloud")
 
     def test_legacy_view_aliases_the_first_account(self) -> None:
         validated = validate_config(
-            {"schema_version": 2, "account": dict(ACCOUNT), "sync": {"max_sync_retries": 9}}
+            {
+                "schema_version": 2,
+                "account": {
+                    "server_url": "https://cloud.example.com",
+                    "login_name": "alice",
+                    "authentication_type": "browser",
+                    "local_root": "/tmp/NextCloud",
+                },
+                "sync": {"max_sync_retries": 9},
+            }
         )
         self.assertEqual(validated["account"]["login_name"], "alice")
         self.assertEqual(validated["sync"]["max_sync_retries"], 9)
@@ -121,10 +138,10 @@ class ConfigTests(unittest.TestCase):
             "server_url": "https://work.example.com",
             "login_name": "bob",
             "authentication_type": "manual",
-            "local_root": "/tmp/WorkCloud",
+            "folders": [{"local_root": "/tmp/WorkCloud"}],
             "sync": {"remote_interval_minutes": 55},
         }
-        validated = validate_config({"schema_version": 3, "accounts": [first, second]})
+        validated = validate_config({"schema_version": 6, "accounts": [first, second]})
         self.assertEqual(len(validated["accounts"]), 2)
         self.assertEqual(validated["accounts"][1]["sync"]["remote_interval_minutes"], 55)
         self.assertEqual(validated["accounts"][0]["sync"]["remote_interval_minutes"], 10)
@@ -142,7 +159,7 @@ class ConfigTests(unittest.TestCase):
                 "server_url": "https://work.example.com",
                 "login_name": "bob",
                 "authentication_type": "manual",
-                "local_root": "/tmp/WorkCloud",
+                "folders": [{"local_root": "/tmp/WorkCloud"}],
             }
             account_id = store.add_account(second)
             self.assertTrue(store.configured)
@@ -170,12 +187,25 @@ class ConfigTests(unittest.TestCase):
             self.assertFalse(store.configured)
             self.assertEqual(store.accounts, [])
 
-    def test_account_fingerprint_is_stable_and_distinct(self) -> None:
-        first = account_fingerprint(dict(ACCOUNT))
-        self.assertEqual(first, account_fingerprint(dict(ACCOUNT)))
-        other = dict(ACCOUNT)
-        other["local_root"] = "/tmp/Other"
-        self.assertNotEqual(first, account_fingerprint(other))
+    def test_account_id_is_stable_and_ignores_folders(self) -> None:
+        first = account_id("https://cloud.example.com", "alice")
+        self.assertEqual(first, account_id("https://cloud.example.com", "alice"))
+        other = account_id("https://cloud.example.com", "bob")
+        self.assertNotEqual(first, other)
+        self.assertEqual(
+            first, account_id("HTTPS://cloud.example.com/", "ALICE")
+        )
+
+    def test_folder_fingerprint_depends_on_the_folder_pair(self) -> None:
+        base = folder_fingerprint("https://cloud.example.com", "alice", "/tmp/NextCloud", "")
+        self.assertEqual(
+            base,
+            folder_fingerprint("https://cloud.example.com", "alice", "/tmp/NextCloud", ""),
+        )
+        with_remote = folder_fingerprint(
+            "https://cloud.example.com", "alice", "/tmp/NextCloud", "/Documents"
+        )
+        self.assertNotEqual(base, with_remote)
 
     def test_remote_path_root_is_empty_after_normalize(self) -> None:
         self.assertEqual(normalize_remote_path(""), "")
@@ -194,50 +224,57 @@ class ConfigTests(unittest.TestCase):
 
     def test_remote_path_persists_through_validate_config(self) -> None:
         account = dict(ACCOUNT)
-        account["remote_path"] = "/Documents"
+        account["folders"][0]["remote_path"] = "/Documents"
         validated = validate_config(
-            {"schema_version": 3, "accounts": [account]}
+            {"schema_version": 6, "accounts": [account]}
         )
-        self.assertEqual(validated["accounts"][0]["remote_path"], "/Documents")
+        self.assertEqual(
+            validated["accounts"][0]["folders"][0]["remote_path"], "/Documents"
+        )
         self.assertEqual(validated["account"]["remote_path"], "/Documents")
 
     def test_remote_path_defaults_to_root_for_legacy_accounts(self) -> None:
         legacy = {
             "schema_version": 2,
-            "account": dict(ACCOUNT),
+            "account": {
+                "server_url": "https://cloud.example.com",
+                "login_name": "alice",
+                "authentication_type": "browser",
+                "local_root": "/tmp/NextCloud",
+            },
             "sync": {"max_sync_retries": 9},
         }
         validated = validate_config(legacy)
-        self.assertEqual(validated["accounts"][0]["remote_path"], "")
+        self.assertEqual(validated["accounts"][0]["folders"][0]["remote_path"], "")
         self.assertEqual(validated["account"]["remote_path"], "")
 
-    def test_accounts_with_same_local_root_distinct_remote_path_are_distinct(self) -> None:
-        base = dict(ACCOUNT)
-        root_only = account_fingerprint(base)
-        with_remote = dict(base)
-        with_remote["remote_path"] = "/Documents"
-        self.assertNotEqual(root_only, account_fingerprint(with_remote))
+    def test_add_folders_to_an_account(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ConfigStore(Path(directory) / "settings.json")
+            account_id = store.add_account(dict(ACCOUNT))
+            folder_id = store.add_folder(account_id, {"local_root": "/tmp/Second"})
+            self.assertEqual(len(store.account(account_id)["folders"]), 2)
+            self.assertEqual(store.account(account_id)["folders"][1]["local_root"], "/tmp/Second")
+            with self.assertRaises(ConfigurationError):
+                store.add_folder(account_id, {"local_root": "/tmp/NextCloud"})
+            self.assertTrue(store.remove_folder(account_id, folder_id))
+            self.assertEqual(len(store.account(account_id)["folders"]), 1)
 
-    def test_add_same_folder_distinct_remote_path_coexist(self) -> None:
+    def test_two_accounts_may_share_a_local_folder(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             store = ConfigStore(Path(directory) / "settings.json")
             store.add_account(dict(ACCOUNT))
-            twin = dict(ACCOUNT)
-            twin["remote_path"] = "/Documents"
-            store.add_account(twin)
+            other = {
+                "server_url": "https://work.example.com",
+                "login_name": "bob",
+                "authentication_type": "manual",
+                "folders": [{"local_root": "/tmp/NextCloud"}],
+            }
+            store.add_account(other)
             self.assertEqual(len(store.accounts), 2)
             self.assertEqual(
-                {a["remote_path"] for a in store.accounts}, {"", "/Documents"}
+                {a["folders"][0]["local_root"] for a in store.accounts}, {"/tmp/NextCloud"}
             )
-
-    def test_add_duplicate_account_with_same_remote_path_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            store = ConfigStore(Path(directory) / "settings.json")
-            twin = dict(ACCOUNT)
-            twin["remote_path"] = "/Documents"
-            store.add_account(twin)
-            with self.assertRaises(ConfigurationError):
-                store.add_account(dict(twin))
 
 
 if __name__ == "__main__":

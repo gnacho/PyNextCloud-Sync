@@ -12,7 +12,7 @@ from nextsync.core.exclusions import DEFAULT_PATTERNS, validate_pattern
 from nextsync.util.paths import config_dir, default_sync_root, ensure_private_directory
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 DEFAULT_SYNC: dict[str, Any] = {
     "local_inotify_enabled": True,
@@ -96,6 +96,32 @@ def normalize_remote_path(value: Any) -> str:
     if not segments:
         return ""
     return "/" + "/".join(segments)
+
+
+def account_id(server_url: str, login_name: str) -> str:
+    """Stable identity of an account, independent of its sync folders."""
+    identity = "\n".join(
+        (
+            str(server_url or "").rstrip("/").casefold(),
+            str(login_name or "").casefold(),
+        )
+    )
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
+def folder_fingerprint(
+    server_url: str, login_name: str, local_root: str, remote_path: str
+) -> str:
+    """Identity of one sync folder pair within an account."""
+    identity = "\n".join(
+        (
+            str(server_url or "").rstrip("/").casefold(),
+            str(login_name or "").casefold(),
+            str(Path(str(local_root)).expanduser().absolute()),
+            str(remote_path or ""),
+        )
+    )
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 def account_fingerprint(account: dict[str, Any]) -> str:
@@ -223,6 +249,56 @@ def _migrate_to_v5(data: dict[str, Any]) -> dict[str, Any]:
     return migrated
 
 
+def _migrate_to_v6(data: dict[str, Any]) -> dict[str, Any]:
+    """Move the single ``local_root``/``remote_path`` pair into ``folders``.
+
+    Schema v6 gives every account a list of sync folders (possibly empty, so an
+    account can be connected without mirroring anything). The account identity
+    no longer depends on the folder pair.
+    """
+    migrated = dict(data)
+    accounts: list[dict[str, Any]] = []
+    for account in migrated.get("accounts", []):
+        account = dict(account)
+        folders = list(account.get("folders", []))
+        if not folders and account.get("local_root"):
+            folders = [
+                {
+                    "local_root": account.get("local_root", ""),
+                    "remote_path": account.get("remote_path", ""),
+                }
+            ]
+        account.pop("local_root", None)
+        account.pop("remote_path", None)
+        account["folders"] = folders
+        account["id"] = account_id(
+            account.get("server_url", ""), account.get("login_name", "")
+        )
+        accounts.append(account)
+    migrated["accounts"] = accounts
+    return migrated
+
+
+def _validate_folder(account: dict[str, Any], folder: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(folder, dict):
+        raise ConfigurationError("Folder configuration is invalid.")
+    root = Path(str(folder.get("local_root", default_sync_root()))).expanduser()
+    if not root.is_absolute():
+        raise ConfigurationError("The local synchronization folder must be absolute.")
+    remote_path = normalize_remote_path(folder.get("remote_path", ""))
+    validated: dict[str, Any] = {
+        "local_root": str(root),
+        "remote_path": remote_path,
+    }
+    validated["id"] = folder_fingerprint(
+        account.get("server_url", ""),
+        account.get("login_name", ""),
+        validated["local_root"],
+        validated["remote_path"],
+    )
+    return validated
+
+
 def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(account, dict):
         raise ConfigurationError("Account configuration is invalid.")
@@ -233,17 +309,23 @@ def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     }
     if not validated["login_name"]:
         raise ConfigurationError("Account username is missing.")
-    root = Path(str(account.get("local_root", default_sync_root()))).expanduser()
-    if not root.is_absolute():
-        raise ConfigurationError("The local synchronization folder must be absolute.")
-    validated["local_root"] = str(root)
-    validated["remote_path"] = normalize_remote_path(account.get("remote_path", ""))
+    folders: list[dict[str, Any]] = []
+    seen_folder_ids: set[str] = set()
+    for folder in account.get("folders", []):
+        validated_folder = _validate_folder(validated, folder)
+        if validated_folder["id"] in seen_folder_ids:
+            raise ConfigurationError(
+                "The same local folder and remote path are configured more than once."
+            )
+        seen_folder_ids.add(validated_folder["id"])
+        folders.append(validated_folder)
+    validated["folders"] = folders
     validated["sync"] = _validate_sync(account.get("sync", DEFAULT_SYNC))
     validated["delete_guard"] = _validate_delete_guard(
         account.get("delete_guard", DEFAULT_DELETE_GUARD)
     )
     validated["runtime"] = _validate_runtime(account.get("runtime", DEFAULT_RUNTIME))
-    validated["id"] = account_fingerprint(validated)
+    validated["id"] = account_id(validated["server_url"], validated["login_name"])
     return validated
 
 
@@ -257,18 +339,25 @@ def _refresh_legacy_view(
     if first is None and accounts:
         first = accounts[0]
     if first:
+        folders = first.get("folders", [])
+        folder = folders[0] if folders else {
+            "local_root": str(default_sync_root()),
+            "remote_path": "",
+        }
         data["account"] = {
             "id": first["id"],
             "server_url": first["server_url"],
             "login_name": first["login_name"],
             "authentication_type": first["authentication_type"],
-            "local_root": first["local_root"],
-            "remote_path": first["remote_path"],
+            "local_root": folder["local_root"],
+            "remote_path": folder["remote_path"],
         }
+        data["folders"] = folders
         data["sync"] = first["sync"]
         data["runtime"] = first["runtime"]
     else:
         data["account"] = None
+        data["folders"] = []
         data["sync"] = data.get("sync") or _deep_merge(DEFAULT_SYNC, {})
         data["runtime"] = data.get("runtime") or _deep_merge(DEFAULT_RUNTIME, {})
     return data
@@ -284,7 +373,10 @@ def validate_config(
         raise ConfigurationError(
             f"Configuration schema {version} is newer than this application supports."
         )
-    merged = _deep_merge(DEFAULT_CONFIG, _migrate_to_v5(_migrate_to_v3(data)))
+    merged = _deep_merge(
+        DEFAULT_CONFIG,
+        _migrate_to_v6(_migrate_to_v5(_migrate_to_v3(data))),
+    )
     merged["schema_version"] = SCHEMA_VERSION
 
     accounts: list[dict[str, Any]] = []
@@ -386,8 +478,7 @@ class ConfigStore:
         accounts = list(self.data.get("accounts", []))
         if any(item.get("id") == validated["id"] for item in accounts):
             raise ConfigurationError(
-                "An account with the same server, username, local folder and "
-                "remote path already exists."
+                "An account with the same server and username already exists."
             )
         accounts.append(validated)
         self.data["accounts"] = accounts
@@ -404,6 +495,37 @@ class ConfigStore:
         self.data["accounts"] = accounts
         if self._active_view_id == account_id:
             self._active_view_id = accounts[0]["id"] if accounts else None
+        self.save()
+        return True
+
+    def account(self, account_id: str) -> dict[str, Any] | None:
+        return next(
+            (item for item in self.data.get("accounts", []) if item.get("id") == account_id),
+            None,
+        )
+
+    def add_folder(self, account_id: str, folder: dict[str, Any]) -> str:
+        account = self.account(account_id)
+        if account is None:
+            raise ConfigurationError("Account not found.")
+        validated = _validate_folder(account, folder)
+        existing = [item.get("id") for item in account.get("folders", [])]
+        if validated["id"] in existing:
+            raise ConfigurationError("This local folder is already configured.")
+        account["folders"] = [*account.get("folders", []), validated]
+        self.save()
+        return validated["id"]
+
+    def remove_folder(self, account_id: str, folder_id: str) -> bool:
+        account = self.account(account_id)
+        if account is None:
+            return False
+        folders = [
+            item for item in account.get("folders", []) if item.get("id") != folder_id
+        ]
+        if len(folders) == len(account.get("folders", [])):
+            return False
+        account["folders"] = folders
         self.save()
         return True
 

@@ -31,6 +31,14 @@ def terms_text() -> str:
 def release_notes_markup() -> str:
     sections = [
         (
+            _("Version 0.2.0"),
+            [
+                _("Each account can now hold several sync folders instead of one: every folder maps a local root to an optional remote path and runs its own synchronization, filesystem watch, deletion guard, exclusions, and nextcloudcmd invocation."),
+                _("The setup wizard lets you finish the login without choosing any folder, and folders can be added or removed later from Settings."),
+                _("The account view lists every sync folder of the active account."),
+            ],
+        ),
+        (
             _("Version 0.1.0"),
             [
                 _("NextSync is a fork of PyNextCloud-Sync by ehstbr, renamed and versioned independently from 0.1.0 (each release adds +0.1)."),

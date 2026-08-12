@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 — 2026-08-12
+
+### Multiple sync folders per account
+
+- Accounts now hold a **list of sync folders** instead of a single pair. Each folder maps a local root to an optional remote path and runs its own synchronization, inotify watch, deletion guard, exclusions, and `nextcloudcmd` invocation, sharing the account's sync settings.
+- The setup wizard lets you **finish the login without choosing any folder**, matching the official Nextcloud client; folders can be added later from Settings.
+- The account view lists every sync folder, and Settings gains **Add Folder / Remove Folder** actions.
+- Config schema bumps to **v6**: the single `local_root`/`remote_path` pair migrates automatically into the `folders` list, and the account identity no longer depends on the folder.
+- **Note:** desktop integrations (Files bookmark, Desktop shortcut, folder icon) and the conflict resolver currently apply to the first folder of the active account; per-folder integration for every folder is a future refinement.
+
 ## 0.1.0 — 2026-08-12
 
 ### Fork of PyNextCloud-Sync, renamed to NextSync

@@ -1,17 +1,13 @@
 {
   "schema_version": 1,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "mandatory": false,
-  "released_at": "2026-08-12T00:00:00Z",
-  "summary": "NextSync 0.1.0: full fork of PyNextCloud-Sync by ehstbr, renamed and versioned independently from 0.1.0, with the thin-wrapper redesign.",
+  "released_at": "2026-08-12T23:30:00Z",
+  "summary": "NextSync 0.2.0: an account can hold several sync folders (or none), with folders added and removed from the account view.",
   "changelog": [
-    "Renamed the project to NextSync (application, Python module, binary, app ID io.github.gnacho.nextsync, icons, and packaging); the fork restarts versioning at 0.1.0 and each release adds +0.1.",
-    "Thin-wrapper redesign: removed the protected-initialization subsystem (bootstrap staging, safety baseline, run markers, and the review window). The first sync is now a single nextcloudcmd run with delta detection; config schema bumps from v4 to v5 and drops the safety fields automatically.",
-    "Leftover protected-* staging trees are removed and legacy safety manifests are archived on first run after upgrade.",
-    "Added a first-sync confirmation dialog before the initial run when the local folder, the remote folder, or both are empty (the remote side is probed with a shallow WebDAV PROPFIND that downloads no bodies).",
-    "Added a conflict view with two tabs: Recent activity and the conflicted copies nextcloudcmd preserves as '* (Nextcloud conflicted copy <date>).*', with Keep Local, Keep Remote, and Open in Files actions.",
-    "Added a lightweight deletion guard that blocks synchronization before nextcloudcmd starts when a large share of previously known local files disappears, with Keep Paused, Restore from Nextcloud, or Approve These Deletions Once.",
-    "Surfaced real nextcloudcmd per-file progress (current file and processed count) in the account view and the tray tooltip during a sync, with a fallback to the existing state label when the engine emits no per-file output.",
-    "Fixed packaging: core/conflict_files.py is now listed in meson.build so the installed application can import it."
+    "Accounts now hold a list of sync folder pairs instead of a single one. Each folder maps a local root to an optional remote path and runs its own synchronization, inotify watch, deletion guard, exclusions, and nextcloudcmd invocation.",
+    "The setup wizard lets you finish the login without choosing any folder, matching the official Nextcloud client, and folders can be added later from Settings.",
+    "Config schema bumps from v5 to v6: the single local_root/remote_path pair migrates automatically into the folders list, and the account identity no longer depends on the folder.",
+    "The account view lists every sync folder of the active account, and Settings gains Add Folder / Remove Folder actions."
   ]
 }

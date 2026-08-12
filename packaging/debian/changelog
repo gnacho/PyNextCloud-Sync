@@ -1,3 +1,14 @@
+nextsync (0.2.0) stable; urgency=medium
+
+  * Allow several sync folders per account (each with its own local root,
+    remote path, synchronization, and deletion guard) and finishing the setup
+    without any folder.
+  * Add and remove folders from Settings; the account view lists every folder.
+  * Bump the config schema from v5 to v6 with automatic migration of the single
+    folder pair into the folders list.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:30:00 +0200
+
 nextsync (0.1.0) stable; urgency=medium
 
   * Fork of PyNextCloud-Sync by ehstbr, renamed to NextSync (application,

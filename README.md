@@ -11,7 +11,7 @@
     <a href="https://github.com/gnacho/nextsync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-0.1.0-6557e8?style=flat-square" alt="Version 0.1.0">
+    <img src="https://img.shields.io/badge/version-0.2.0-6557e8?style=flat-square" alt="Version 0.2.0">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -25,7 +25,7 @@
 
 ## A small app with one clear job
 
-NextSync keeps **one Nextcloud account** mirrored to **one local folder**. It deliberately avoids selective-sync rules, virtual files, multiple account trees, dashboards, and unrelated cloud features.
+NextSync keeps **one or more Nextcloud accounts** mirrored to **one or more local folders** per account. It deliberately avoids virtual files, selective-sync rule sets beyond a per-folder remote path, dashboards, and unrelated cloud features. You can connect an account and finish the setup without synchronizing any folder, and add or remove folders later from Settings.
 
 The actual bidirectional reconciliation is performed by the official [`nextcloudcmd`](https://github.com/nextcloud/desktop) engine. NextSync adds the desktop experience around it: secure login, automatic triggers, a compact status window, GNOME integration, logs, and a tray menu.
 
@@ -115,7 +115,7 @@ flowchart LR
 
 ## Why the thin-wrapper redesign
 
-Version 0.1.0 (the fork release) changes the architecture on purpose. Earlier releases wrapped `nextcloudcmd` in a "protected initialization" layer: a staging folder mirrored the entire remote tree, three separate `nextcloudcmd` runs merged both sides, and the app kept its own safety baseline with SHA-256 hashes and a deletion guard. On a real account that design broke down.
+Version 0.2.0 keeps the thin-wrapper architecture; Version 0.1.0 (the fork release) changed it on purpose. Earlier releases wrapped `nextcloudcmd` in a "protected initialization" layer: a staging folder mirrored the entire remote tree, three separate `nextcloudcmd` runs merged both sides, and the app kept its own safety baseline with SHA-256 hashes and a deletion guard. On a real account that design broke down.
 
 ### What was wrong
 
@@ -128,7 +128,7 @@ Version 0.1.0 (the fork release) changes the architecture on purpose. Earlier re
 
 `nextcloudcmd` is the same engine the official Nextcloud desktop client ships. It has a perpetual SQLite journal (`.sync_*.db`), ETag-aware delta sync, an internal conflict policy that preserves both sides as `* (Nextcloud conflicted copy <date>).*`, and it only rewrites files that actually changed. Reimplementing any of that in Python on top of it was scope creep that did the job worse.
 
-One honest caveat drove part of this release: the CLI runs `--non-interactive`, and the mass-deletion confirmation that the GUI client shows is disabled for it. So **the CLI does not ask before propagating a large local deletion to the server.** That is why 0.1.0 ships a small, opt-in deletion guard of its own (see below) instead of relying on the engine for it.
+One honest caveat drove part of this release: the CLI runs `--non-interactive`, and the mass-deletion confirmation that the GUI client shows is disabled for it. So **the CLI does not ask before propagating a large local deletion to the server.** That is why the fork ships a small, opt-in deletion guard of its own (see below) instead of relying on the engine for it.
 
 ### What changed
 
@@ -157,7 +157,7 @@ Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./nextsync_0.1.0_all.deb
+sudo apt install ./nextsync_0.2.0_all.deb
 ```
 
 During an interactive upgrade started with `sudo apt install`, the package asks a running NextSync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
@@ -180,8 +180,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip NextSync-0.1.0.zip
-cd NextSync-0.1.0
+unzip NextSync-0.2.0.zip
+cd NextSync-0.2.0
 ./run.sh
 ```
 
@@ -190,12 +190,12 @@ cd NextSync-0.1.0
 ### Arch / CachyOS package
 
 The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
-package locally, copy the `NextSync-0.1.0.zip` and the `PKGBUILD` into a
+package locally, copy the `NextSync-0.2.0.zip` and the `PKGBUILD` into a
 directory without spaces (makepkg cannot run in paths containing spaces) and run:
 
 ```bash
 makepkg -cf
-sudo pacman -U nextsync-0.1.0-1-any.pkg.tar.zst
+sudo pacman -U nextsync-0.2.0-1-any.pkg.tar.zst
 ```
 
 The package installs the application, `.desktop` entry, metainfo, icons, and the
@@ -294,7 +294,7 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `0.1.0` is the first fork release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `0.2.0` is the current release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 

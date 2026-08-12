@@ -1,3 +1,10 @@
+nextsync (0.2.1) stable; urgency=medium
+
+  * Let the folder picker open at its default location unless the pre-filled
+    path is an existing directory, matching the official client.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:45:00 +0200
+
 nextsync (0.2.0) stable; urgency=medium
 
   * Allow several sync folders per account (each with its own local root,

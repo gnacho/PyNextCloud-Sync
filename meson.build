@@ -187,10 +187,16 @@ install_data(
   'data/icons/io.github.gnacho.nextsync-folder.svg',
   install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'scalable', 'places'),
 )
-install_subdir(
-  'data/icons/status',
-  install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'status'),
-  strip_directory: true,
+install_data(
+  'data/icons/status/nextsync-status-battery-symbolic.svg',
+  'data/icons/status/nextsync-status-error-symbolic.svg',
+  'data/icons/status/nextsync-status-offline-symbolic.svg',
+  'data/icons/status/nextsync-status-ok-symbolic.svg',
+  'data/icons/status/nextsync-status-paused-symbolic.svg',
+  'data/icons/status/nextsync-status-syncing-symbolic.svg',
+  install_dir: join_paths(
+    get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'apps'
+  ),
 )
 
 install_data(

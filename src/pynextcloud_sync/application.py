@@ -337,6 +337,7 @@ class PyNextCloudApplication(Adw.Application):
                 self.credentials,
                 self.logger,
                 self._notify_sync_failure,
+                self._notify_delete_alert,
             )
         self.account_manager.start()
         self._select_active_account()
@@ -438,6 +439,10 @@ class PyNextCloudApplication(Adw.Application):
             runtime.runtime.set_paused(not runtime.runtime.scheduler.user_paused)
 
     def _tray_sync(self) -> None:
+        if self.runtime and self.runtime.scheduler.delete_alert:
+            self.present_main()
+            self.review_delete_alert(self.main_window)
+            return
         if self.runtime:
             self.runtime.sync_now()
 
@@ -585,6 +590,52 @@ class PyNextCloudApplication(Adw.Application):
             )
             notification.set_default_action("app.log")
             self.send_notification(f"sync-failure-{account_name}", notification)
+
+    def _notify_delete_alert(self, account_name: str, alert: object) -> None:
+        notification = Gio.Notification.new(_("Many local files disappeared"))
+        count = int(getattr(alert, "missing_count", 0))
+        if count:
+            body = _(
+                "{account}: {count} local files disappeared. Synchronization was "
+                "blocked before Nextcloud could be changed."
+            ).format(account=account_name, count=count)
+        else:
+            body = _(
+                "{account}: the local synchronization folder changed unexpectedly. "
+                "Synchronization was blocked."
+            ).format(account=account_name)
+        notification.set_body(body)
+        notification.set_default_action("app.show")
+        self.send_notification(f"delete-review-{account_name}", notification)
+
+    def review_delete_alert(self, parent: Gtk.Window | None = None) -> None:
+        if not self.runtime or not self.runtime.scheduler.delete_alert:
+            return
+        alert = self.runtime.scheduler.delete_alert
+        examples = "\n".join(f"• {path}" for path in alert.missing_paths[:8])
+        body = _(alert.message)
+        if examples:
+            body += "\n\n" + examples
+        dialog = Adw.AlertDialog(
+            heading=_("Synchronization blocked"),
+            body=body,
+        )
+        dialog.add_response("keep", _("Keep Paused"))
+        dialog.set_response_appearance("keep", Adw.ResponseAppearance.SUGGESTED)
+        dialog.add_response("restore", _("Restore from Nextcloud"))
+        if alert.can_approve_once:
+            dialog.add_response("approve", _("Approve These Deletions Once"))
+            dialog.set_response_appearance("approve", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.choose(parent, None, self._delete_choice)
+
+    def _delete_choice(self, dialog: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
+        response = dialog.choose_finish(result)
+        if not self.runtime:
+            return
+        if response == "approve":
+            self.runtime.approve_delete_once()
+        elif response == "restore":
+            self.runtime.restore_from_server()
 
     def _any_engine_running(self) -> bool:
         if self.account_manager:

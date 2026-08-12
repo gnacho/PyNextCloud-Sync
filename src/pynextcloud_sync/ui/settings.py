@@ -397,6 +397,37 @@ class SettingsWindow(Adw.PreferencesWindow):
         self.detailed.connect("notify::active", self._save_sync)
         group.add(self.detailed)
         page.add(group)
+        guard_config = self.config.data["delete_guard"]
+        guard = Adw.PreferencesGroup(
+            title=_("Deletion Guard"),
+            description=_(
+                "Blocks synchronization before nextcloudcmd starts when too many previously synchronized local files disappear."
+            ),
+        )
+        self.guard_enabled = Adw.SwitchRow(
+            title=_("Protect against mass local deletion"),
+            subtitle=_("Recommended. Stops sync when the local folder loses many files at once."),
+            active=guard_config.get("enabled", True),
+        )
+        self.guard_enabled.connect("notify::active", self._save_delete_guard)
+        guard.add(self.guard_enabled)
+        self.guard_count = _spin_row(
+            _("Review after this many missing files"),
+            1,
+            100_000,
+            guard_config.get("count_threshold", 10),
+        )
+        self.guard_percent = _spin_row(
+            _("Review after this percentage is missing"),
+            1,
+            100,
+            guard_config.get("percent_threshold", 20),
+        )
+        self.guard_count.connect("notify::value", self._save_delete_guard)
+        self.guard_percent.connect("notify::value", self._save_delete_guard)
+        guard.add(self.guard_count)
+        guard.add(self.guard_percent)
+        page.add(guard)
         diagnostics = Adw.PreferencesGroup(title=_("Diagnostics"))
         diagnostics.add(
             Adw.ActionRow(
@@ -458,6 +489,15 @@ class SettingsWindow(Adw.PreferencesWindow):
             save_to_disk=enabled,
             retention_days=retention,
         )
+
+    def _save_delete_guard(self, *_args: object) -> None:
+        if self._building:
+            return
+        guard = self.config.data["delete_guard"]
+        guard["enabled"] = self.guard_enabled.get_active()
+        guard["count_threshold"] = int(self.guard_count.get_value())
+        guard["percent_threshold"] = int(self.guard_percent.get_value())
+        self.config.save()
 
     def _open_log_folder(self, _row: Adw.ActionRow) -> None:
         self.runtime.logger.directory.mkdir(parents=True, exist_ok=True)

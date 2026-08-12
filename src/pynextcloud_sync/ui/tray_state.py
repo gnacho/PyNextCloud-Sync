@@ -41,6 +41,9 @@ STATE_PRESENTATIONS: dict[AppState, TrayPresentation] = {
     AppState.KEYRING_LOCKED: TrayPresentation(
         "error", "NeedsAttention", "Password Keyring Locked"
     ),
+    AppState.DELETE_REVIEW: TrayPresentation(
+        "error", "NeedsAttention", "Review Deletions"
+    ),
 }
 
 

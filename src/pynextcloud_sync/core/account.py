@@ -20,6 +20,7 @@ class AccountSession:
     local_root: str
     remote_path: str = ""
     sync: dict[str, Any] = field(default_factory=dict)
+    delete_guard: dict[str, Any] = field(default_factory=dict)
     runtime: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -32,6 +33,7 @@ class AccountSession:
             local_root=account["local_root"],
             remote_path=account.get("remote_path", ""),
             sync=account.get("sync", {}),
+            delete_guard=account.get("delete_guard", {}),
             runtime=account.get("runtime", {}),
         )
 
@@ -58,5 +60,6 @@ class AccountSession:
         return {
             **self.account_dict,
             "sync": self.sync,
+            "delete_guard": self.delete_guard,
             "runtime": self.runtime,
         }

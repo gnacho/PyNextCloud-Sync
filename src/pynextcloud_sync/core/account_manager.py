@@ -44,6 +44,7 @@ class AccountConfigView:
             "accounts": [session.as_account()],
             "account": session.account_dict,
             "sync": session.sync,
+            "delete_guard": session.delete_guard,
             "runtime": session.runtime,
             "general": store_data.get("general", {}),
             "logging": store_data.get("logging", {}),
@@ -70,6 +71,7 @@ class AccountConfigView:
         for account in self._store.data.get("accounts", []):
             if account.get("id") == self._session.account_id:
                 account["sync"] = self._session.sync
+                account["delete_guard"] = self._session.delete_guard
                 account["runtime"] = self._session.runtime
                 return
 
@@ -84,6 +86,7 @@ class AccountRuntime:
         logger: Any,
         session: AccountSession,
         notify_failure: Callable[[Any], None] | None = None,
+        notify_delete_alert: Callable[[Any], None] | None = None,
         sync_permit: SyncPermit | None = None,
     ) -> None:
         self.session = session
@@ -93,11 +96,17 @@ class AccountRuntime:
             if notify_failure
             else None
         )
+        wrapped_delete_alert = (
+            (lambda alert: notify_delete_alert(self.display_name, alert))
+            if notify_delete_alert
+            else None
+        )
         self.runtime = RuntimeController(
             self.view,
             credentials,
             logger,
             wrapped_failure,
+            wrapped_delete_alert,
             sync_permit=sync_permit,
         )
 
@@ -129,11 +138,13 @@ class AccountManager:
         credentials: Any,
         logger: Any,
         notify_failure: Callable[[Any], None] | None = None,
+        notify_delete_alert: Callable[[Any], None] | None = None,
     ) -> None:
         self.config = config
         self.credentials = credentials
         self.logger = logger
         self.notify_failure = notify_failure
+        self.notify_delete_alert = notify_delete_alert
         self._runtimes: dict[str, AccountRuntime] = {}
         self._session_cache: dict[str, AccountSession] = {}
         self._aggregate = AggregateStateController()
@@ -177,6 +188,7 @@ class AccountManager:
             self.logger,
             session,
             self.notify_failure,
+            self.notify_delete_alert,
             self.sync_permit,
         )
         runtime.start()

@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import datetime as dt
+import threading
+from pathlib import Path
 from typing import Any, Callable
 
 from gi.repository import GLib
 
 from pynextcloud_sync.core.debounce import DebounceGate
+from pynextcloud_sync.core.delete_guard import (
+    DeleteAlert,
+    DeleteGuard,
+    DeleteGuardManifest,
+    find_sync_databases,
+)
 from pynextcloud_sync.core.exclusions import ExclusionMatcher
 from pynextcloud_sync.core.sync_permit import SyncPermit
 from pynextcloud_sync.core.state import AppState, StateController
@@ -31,6 +39,7 @@ class SyncScheduler:
         state: StateController,
         logger: Any,
         on_completed: Callable[[SyncResult], None] | None = None,
+        on_delete_alert: Callable[[DeleteAlert], None] | None = None,
         sync_permit: SyncPermit | None = None,
     ) -> None:
         self.config = config
@@ -39,6 +48,7 @@ class SyncScheduler:
         self.state = state
         self.logger = logger
         self.on_completed = on_completed
+        self.on_delete_alert = on_delete_alert
         self.sync_permit = sync_permit
         self.queue = CoalescingQueue()
         self.online = True
@@ -56,8 +66,15 @@ class SyncScheduler:
         account = config.data.get("account")
         if account:
             self._account_fingerprint = account_fingerprint(account)
+            self.delete_guard = DeleteGuard(
+                config, logger, manifest=DeleteGuardManifest.for_account(account)
+            )
         else:
             self._account_fingerprint = None
+            self.delete_guard = DeleteGuard(config, logger)
+        self.delete_alert: DeleteAlert | None = None
+        self._delete_checking = False
+        self._delete_bypass_once = False
         self._keyring_locked = False
         self._stopped = False
         self._feedback_followup_pending = False
@@ -77,6 +94,14 @@ class SyncScheduler:
 
     def request(self, trigger: Trigger) -> None:
         if self._stopped:
+            return
+        if self.delete_alert and not self._delete_bypass_once:
+            self.queue.add(trigger)
+            self.state.set(AppState.DELETE_REVIEW, _(self.delete_alert.message))
+            self.logger.warning(
+                "Synchronization remains blocked by the deletion guard: %s",
+                self.delete_alert.reason,
+            )
             return
         if self.engine.running or self._preparing:
             if trigger == Trigger.LOCAL_INOTIFY:
@@ -125,6 +150,7 @@ class SyncScheduler:
             or self._start_source
             or self._debounce.in_cooldown
             or self._preparing
+            or self._delete_checking
             or self.engine.running
         ):
             return
@@ -145,6 +171,57 @@ class SyncScheduler:
             return GLib.SOURCE_REMOVE
         reason_text = ", ".join(sorted(reason.value for reason in reasons))
         self.logger.info("Synchronization triggers: %s", reason_text)
+        guard = self.config.data.get("delete_guard", {})
+        if guard.get("enabled", True) and not self._delete_bypass_once:
+            self._preparing = True
+            self._delete_checking = True
+            self.state.set(AppState.SYNC_QUEUED, _("Checking the local folder…"))
+
+            def check_worker() -> None:
+                try:
+                    alert = self.delete_guard.check()
+                    error = None
+                except Exception as exc:
+                    alert = None
+                    error = exc
+                GLib.idle_add(
+                    lambda: self._delete_checked(alert, error, account, reasons)
+                )
+
+            threading.Thread(
+                target=check_worker,
+                name="pynextcloud-delete-guard",
+                daemon=True,
+            ).start()
+            return GLib.SOURCE_REMOVE
+        self._delete_bypass_once = False
+        self._prepare_sync(account, reasons)
+        return GLib.SOURCE_REMOVE
+
+    def _delete_checked(
+        self,
+        alert: DeleteAlert | None,
+        error: Exception | None,
+        account: dict[str, Any],
+        reasons: set[Trigger],
+    ) -> bool:
+        if self._stopped:
+            return GLib.SOURCE_REMOVE
+        self._delete_checking = False
+        self._preparing = False
+        if error:
+            self.logger.error("Deletion guard check failed: %s", error)
+        if alert:
+            self.delete_alert = alert
+            for reason in reasons:
+                self.queue.add(reason)
+            self.state.set(AppState.DELETE_REVIEW, _(alert.message))
+            self.logger.critical(
+                "Synchronization blocked by deletion guard: %s", alert.reason
+            )
+            if self.on_delete_alert:
+                self.on_delete_alert(alert)
+            return GLib.SOURCE_REMOVE
         self._prepare_sync(account, reasons)
         return GLib.SOURCE_REMOVE
 
@@ -241,6 +318,14 @@ class SyncScheduler:
         else:
             self.state.set(AppState.ERROR, _("Synchronization failed — view the log"))
             self.logger.error("Synchronization failed with exit code %s.", result.exit_code)
+        if result.successful and self.delete_alert is None:
+            guard = self.config.data.get("delete_guard", {})
+            if guard.get("enabled", True):
+                threading.Thread(
+                    target=self._record_guard_baseline,
+                    name="pynextcloud-delete-guard-record",
+                    daemon=True,
+                ).start()
         try:
             self.config.save(notify=False)
         except Exception as exc:
@@ -311,7 +396,9 @@ class SyncScheduler:
                 self._set_idle_state()
 
     def _set_idle_state(self) -> None:
-        if self.user_paused:
+        if self.delete_alert:
+            self.state.set(AppState.DELETE_REVIEW, _(self.delete_alert.message))
+        elif self.user_paused:
             self.state.set(AppState.PAUSED_USER, _("Synchronization is paused"))
         elif self.battery_paused:
             self.state.set(AppState.PAUSED_BATTERY, _("Paused on battery"))
@@ -321,6 +408,63 @@ class SyncScheduler:
             self.state.set(AppState.IDLE_MANUAL_ONLY, _("Automatic synchronization is off"))
         else:
             self.state.set(AppState.IDLE_OK, _("Synchronized"))
+
+    def _record_guard_baseline(self) -> None:
+        try:
+            self.delete_guard.record_current()
+        except Exception as exc:
+            self.logger.error("Could not record the deletion guard baseline: %s", exc)
+
+    def approve_delete_once(self) -> None:
+        if not self.delete_alert or not self.delete_alert.can_approve_once:
+            if self.delete_alert:
+                self.logger.warning(
+                    "Deletion alert cannot be bypassed and requires restore: %s",
+                    self.delete_alert.reason,
+                )
+            return
+        self.logger.warning(
+            "The user approved one synchronization despite a deletion alert: %s",
+            self.delete_alert.reason,
+        )
+        self.delete_alert = None
+        self._delete_bypass_once = True
+        self.request(Trigger.MANUAL)
+
+    def restore_from_server(self) -> None:
+        """Redownload the remote tree after a mass local deletion.
+
+        nextcloudcmd restores a folder from the server when its local journal
+        is gone: without a journal it treats the remote side as authoritative
+        and downloads everything again. We drop the journal files at the root
+        of the local folder, record a fresh (empty) baseline so the guard does
+        not keep blocking, and schedule one reconciliation.
+        """
+        if not self.delete_alert:
+            return
+        account = self.config.data.get("account")
+        if not account:
+            return
+        root = Path(account["local_root"]).expanduser().absolute()
+        removed = 0
+        for database in find_sync_databases(root):
+            try:
+                database.unlink()
+                removed += 1
+            except OSError as exc:
+                self.logger.error("Could not remove sync journal %s: %s", database, exc)
+        if removed:
+            self.logger.warning(
+                "Removed %s sync journal file(s) to restore the folder from the server.",
+                removed,
+            )
+        self.delete_alert = None
+        self._delete_bypass_once = False
+        try:
+            self.delete_guard.record_current()
+        except Exception as exc:
+            self.logger.error("Could not reset the deletion guard baseline: %s", exc)
+        self.request(Trigger.MANUAL)
 
     def stop(self) -> None:
         self._stopped = True
@@ -332,5 +476,6 @@ class SyncScheduler:
         self.local_dirty = False
         self.remote_pending = False
         self._feedback_followup_pending = False
+        self.delete_alert = None
         if self.engine.running:
             self.engine.cancel()

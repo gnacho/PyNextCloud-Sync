@@ -35,6 +35,7 @@ STATE_PRESENTATION = {
     AppState.ERROR: ("dialog-error-symbolic", _("Synchronization Error")),
     AppState.AUTH_REQUIRED: ("dialog-password-symbolic", _("Account Needs Attention")),
     AppState.KEYRING_LOCKED: ("changes-prevent-symbolic", _("Password Keyring Locked")),
+    AppState.DELETE_REVIEW: ("security-high-symbolic", _("Review Deletions")),
 }
 
 
@@ -216,7 +217,10 @@ class AccountView(Gtk.Box):
         self.pause_content.set_icon_name(
             "media-playback-start-symbolic" if paused else "media-playback-pause-symbolic"
         )
-        if snapshot.state == AppState.KEYRING_LOCKED:
+        if snapshot.state == AppState.DELETE_REVIEW:
+            self.sync_content.set_label(_("Review Deletions"))
+            self.sync_content.set_icon_name("security-high-symbolic")
+        elif snapshot.state == AppState.KEYRING_LOCKED:
             self.sync_content.set_label(_("Unlock Password Keyring"))
             self.sync_content.set_icon_name("changes-prevent-symbolic")
         else:
@@ -447,6 +451,11 @@ class AccountView(Gtk.Box):
         self._activity_rows.extend(rows)
 
     def _sync_clicked(self, _button: Gtk.Button) -> None:
+        if self.runtime.scheduler.delete_alert:
+            application = self.application
+            if application and hasattr(application, "review_delete_alert"):
+                application.review_delete_alert(self)
+            return
         if self.runtime.scheduler.battery_paused:
             dialog = Adw.AlertDialog(
                 heading=_("Synchronization is paused on battery"),

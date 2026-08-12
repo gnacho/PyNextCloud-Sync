@@ -26,6 +26,7 @@ class RuntimeController:
         credentials: Any,
         logger: Any,
         notify_failure: Callable[[SyncResult], None] | None = None,
+        notify_delete_alert: Callable[[Any], None] | None = None,
         sync_permit: Any | None = None,
     ) -> None:
         self.config = config
@@ -45,6 +46,7 @@ class RuntimeController:
             self.state,
             logger,
             self._sync_completed,
+            notify_delete_alert,
             sync_permit=sync_permit,
         )
         self.timers = SyncTimers(self.scheduler.request)
@@ -289,3 +291,9 @@ class RuntimeController:
 
     def set_paused(self, paused: bool) -> None:
         self.scheduler.set_user_paused(paused)
+
+    def approve_delete_once(self) -> None:
+        self.scheduler.approve_delete_once()
+
+    def restore_from_server(self) -> None:
+        self.scheduler.restore_from_server()

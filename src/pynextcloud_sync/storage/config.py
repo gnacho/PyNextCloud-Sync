@@ -32,6 +32,12 @@ DEFAULT_RUNTIME: dict[str, Any] = {
     "last_exit_code": None,
 }
 
+DEFAULT_DELETE_GUARD: dict[str, Any] = {
+    "enabled": True,
+    "count_threshold": 10,
+    "percent_threshold": 20,
+}
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION,
     "accounts": [],
@@ -138,6 +144,23 @@ def _validate_runtime(runtime: dict[str, Any]) -> dict[str, Any]:
     return _deep_merge(DEFAULT_RUNTIME, runtime)
 
 
+def _validate_delete_guard(guard: dict[str, Any]) -> dict[str, Any]:
+    merged = _deep_merge(DEFAULT_DELETE_GUARD, guard)
+    merged["enabled"] = bool(merged.get("enabled", True))
+    try:
+        count = int(merged.get("count_threshold", 10))
+        percent = int(merged.get("percent_threshold", 20))
+    except (TypeError, ValueError) as exc:
+        raise ConfigurationError("Invalid deletion guard threshold.") from exc
+    if not 1 <= count <= 100_000:
+        raise ConfigurationError("count_threshold must be between 1 and 100000.")
+    if not 1 <= percent <= 100:
+        raise ConfigurationError("percent_threshold must be between 1 and 100.")
+    merged["count_threshold"] = count
+    merged["percent_threshold"] = percent
+    return merged
+
+
 def _migrate_to_v3(data: dict[str, Any]) -> dict[str, Any]:
     if "accounts" in data or "account" not in data:
         return data
@@ -216,6 +239,9 @@ def _validate_account(account: dict[str, Any]) -> dict[str, Any]:
     validated["local_root"] = str(root)
     validated["remote_path"] = normalize_remote_path(account.get("remote_path", ""))
     validated["sync"] = _validate_sync(account.get("sync", DEFAULT_SYNC))
+    validated["delete_guard"] = _validate_delete_guard(
+        account.get("delete_guard", DEFAULT_DELETE_GUARD)
+    )
     validated["runtime"] = _validate_runtime(account.get("runtime", DEFAULT_RUNTIME))
     validated["id"] = account_fingerprint(validated)
     return validated

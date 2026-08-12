@@ -133,6 +133,7 @@ class SchedulerTests(unittest.TestCase):
                     "exclude_patterns": [],
                     "exclude_patterns_enabled": True,
                 },
+                "delete_guard": {"enabled": False},
                 "network": {},
                 "runtime": {},
             }

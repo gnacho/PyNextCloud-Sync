@@ -19,6 +19,7 @@ class AppState(str, Enum):
     ERROR = "error"
     AUTH_REQUIRED = "auth_required"
     KEYRING_LOCKED = "keyring_locked"
+    DELETE_REVIEW = "delete_review"
 
 
 class PushState(str, Enum):
@@ -90,6 +91,7 @@ class StateController:
 
 
 _STATE_SEVERITY: dict[AppState, int] = {
+    AppState.DELETE_REVIEW: 100,
     AppState.ERROR: 90,
     AppState.AUTH_REQUIRED: 80,
     AppState.KEYRING_LOCKED: 70,

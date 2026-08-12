@@ -26,10 +26,16 @@
   (shallow WebDAV PROPFIND, Depth 1, no bodies) and asks the user to confirm
   when the local side, the remote side, or both are empty, with wording adapted
   to download/upload/merge.
-- **Conflicted-copy resolver:** a window lists the files the engine preserves
-  as `* (Nextcloud conflicted copy <date>).*`, with Keep Local, Keep Remote,
-  and Open in Files actions. It only scans the local folder and never runs
+- **Conflicted-copy resolver:** a window with two tabs — Recent (the live
+  synchronization log) and Conflicts — lists the files the engine preserves as
+  `* (Nextcloud conflicted copy <date>).*`, with Keep Local, Keep Remote, and
+  Open in Files actions. It only scans the local folder and never runs
   `nextcloudcmd`.
+- **Deletion guard:** before each sync the app compares the local folder against
+  a per-account baseline of file paths and blocks synchronization when a large
+  share of previously known files disappears, with Keep Paused / Restore from
+  Nextcloud / Approve These Deletions Once. This restores the protection that
+  the CLI engine does not provide (its confirmation dialog is GUI-only).
 - **Live progress:** a defensive parser surfaces `nextcloudcmd` per-file lines
   (download/upload/delete/conflict) as the current file plus a processed count
   in the account view and the tray tooltip during a sync, falling back to the

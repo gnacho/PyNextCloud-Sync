@@ -7,7 +7,7 @@
   <project_license>GPL-3.0-or-later</project_license>
   <description>
     <p>PyNextCloud Sync keeps one or more complete physical local mirrors of Nextcloud accounts synchronized through the official nextcloudcmd engine.</p>
-    <p>It adds GNOME integration, an accounts sidebar, filesystem monitoring, server push notifications, sync intervals, secure account setup, exclusions, logs, and a conflicted-copy resolver.</p>
+    <p>It adds GNOME integration, an accounts sidebar, filesystem monitoring, server push notifications, sync intervals, secure account setup, exclusions, logs, and a recent-activity and conflict-resolution view.</p>
   </description>
   <launchable type="desktop-id">com.eduhcommerce.PyNextCloudSync.desktop</launchable>
   <developer id="com.eduhcommerce"><name>EduhCommerce</name></developer>
@@ -21,7 +21,7 @@
           <li>Removed the protected-initialization subsystem (bootstrap staging, safety baseline, run markers, deletion guard) so nextcloudcmd owns synchronization, conflict resolution, and safety; config schema bumps from v4 to v5 and drops the safety fields automatically.</li>
           <li>Leftover bootstrap staging trees are removed and legacy safety manifests are archived on first run after upgrade.</li>
           <li>Added a first-sync confirmation dialog before the initial run when the local folder, the remote folder, or both are empty, probing the remote side with a shallow WebDAV PROPFIND.</li>
-          <li>Added a conflicted-copy resolver window with Keep Local, Keep Remote, and Open in Files actions.</li>
+          <li>Added a recent-activity and conflict view with Keep Local, Keep Remote, and Open in Files actions, plus a deletion guard that blocks sync before nextcloudcmd starts when a large share of local files disappears.</li>
           <li>Surfaced real nextcloudcmd per-file progress in the account view and tray tooltip during a sync.</li>
         </ul>
       </description>

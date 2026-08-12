@@ -42,7 +42,8 @@ The actual bidirectional reconciliation is performed by the official [`nextcloud
 - **Remote change awareness:** optional `notify_push`, backed by a configurable remote interval.
 - **Low-noise background operation:** one coalescing queue and at most one `nextcloudcmd` process.
 - **First-sync confirmation:** before the initial run you confirm when the local folder, the remote folder, or both are empty.
-- **Conflicted-copy resolver:** a window that lists the `* (Nextcloud conflicted copy <date>).*` files the engine preserves, with keep/restore and open actions.
+- **Recent activity and conflicts:** a window with the live synchronization log and the `* (Nextcloud conflicted copy <date>).*` files the engine preserves, with keep/restore and open actions.
+- **Deletion guard:** a mass local deletion blocks sync before the engine can propagate it, with keep paused, restore from Nextcloud, or approve once.
 - **Live progress:** the current file and processed count appear in the main window and tray during a sync.
 - **Useful desktop integration:** Files sidebar bookmark, Desktop shortcut, custom folder icon, autostart, notifications, and tray controls.
 - **Private by design:** no telemetry, analytics, advertisements, or remote crash reporting.

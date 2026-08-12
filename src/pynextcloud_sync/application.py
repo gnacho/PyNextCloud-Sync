@@ -553,11 +553,12 @@ class PyNextCloudApplication(Adw.Application):
             return
         if self.conflicts_window:
             self.conflicts_window.present()
-            self.conflicts_window._reload()
+            self.conflicts_window._reload_conflicts()
             return
         self.conflicts_window = ConflictResolverWindow(
             self,
             account["local_root"],
+            self.logger,
             on_close=self._conflicts_window_closed,
         )
         self.conflicts_window.present()

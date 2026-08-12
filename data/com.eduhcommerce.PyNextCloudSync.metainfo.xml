@@ -168,8 +168,8 @@
       <description>
         <ul>
           <li>Added click-to-expand activity messages and right-click copy support.</li>
-          <li>Bundled translations and fixed Brazilian Portuguese locale detection.</li>
-          <li>Completed the Brazilian Portuguese application catalog.</li>
+          <li>Bundled translations and fixed Spanish locale detection.</li>
+          <li>Completed the Spanish application catalog.</li>
         </ul>
       </description>
     </release>

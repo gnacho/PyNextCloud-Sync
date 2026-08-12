@@ -66,7 +66,7 @@ def show_about_dialog(
         _("Desktop Technologies"), ["GTK 4", "Libadwaita", "Secret Service", "D-Bus"]
     )
     about.add_acknowledgement_section(
-        _("Languages"), ["English", "Português (Brasil)", "Español"]
+        _("Languages"), ["English", "Español"]
     )
     about.add_legal_section(
         _("Terms of Use"),

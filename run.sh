@@ -14,7 +14,7 @@ fi
 
 locale_dir="$project_root/locale"
 if command -v msgfmt >/dev/null 2>&1; then
-    for language in pt_BR es; do
+    for language in es; do
         source_file="$project_root/po/$language.po"
         target_dir="$locale_dir/$language/LC_MESSAGES"
         target_file="$target_dir/pynextcloud-sync.mo"

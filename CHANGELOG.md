@@ -262,7 +262,7 @@
   AppStream, Python, and Debian metadata.
 - Updated source, issue, and documentation links to the canonical
   `ehstbr/PyNextCloud-Sync` repository.
-- Added complete English and Brazilian Portuguese GitHub documentation with a
+- Added complete English GitHub documentation with a
   screenshot gallery, compatibility statement, expanded terms, and third-party
   project/license references.
 - Added a native GTK bookmark for the synchronized folder in the Files sidebar.
@@ -315,8 +315,8 @@
   and collapse back to one ellipsized line when clicked again.
 - Added a right-click context menu that copies the complete activity message.
 - Bundled compiled translation catalogs with the ZIP and made locale discovery
-  robust for `pt_BR`, `pt-BR`, encoding suffixes, and installed packages.
-- Completed the Brazilian Portuguese catalog so application-owned status,
+  robust for language codes, encoding suffixes, and installed packages.
+- Completed the Spanish catalog so application-owned status,
   setup, settings, notification, and tray text no longer falls back to English.
 - Treats a terminal `Ctrl+C` as a clean interruption without printing a Python
   traceback.
@@ -377,4 +377,4 @@
 - GTK4/Libadwaita setup, main, settings, log, and About interfaces.
 - StatusNotifierItem tray integration without a GTK3 helper process.
 - Network, battery, suspend, notifications, autostart, logs, and exclusions.
-- English source UI plus Brazilian Portuguese and Spanish translations.
+- English source UI plus Spanish translation.

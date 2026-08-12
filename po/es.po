@@ -923,12 +923,6 @@ msgid ""
 "click menu."
 msgstr ""
 
-#: src/pynextcloud_sync/ui/about_content.py:170
-msgid ""
-"Fixed Brazilian Portuguese loading and completed the application translation "
-"catalog."
-msgstr ""
-
 #: src/pynextcloud_sync/ui/about_content.py:174
 msgid "Version 0.1.4"
 msgstr "Versión 0.1.4"

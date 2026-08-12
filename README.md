@@ -4,8 +4,6 @@
   <p><strong>Your files, local. Your Nextcloud, in sync.</strong></p>
   <p>A lightweight, GNOME-native desktop companion for keeping one complete physical copy of a Nextcloud account on Linux.</p>
   <p>
-    <a href="README.pt-BR.md">Português (Brasil)</a>
-    ·
     <a href="https://eduhcommerce.com.br">Website</a>
     ·
     <a href="https://github.com/ehstbr/PyNextCloud-Sync/releases">Releases</a>
@@ -47,7 +45,7 @@ The actual bidirectional reconciliation is performed by the official [`nextcloud
 - **Live progress:** the current file and processed count appear in the main window and tray during a sync.
 - **Useful desktop integration:** Files sidebar bookmark, Desktop shortcut, custom folder icon, autostart, notifications, and tray controls.
 - **Private by design:** no telemetry, analytics, advertisements, or remote crash reporting.
-- **Multilingual:** English source interface with Brazilian Portuguese and Spanish translations.
+- **Multilingual:** English source interface with Spanish translation.
 
 ## Screenshots
 
@@ -109,6 +107,41 @@ flowchart LR
 > [!IMPORTANT]
 > Synchronization is bidirectional. Local and remote changes—including deletions—can be propagated to the other side. Keep an independent backup of important data and do not run another synchronization engine against the same local folder.
 
+## Why the thin-wrapper redesign
+
+Version 3.0.0 changes the architecture on purpose. Earlier releases wrapped `nextcloudcmd` in a "protected initialization" layer: a staging folder mirrored the entire remote tree, three separate `nextcloudcmd` runs merged both sides, and the app kept its own safety baseline with SHA-256 hashes and a deletion guard. On a real account that design broke down.
+
+### What was wrong
+
+- **The first sync downloaded everything, twice.** The staging step ran `nextcloudcmd <staging> <server>`, a full root-to-staging mirror of the whole account, before the real sync ever started. On large accounts that meant tens of gigabytes of extra disk in `~/.local/state/.../bootstrap/protected-*`, the same bandwidth used twice, and a re-upload of every local-only file.
+- **No feedback, no cancel.** The bootstrap window showed an indeterminate spinner for the whole phase. `nextcloudcmd` prints one line per file, and the app captured every line into the log, but none of it reached the UI. A 50-minute download with zero progress and no Cancel button is what pushed this redesign over the edge.
+- **A second source of truth that drifted.** The app kept its own manifest of the local tree and compared it before every sync. That is a parallel bookkeeping system on top of the engine's own perpetual database; it reimplemented the engine's safety poorly and could disagree with the real state.
+- **Leaked staging.** Killing the app left `protected-*` staging trees on disk. Observed in real use: four aborted attempts, 11 GB of orphaned staging.
+
+### What the engine already provides
+
+`nextcloudcmd` is the same engine the official Nextcloud desktop client ships. It has a perpetual SQLite journal (`.sync_*.db`), ETag-aware delta sync, an internal conflict policy that preserves both sides as `* (Nextcloud conflicted copy <date>).*`, and it only rewrites files that actually changed. Reimplementing any of that in Python on top of it was scope creep that did the job worse.
+
+One honest caveat drove part of this release: the CLI runs `--non-interactive`, and the mass-deletion confirmation that the GUI client shows is disabled for it. So **the CLI does not ask before propagating a large local deletion to the server.** That is why 3.0.0 ships a small, opt-in deletion guard of its own (see below) instead of relying on the engine for it.
+
+### What changed
+
+- **The bootstrap, staging, and three-run merge are gone.** The first sync is now a single `nextcloudcmd` run. Delta detection downloads only what differs, and files that already match by size and ETag stay untouched on disk.
+- **The safety baseline, run markers, and SHA-256 sweep are gone.** The engine's journal is the single source of truth for synchronization state.
+- **Config schema v4 → v5.** The safety fields are dropped automatically; leftover staging trees are removed and legacy safety manifests are archived on the first run after upgrade.
+- **A first-sync confirmation** asks before the initial run when the local folder, the remote folder, or both are empty — probed with a shallow WebDAV PROPFIND that downloads no file bodies.
+- **A deletion guard** (new, opt-in, per account) compares the local folder against a baseline of file paths before every sync. If a large share of previously known files disappears, the sync is blocked and you choose **Keep Paused**, **Restore from Nextcloud** (redownloads after dropping the local journal), or **Approve These Deletions Once**.
+- **Live progress.** `nextcloudcmd` per-file lines are parsed defensively and shown as the current file plus a processed count in the account view and tray tooltip, falling back to the state label when the engine prints no per-file output.
+- **A recent-activity and conflict view.** One window with two tabs: the live synchronization log, and every conflicted copy the engine left behind, with Keep Local, Keep Remote, and Open in Files.
+
+### What this gains you
+
+- **First sync of a large account runs once**, not three times, and does not mirror the remote tree into a staging copy first.
+- **No more 50-minute silent spinner** and no more orphaned staging trees after a kill.
+- **One source of truth** for synchronization state, maintained by the engine that actually does the work.
+- **Accidental mass deletion is caught before it reaches the server** — the gap the CLI leaves open.
+- **Conflicts stay visible and resolvable** in the app instead of hiding in the file manager.
+
 ## Installation
 
 ### Debian package — recommended
@@ -147,6 +180,21 @@ cd PyNextCloud-Sync-3.0.0
 ```
 
 `run.sh` uses the distribution Python and GI packages. It does not create a virtual environment or download packages from the internet.
+
+### Arch / CachyOS package
+
+The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
+package locally, copy the `PyNextCloud-Sync-3.0.0.zip` and the `PKGBUILD` into a
+directory without spaces (makepkg cannot run in paths containing spaces) and run:
+
+```bash
+makepkg -cf
+sudo pacman -U pynextcloud-sync-3.0.0-1-any.pkg.tar.zst
+```
+
+The package installs the application, `.desktop` entry, metainfo, icons, and the
+`es` translation, and depends on `nextcloud-client` for the
+`nextcloudcmd` engine.
 
 ## First setup
 

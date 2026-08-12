@@ -65,7 +65,7 @@ install -m 0644 "$project_root/data/icons/com.eduhcommerce.PyNextCloudSync-symbo
 install -m 0644 "$project_root/data/icons/com.eduhcommerce.PyNextCloudSync-folder.svg" "$package_root/usr/share/icons/hicolor/scalable/places/"
 install -m 0644 "$project_root/data/icons/status/"*.svg "$package_root/usr/share/icons/hicolor/symbolic/status/"
 
-for language in pt_BR es; do
+for language in es; do
     install -D -m 0644 \
         "$project_root/locale/$language/LC_MESSAGES/pynextcloud-sync.mo" \
         "$package_root/usr/share/locale/$language/LC_MESSAGES/pynextcloud-sync.mo"
@@ -73,12 +73,9 @@ done
 
 install -m 0644 \
     "$project_root/README.md" \
-    "$project_root/README.pt-BR.md" \
     "$project_root/LICENSE" \
     "$project_root/TERMS.md" \
-    "$project_root/TERMS.pt-BR.md" \
     "$project_root/THIRD-PARTY.md" \
-    "$project_root/THIRD-PARTY.pt-BR.md" \
     "$project_root/version.json" \
     "$doc_dir/"
 install -m 0644 "$project_root/packaging/debian/copyright" "$doc_dir/copyright"

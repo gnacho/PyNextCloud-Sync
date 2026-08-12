@@ -22,7 +22,6 @@ class PackagingTests(unittest.TestCase):
             "packaging/debian/changelog",
             "CHANGELOG.md",
             "README.md",
-            "README.pt-BR.md",
             "version.json",
         ):
             contents = (ROOT / relative_path).read_text(encoding="utf-8")

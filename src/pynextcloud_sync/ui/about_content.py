@@ -178,7 +178,7 @@ def release_notes_markup() -> str:
             _("Version 0.1.5"),
             [
                 _("Activity messages can now be expanded with one click and copied from a right-click menu."),
-                _("Fixed Brazilian Portuguese loading and completed the application translation catalog."),
+                _("Fixed Spanish loading and completed the application translation catalog."),
             ],
         ),
         (

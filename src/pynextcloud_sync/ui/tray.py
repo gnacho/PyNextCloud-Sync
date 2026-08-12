@@ -80,6 +80,7 @@ class StatusNotifier:
         open_settings: Callable[[], None],
         quit_app: Callable[[], None],
         logger: object,
+        open_conflicts: Callable[[], None] | None = None,
         account_provider: Callable[[], list[tuple[str, str]]] | None = None,
         on_account_action: Callable[[str, str], None] | None = None,
         progress_provider: Callable[[], SyncProgress | None] | None = None,
@@ -88,6 +89,7 @@ class StatusNotifier:
         self.account_provider = account_provider or (lambda: [])
         self.on_account_action = on_account_action or (lambda _account_id, _action: None)
         self.progress_provider = progress_provider or (lambda: None)
+        self.open_conflicts = open_conflicts or (lambda: None)
         self.actions = {
             1: open_window,
             2: sync_now,
@@ -96,6 +98,7 @@ class StatusNotifier:
             5: open_log,
             7: open_settings,
             8: quit_app,
+            9: open_conflicts,
         }
         self.logger = logger
         self.connection: Gio.DBusConnection | None = None
@@ -347,6 +350,7 @@ class StatusNotifier:
             6: "",
             7: _("Settings"),
             8: _("Quit"),
+            9: _("Conflicts…"),
         }
         if item_id == 0:
             return {}
@@ -365,6 +369,7 @@ class StatusNotifier:
             5: "text-x-generic-symbolic",
             7: "emblem-system-symbolic",
             8: "application-exit-symbolic",
+            9: "dialog-warning-symbolic",
         }
         if item_id in icon_names:
             properties["icon-name"] = GLib.Variant("s", icon_names[item_id])
@@ -406,7 +411,7 @@ class StatusNotifier:
         if item_id == 0:
             children = [
                 GLib.Variant("(ia{sv}av)", self._layout_data(child))
-                for child in (1, 2, 3, 4, 5, 6, 7, 8)
+                for child in (1, 2, 3, 4, 5, 6, 7, 8, 9)
             ]
             account_menus = self._account_menu_ids()
             if account_menus:
@@ -478,7 +483,7 @@ class StatusNotifier:
             result = [
                 (item_id, self._properties(item_id))
                 for item_id in ids
-                if 0 <= item_id <= 8
+                if 0 <= item_id <= 9
                 or item_id == self.ACCOUNTS_MENU_ID
                 or item_id >= self.ACCOUNT_MENU_BASE
             ]

@@ -24,6 +24,7 @@ from pynextcloud_sync.nextcloud.api import NextcloudApi
 from pynextcloud_sync.storage.config import ConfigStore, ConfigurationError
 from pynextcloud_sync.storage.log import AppLogger
 from pynextcloud_sync.ui.main_window import MainWindow
+from pynextcloud_sync.ui.conflict_resolver import ConflictResolverWindow
 from pynextcloud_sync.ui.settings import SettingsWindow
 from pynextcloud_sync.ui.setup import SetupWindow
 from pynextcloud_sync.ui.tray import StatusNotifier
@@ -52,6 +53,7 @@ class PyNextCloudApplication(Adw.Application):
         self.desktop_integration: DesktopIntegration | None = None
         self.main_window: MainWindow | None = None
         self.settings_window: SettingsWindow | None = None
+        self.conflicts_window: ConflictResolverWindow | None = None
         self.setup_window: SetupWindow | None = None
         self.update_window: UpdateWindow | None = None
         self.tray: StatusNotifier | None = None
@@ -417,6 +419,7 @@ class PyNextCloudApplication(Adw.Application):
             progress_provider=lambda: (
                 self.runtime.state.progress if self.runtime else None
             ),
+            open_conflicts=self.show_conflicts,
         )
         self.tray.start()
 
@@ -535,6 +538,28 @@ class PyNextCloudApplication(Adw.Application):
         if self.settings_window is window:
             self.settings_window = None
         return False
+
+    def show_conflicts(self) -> None:
+        if self._mandatory_update_manifest:
+            self._show_update_window(self._mandatory_update_manifest)
+            return
+        account = self._active_account()
+        if not account:
+            return
+        if self.conflicts_window:
+            self.conflicts_window.present()
+            self.conflicts_window._reload()
+            return
+        self.conflicts_window = ConflictResolverWindow(
+            self,
+            account["local_root"],
+            on_close=self._conflicts_window_closed,
+        )
+        self.conflicts_window.present()
+
+    def _conflicts_window_closed(self, window: ConflictResolverWindow) -> None:
+        if self.conflicts_window is window:
+            self.conflicts_window = None
 
     def main_window_closed(self, window: MainWindow) -> None:
         if self.main_window is window:

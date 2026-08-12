@@ -180,6 +180,13 @@ class AccountView(Gtk.Box):
         )
         self.view_log_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
         self.view_log_row.connect("activated", lambda _row: self.show_log())
+        self.conflicts_row = _compact_action_row(
+            title=_("Resolve Conflicts"),
+            icon_name="dialog-warning-symbolic",
+            activatable=True,
+        )
+        self.conflicts_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+        self.conflicts_row.connect("activated", lambda _row: self._show_conflicts())
         self._refresh_activity()
 
         if hasattr(Adw, "Breakpoint") and hasattr(self, "add_breakpoint"):
@@ -434,6 +441,7 @@ class AccountView(Gtk.Box):
             self.activity_expander.set_subtitle(_("No activity in this session"))
             rows = [self._empty_activity_row()]
         rows.append(self.view_log_row)
+        rows.append(self.conflicts_row)
         for row in rows:
             self.activity_expander.add_row(row)
         self._activity_rows.extend(rows)
@@ -470,6 +478,11 @@ class AccountView(Gtk.Box):
             self.log_window = LogWindow(self, self.logger)
             self.log_window.connect("close-request", self._log_closed)
         self.log_window.present()
+
+    def _show_conflicts(self) -> None:
+        application = self.application
+        if application and hasattr(application, "show_conflicts"):
+            application.show_conflicts()
 
     def _log_closed(self, _window: Gtk.Window) -> bool:
         self.log_window = None

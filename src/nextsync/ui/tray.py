@@ -144,14 +144,12 @@ class StatusNotifier:
     def _icon_data(
         self, presentation: TrayPresentation
     ) -> tuple[str, str, list[tuple[int, int, bytes]]]:
-        source = self._find_status_icon(presentation)
-        if not source:
-            return "io.github.gnacho.nextsync", "", []
-        pixmaps = self._pixmap_cache.get(source)
-        if pixmaps is None:
-            pixmaps = self._load_application_pixmaps(source)
-            self._pixmap_cache[source] = pixmaps
-        return str(source), str(source.parent), pixmaps
+        # The status SVGs use stroke="currentColor", so the tray host must
+        # resolve them through the icon theme to recolor them. Publishing an
+        # absolute path made GNOME's AppIndicator host render the file as-is
+        # (black); a bare symbolic name under the indexed hicolor/symbolic/apps
+        # directory lets the theme tint it.
+        return f"nextsync-status-{presentation.icon_key}-symbolic", "", []
 
     def _load_application_pixmaps(
         self, source: Path | None
@@ -250,9 +248,9 @@ class StatusNotifier:
             "Title": GLib.Variant("s", title),
             "Status": GLib.Variant("s", presentation.status),
             "WindowId": GLib.Variant("i", 0),
-            # GNOME's AppIndicator host runs outside this process. An absolute
-            # path prevents it from losing the icon when the app is launched
-            # directly from the ZIP and its icon theme is not installed yet.
+            # The tray host runs outside this process and recolors the
+            # symbolic icon through its own icon theme, so only the bare
+            # themed name is published and IconThemePath is left empty.
             "IconThemePath": GLib.Variant("s", icon_theme_path),
             "IconName": GLib.Variant("s", icon_name),
             "IconPixmap": GLib.Variant("a(iiay)", icon_pixmaps),

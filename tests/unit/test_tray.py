@@ -123,11 +123,12 @@ class TrayContractTests(unittest.TestCase):
         self.assertIsNotNone(property_node)
         self.assertEqual(property_node.attrib["type"], "i")
 
-    def test_tray_publishes_dynamic_icon_and_pixmap_fallbacks(self) -> None:
+    def test_tray_publishes_themed_icon_name_and_keeps_pixmap_fallbacks(self) -> None:
         source = TRAY_SOURCE.read_text(encoding="utf-8")
         self.assertIn('"IconName": GLib.Variant("s", icon_name)', source)
         self.assertIn('"IconPixmap": GLib.Variant("a(iiay)", icon_pixmaps)', source)
-        self.assertIn("self._find_status_icon(presentation)", source)
+        self.assertIn("def _find_status_icon(", source)
+        self.assertIn("def _load_application_pixmaps(", source)
 
     def test_every_application_state_has_a_status_asset(self) -> None:
         icon_directory = TRAY_SOURCE.parents[3] / "data" / "icons" / "status"
@@ -199,11 +200,12 @@ class TrayContractTests(unittest.TestCase):
             and signal[3] == "PropertiesChanged"
         )
         paused_properties = paused_change[4].value[1]
-        self.assertTrue(
-            paused_properties["IconName"].value.endswith(
-                "nextsync-status-paused-symbolic.svg"
-            )
+        self.assertEqual(
+            paused_properties["IconName"].value,
+            "nextsync-status-paused-symbolic",
         )
+        self.assertEqual(paused_properties["IconThemePath"].value, "")
+        self.assertEqual(paused_properties["IconPixmap"].value, [])
         self.assertEqual(paused_properties["Status"].value, "Active")
 
         connection.signals.clear()
@@ -215,10 +217,9 @@ class TrayContractTests(unittest.TestCase):
             and signal[3] == "PropertiesChanged"
         )
         syncing_properties = syncing_change[4].value[1]
-        self.assertTrue(
-            syncing_properties["IconName"].value.endswith(
-                "nextsync-status-syncing-symbolic.svg"
-            )
+        self.assertEqual(
+            syncing_properties["IconName"].value,
+            "nextsync-status-syncing-symbolic",
         )
         self.assertNotEqual(
             paused_properties["IconName"].value,

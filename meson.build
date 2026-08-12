@@ -199,6 +199,8 @@ install_data(
   'data/icons/status/nextsync-status-ok-symbolic.svg',
   'data/icons/status/nextsync-status-paused-symbolic.svg',
   'data/icons/status/nextsync-status-syncing-symbolic.svg',
+  'data/icons/status/nextsync-tray-cloud.svg',
+  'data/icons/status/nextsync-tray-cloud-off.svg',
   install_dir: join_paths(
     get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'apps'
   ),

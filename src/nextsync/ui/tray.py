@@ -8,7 +8,7 @@ import gi
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import GdkPixbuf, Gio, GLib
 
-from nextsync.core.state import StateSnapshot
+from nextsync.core.state import AppState, StateSnapshot
 from nextsync.nextcloud.nextcloudcmd_progress import SyncProgress
 from nextsync.ui.tray_state import TrayPresentation, presentation_for
 from nextsync.util.paths import project_root
@@ -133,18 +133,52 @@ class StatusNotifier:
             self.application_icon,
         )
 
+    def _tray_icon_candidates(self, icon_name: str) -> list[Path]:
+        filename = f"{icon_name}.svg"
+        return [
+            project_root() / "data" / "icons" / "status" / filename,
+            Path("/usr/share/icons/hicolor/symbolic/apps") / filename,
+            Path("/usr/local/share/icons/hicolor/symbolic/apps") / filename,
+        ]
+
+    def _find_tray_icon(self, icon_name: str) -> Path | None:
+        return next(
+            (
+                path
+                for path in self._tray_icon_candidates(icon_name)
+                if path.is_file()
+            ),
+            None,
+        )
+
+    def _tray_icon_name(self, presentation: TrayPresentation) -> str:
+        """Choose the monochrome Lucide tray glyph for the current state.
+
+        The unconfigured install is shown as the struck-out cloud so the user
+        is not left guessing that sync is merely paused; every other state
+        uses the cloud glyph.
+        """
+        if (
+            presentation.icon_key == "offline"
+            and self.snapshot.state == AppState.UNCONFIGURED
+        ):
+            return "nextsync-tray-cloud-off"
+        return "nextsync-tray-cloud"
+
     def _icon_data(
         self, presentation: TrayPresentation
     ) -> tuple[str, str, list[tuple[int, int, bytes]]]:
-        # Publish the Lucide application icon as an ARGB pixmap so the tray
-        # host renders it exactly as designed (blue background + white cloud),
-        # regardless of whether the host can recolor "currentColor" symbolic
-        # icons. The name is kept as a fallback for hosts that resolve the
-        # theme, and the pixmaps cover hosts that only draw IconPixmap.
+        # Publish the monochrome Lucide glyph as an ARGB pixmap so the tray
+        # host renders it exactly as designed (transparent background, single
+        # colour stroke), regardless of whether the host can recolor
+        # "currentColor" symbolic icons. The name is kept as a fallback for
+        # hosts that resolve the theme, and the pixmaps cover hosts that only
+        # draw IconPixmap.
+        icon_name = self._tray_icon_name(presentation)
         return (
-            "io.github.gnacho.nextsync",
+            icon_name,
             "",
-            self._load_application_pixmaps(self.application_icon),
+            self._load_application_pixmaps(self._find_tray_icon(icon_name)),
         )
 
     def _load_application_pixmaps(

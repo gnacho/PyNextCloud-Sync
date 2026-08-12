@@ -202,28 +202,61 @@ class TrayContractTests(unittest.TestCase):
         paused_properties = paused_change[4].value[1]
         self.assertEqual(
             paused_properties["IconName"].value,
-            "io.github.gnacho.nextsync",
+            "nextsync-tray-cloud",
         )
         self.assertEqual(paused_properties["IconThemePath"].value, "")
         self.assertIsInstance(paused_properties["IconPixmap"].value, list)
+        self.assertGreater(len(paused_properties["IconPixmap"].value), 0)
         self.assertEqual(paused_properties["Status"].value, "Active")
 
         connection.signals.clear()
-        state.set(AppState.SYNCING, "Synchronizing files…")
-        syncing_change = next(
+        state.set(AppState.UNCONFIGURED, "")
+        unconfigured_change = next(
             signal
             for signal in connection.signals
             if signal[2] == "org.freedesktop.DBus.Properties"
             and signal[3] == "PropertiesChanged"
         )
-        syncing_properties = syncing_change[4].value[1]
+        unconfigured_properties = unconfigured_change[4].value[1]
         self.assertEqual(
-            syncing_properties["IconName"].value,
-            "io.github.gnacho.nextsync",
+            unconfigured_properties["IconName"].value,
+            "nextsync-tray-cloud-off",
         )
         self.assertIn(
             "NewIcon", [signal[3] for signal in connection.signals]
         )
+
+    def test_every_state_picks_the_monochrome_tray_glyph(self) -> None:
+        tray_module = load_tray_module()
+        icon_directory = TRAY_SOURCE.parents[3] / "data" / "icons" / "status"
+        self.assertTrue((icon_directory / "nextsync-tray-cloud.svg").is_file())
+        self.assertTrue(
+            (icon_directory / "nextsync-tray-cloud-off.svg").is_file()
+        )
+        no_op = lambda: None
+        for state in AppState:
+            with self.subTest(state=state):
+                controller = StateController(state)
+                notifier = tray_module.StatusNotifier(
+                    controller,
+                    no_op,
+                    no_op,
+                    no_op,
+                    no_op,
+                    no_op,
+                    no_op,
+                    no_op,
+                    FakeLogger(),
+                )
+                presentation = presentation_for(state)
+                expected = (
+                    "nextsync-tray-cloud-off"
+                    if state is AppState.UNCONFIGURED
+                    else "nextsync-tray-cloud"
+                )
+                self.assertEqual(
+                    notifier._tray_icon_name(presentation), expected
+                )
 
     def test_menu_is_trimmed_to_open_settings_and_quit(self) -> None:
         tray_module = load_tray_module()

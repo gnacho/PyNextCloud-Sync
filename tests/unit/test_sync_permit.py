@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.sync_permit import SyncPermit
+from nextsync.core.sync_permit import SyncPermit
 
 
 class SyncPermitTests(unittest.TestCase):

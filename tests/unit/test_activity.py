@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.ui.activity import parse_activity_line
+from nextsync.ui.activity import parse_activity_line
 
 
 class ActivityTests(unittest.TestCase):
@@ -30,7 +30,7 @@ class ActivityTests(unittest.TestCase):
         source = (
             Path(__file__).parents[2]
             / "src"
-            / "pynextcloud_sync"
+            / "nextsync"
             / "ui"
             / "main_window.py"
         ).read_text(encoding="utf-8")

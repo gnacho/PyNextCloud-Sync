@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="${1:-$project_root/dist}"
-package_name="pynextcloud-sync"
+package_name="nextsync"
 source_date_epoch="${SOURCE_DATE_EPOCH:-1786243825}"
 
 for command_name in dpkg-deb install find sort xargs md5sum gzip sed grep du awk mktemp rm touch chmod; do
@@ -13,23 +13,23 @@ for command_name in dpkg-deb install find sort xargs md5sum gzip sed grep du awk
     fi
 done
 
-version="$(sed -n 's/^VERSION = "\([^"]*\)"/\1/p' "$project_root/src/pynextcloud_sync/__init__.py")"
+version="$(sed -n 's/^VERSION = "\([^"]*\)"/\1/p' "$project_root/src/nextsync/__init__.py")"
 if [[ -z "$version" ]]; then
     echo "Could not determine the application version." >&2
     exit 2
 fi
 
-for version_file in "$project_root/meson.build" "$project_root/pyproject.toml" "$project_root/data/com.eduhcommerce.PyNextCloudSync.metainfo.xml"; do
+for version_file in "$project_root/meson.build" "$project_root/pyproject.toml" "$project_root/data/io.github.gnacho.nextsync.metainfo.xml"; do
     if ! grep -Fq "$version" "$version_file"; then
         echo "Version $version is not present in ${version_file#$project_root/}." >&2
         exit 2
     fi
 done
 
-work_dir="$(mktemp -d "${TMPDIR:-/tmp}/pynextcloud-sync-deb.XXXXXX")"
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/nextsync-deb.XXXXXX")"
 cleanup() {
     case "$work_dir" in
-        /tmp/pynextcloud-sync-deb.*|"${TMPDIR:-/tmp}"/pynextcloud-sync-deb.*)
+        /tmp/nextsync-deb.*|"${TMPDIR:-/tmp}"/nextsync-deb.*)
             rm -rf -- "$work_dir"
             ;;
     esac
@@ -55,20 +55,20 @@ install -d -m 0755 \
 while IFS= read -r -d '' source_file; do
     relative_path="${source_file#$project_root/src/}"
     install -D -m 0644 "$source_file" "$python_dir/$relative_path"
-done < <(find "$project_root/src/pynextcloud_sync" -type f -name '*.py' -print0 | sort -z)
+done < <(find "$project_root/src/nextsync" -type f -name '*.py' -print0 | sort -z)
 
-install -m 0755 "$project_root/packaging/debian/pynextcloud-sync" "$package_root/usr/bin/pynextcloud-sync"
-install -m 0644 "$project_root/data/com.eduhcommerce.PyNextCloudSync.desktop" "$package_root/usr/share/applications/"
-install -m 0644 "$project_root/data/com.eduhcommerce.PyNextCloudSync.metainfo.xml" "$package_root/usr/share/metainfo/"
-install -m 0644 "$project_root/data/icons/com.eduhcommerce.PyNextCloudSync.svg" "$package_root/usr/share/icons/hicolor/scalable/apps/"
-install -m 0644 "$project_root/data/icons/com.eduhcommerce.PyNextCloudSync-symbolic.svg" "$package_root/usr/share/icons/hicolor/symbolic/apps/"
-install -m 0644 "$project_root/data/icons/com.eduhcommerce.PyNextCloudSync-folder.svg" "$package_root/usr/share/icons/hicolor/scalable/places/"
+install -m 0755 "$project_root/packaging/debian/nextsync" "$package_root/usr/bin/nextsync"
+install -m 0644 "$project_root/data/io.github.gnacho.nextsync.desktop" "$package_root/usr/share/applications/"
+install -m 0644 "$project_root/data/io.github.gnacho.nextsync.metainfo.xml" "$package_root/usr/share/metainfo/"
+install -m 0644 "$project_root/data/icons/io.github.gnacho.nextsync.svg" "$package_root/usr/share/icons/hicolor/scalable/apps/"
+install -m 0644 "$project_root/data/icons/io.github.gnacho.nextsync-symbolic.svg" "$package_root/usr/share/icons/hicolor/symbolic/apps/"
+install -m 0644 "$project_root/data/icons/io.github.gnacho.nextsync-folder.svg" "$package_root/usr/share/icons/hicolor/scalable/places/"
 install -m 0644 "$project_root/data/icons/status/"*.svg "$package_root/usr/share/icons/hicolor/symbolic/status/"
 
 for language in es; do
     install -D -m 0644 \
-        "$project_root/locale/$language/LC_MESSAGES/pynextcloud-sync.mo" \
-        "$package_root/usr/share/locale/$language/LC_MESSAGES/pynextcloud-sync.mo"
+        "$project_root/locale/$language/LC_MESSAGES/nextsync.mo" \
+        "$package_root/usr/share/locale/$language/LC_MESSAGES/nextsync.mo"
 done
 
 install -m 0644 \

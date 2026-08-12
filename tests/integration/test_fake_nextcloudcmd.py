@@ -5,7 +5,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.nextcloud.command import build_command, classify_output
+from nextsync.nextcloud.command import build_command, classify_output
 
 
 class FakeNextcloudCmdTests(unittest.TestCase):

@@ -6,14 +6,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pynextcloud_sync.core.account import AccountSession
-from pynextcloud_sync.core.account_manager import (
+from nextsync.core.account import AccountSession
+from nextsync.core.account_manager import (
     AccountConfigView,
     AccountManager,
     AccountRuntime,
 )
-from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.storage.config import (
+from nextsync.core.state import AppState, StateController
+from nextsync.storage.config import (
     DEFAULT_CONFIG,
     ConfigStore,
     validate_config,
@@ -103,7 +103,7 @@ class AccountManagerTests(unittest.TestCase):
     def test_manager_starts_one_runtime_per_account(self) -> None:
         store = _store_with([ACCOUNT_A, ACCOUNT_B])
         with patch(
-            "pynextcloud_sync.core.account_manager.RuntimeController",
+            "nextsync.core.account_manager.RuntimeController",
             FakeRuntimeController,
         ):
             manager = AccountManager(store, None, None)
@@ -114,7 +114,7 @@ class AccountManagerTests(unittest.TestCase):
     def test_manager_stop_stops_all_runtimes(self) -> None:
         store = _store_with([ACCOUNT_A])
         with patch(
-            "pynextcloud_sync.core.account_manager.RuntimeController",
+            "nextsync.core.account_manager.RuntimeController",
             FakeRuntimeController,
         ):
             manager = AccountManager(store, None, None)
@@ -125,7 +125,7 @@ class AccountManagerTests(unittest.TestCase):
     def test_remove_drops_one_runtime_and_keeps_the_rest(self) -> None:
         store = _store_with([ACCOUNT_A, ACCOUNT_B])
         with patch(
-            "pynextcloud_sync.core.account_manager.RuntimeController",
+            "nextsync.core.account_manager.RuntimeController",
             FakeRuntimeController,
         ):
             manager = AccountManager(store, None, None)

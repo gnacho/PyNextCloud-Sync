@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.util.redact import Redactor
+from nextsync.util.redact import Redactor
 
 
 class RedactionTests(unittest.TestCase):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.nextcloud.push_protocol import (
+from nextsync.nextcloud.push_protocol import (
     parse_push_capability,
     validate_push_transport,
 )

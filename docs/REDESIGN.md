@@ -14,7 +14,7 @@ internal perpetual database, ETag-aware delta sync, and its own
 protocol-level safety. The upstream project maintains it and will keep
 improving it without us doing anything.
 
-PyNextCloud Sync wraps that engine today, but adds a parallel
+NextSync wraps that engine today, but adds a parallel
 "protected initialization" subsystem on top of it: `BootstrapRunner`,
 `safety.py`, `SafetyManifest`, four merge policies, a staging tree,
 three full `nextcloudcmd` runs per first sync, and a file-by-file
@@ -22,7 +22,7 @@ SHA-256 comparison in Python. Verified against the code shipped in
 v2.1.0:
 
 - `core/bootstrap.py:242-294` creates a private staging tree under
-  `~/.local/state/pynextcloud-sync/bootstrap/protected-*` and runs
+  `~/.local/state/nextsync/bootstrap/protected-*` and runs
   `nextcloudcmd <staging> <server>` against it. That is a full
   root-to-staging mirror of the entire account, or of the remote-path
   mapping configured via #3, regardless of what is already on the local
@@ -85,7 +85,7 @@ words.
 When the bootstrap did kick off against `self-hosted-nextcloud.example`, it ran for
 fifty minutes with an indeterminate spinner and the text "Downloading a
 protected copy from Nextcloud". Behind that spinner, 11 GB of staging
-landed under `~/.local/state/pynextcloud-sync/bootstrap/protected-*`.
+landed under `~/.local/state/nextsync/bootstrap/protected-*`.
 `BoundedOutputCapture` in `bootstrap.py:393` was reading every line
 `nextcloudcmd` printed, but the UI never saw them. They went to the log
 file via `self.logger.info("CMD %s", line)` and disappeared from the
@@ -110,7 +110,7 @@ getting in the way.
 
 ## 3. New direction
 
-PyNextCloud Sync becomes a thin GNOME desktop companion over
+NextSync becomes a thin GNOME desktop companion over
 `nextcloudcmd`. The engine owns synchronization, conflict resolution,
 and safety. The app owns everything around it: GNOME integration,
 secure credentials, account configuration, folder mapping, scheduling,
@@ -129,11 +129,11 @@ in the file manager.
 
 | Path | What it does | Why it goes |
 |---|---|---|
-| `src/pynextcloud_sync/core/bootstrap.py` | `BootstrapRunner`, `BootstrapAnalysis`, `BootstrapPolicy`, `BootstrapConflict`, `BootstrapResult`; staging tree plus the three-run `nextcloudcmd` flow | Reimplements engine responsibilities badly. |
-| `src/pynextcloud_sync/ui/bootstrap.py` | `BootstrapWindow` (analysis, review, conflict decisions, apply) | Backs the removal above. |
-| `src/pynextcloud_sync/core/safety.py` safety machinery | `SafetyManifest`, `InventorySnapshot`, deletion guards, baseline persistence | The engine has its own perpetual database and safety. The Python baseline adds a second source of truth that drifts. |
-| `src/pynextcloud_sync/core/safety.py` deletion guard and shrunk-folder check | Picks a fight with the engine on every sync | Replace with trust in the engine's own shadowing and trash bin on the server. |
-| `src/pynextcloud_sync/core/sync_run_marker.py` | Durable breadcrumb around `nextcloudcmd` runs; only meaningful if we distrust the engine | Goes with the safety removal. |
+| `src/nextsync/core/bootstrap.py` | `BootstrapRunner`, `BootstrapAnalysis`, `BootstrapPolicy`, `BootstrapConflict`, `BootstrapResult`; staging tree plus the three-run `nextcloudcmd` flow | Reimplements engine responsibilities badly. |
+| `src/nextsync/ui/bootstrap.py` | `BootstrapWindow` (analysis, review, conflict decisions, apply) | Backs the removal above. |
+| `src/nextsync/core/safety.py` safety machinery | `SafetyManifest`, `InventorySnapshot`, deletion guards, baseline persistence | The engine has its own perpetual database and safety. The Python baseline adds a second source of truth that drifts. |
+| `src/nextsync/core/safety.py` deletion guard and shrunk-folder check | Picks a fight with the engine on every sync | Replace with trust in the engine's own shadowing and trash bin on the server. |
+| `src/nextsync/core/sync_run_marker.py` | Durable breadcrumb around `nextcloudcmd` runs; only meaningful if we distrust the engine | Goes with the safety removal. |
 | Config fields `bootstrap_complete`, `bootstrap_completed_at`, `guard_enabled`, `deletion_count_threshold`, `deletion_percent_threshold` | Backed by the safety machinery | Removed from the schema; migration drops legacy values. |
 | `ui/bootstrap.py` review and merge UI (policies, conflict rows) | UI wrapper over the removed runner | Goes with the bootstrap removal. |
 
@@ -183,11 +183,11 @@ Config schema bumps from v4 to v5. Migration:
    file no longer needs stale `bootstrap_complete = false` blocking
    resync.
 2. Leftover `protected-*` staging trees in
-   `~/.local/state/pynextcloud-sync/bootstrap/` are removed on first
+   `~/.local/state/nextsync/bootstrap/` are removed on first
    run after upgrade, freeing disk. The staging directory itself goes
    too. This is the cleanup the current app never runs on its own.
 3. Existing `SafetyManifest` files are archived under
-   `~/.local/state/pynextcloud-sync/safety-archives/legacy-<ISO>/` and
+   `~/.local/state/nextsync/safety-archives/legacy-<ISO>/` and
    then ignored. No user-visible behaviour change beyond "the next
    scheduled sync runs immediately because the guard is gone".
 
@@ -233,7 +233,7 @@ users anything the engine does not already provide.
 The path that adds the least risk and the most long-term value is to
 delete the parallel subsystem. It does not require new sync code. It
 does require accepting that `nextcloudcmd` is the source of truth for
-sync, and that PyNextCloud Sync's job is to make that engine live nicely
+sync, and that NextSync's job is to make that engine live nicely
 on the desktop, not to second-guess it.
 
 ## 11. What is not in scope

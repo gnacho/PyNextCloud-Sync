@@ -1,6 +1,6 @@
 # Third-party projects and licenses
 
-PyNextCloud Sync is original software distributed under the [GNU General Public License version 3 or later](LICENSE). It relies on system packages, protocols, and independently maintained projects listed below.
+NextSync is a fork of [PyNextCloud-Sync](https://github.com/ehstbr/PyNextCloud-Sync) by **ehstbr**, distributed under the [GNU General Public License version 3 or later](LICENSE). Thanks to ehstbr for the original project. NextSync relies on system packages, protocols, and independently maintained projects listed below.
 
 The source ZIP does **not** bundle the source code or binaries of these runtime dependencies. The Debian package declares them as dependencies or recommendations, and the operating system package manager installs them separately. Each external component remains governed by its own upstream license; nothing in this repository relicenses it.
 
@@ -8,7 +8,7 @@ License identifiers below summarize the principal upstream license. Consult the 
 
 ## Core runtime
 
-| Project | How PyNextCloud Sync uses it | Upstream license |
+| Project | How NextSync uses it | Upstream license |
 | --- | --- | --- |
 | [Nextcloud Desktop Client / `nextcloudcmd`](https://github.com/nextcloud/desktop) | Performs file discovery, bidirectional reconciliation, transfers, conflicts, and deletion propagation | GPL-2.0-or-later |
 | [Python](https://www.python.org/) | Application runtime | Python Software Foundation License |
@@ -25,10 +25,10 @@ License identifiers below summarize the principal upstream license. Consult the 
 
 | Project | Relationship | Upstream license |
 | --- | --- | --- |
-| [Nextcloud Client Push (`notify_push`)](https://github.com/nextcloud/notify_push) | Optional server-side app used only to receive best-effort remote change hints; it is not bundled or installed by PyNextCloud Sync | AGPL-3.0 |
+| [Nextcloud Client Push (`notify_push`)](https://github.com/nextcloud/notify_push) | Optional server-side app used only to receive best-effort remote change hints; it is not bundled or installed by NextSync | AGPL-3.0 |
 | [AppIndicator/KStatusNotifierItem GNOME Shell extension](https://github.com/ubuntu/gnome-shell-extension-appindicator) | Optional tray host recommended on GNOME; it is not bundled | GPL-2.0 |
 
-PyNextCloud Sync implements the freedesktop StatusNotifierItem and D-Bus menu interfaces directly through GIO. It does not include or link against `libappindicator`.
+NextSync implements the freedesktop StatusNotifierItem and D-Bus menu interfaces directly through GIO. It does not include or link against `libappindicator`.
 
 ## Build and translation tools
 
@@ -38,4 +38,4 @@ The project metadata and release workflow also support [Meson](https://github.co
 
 Nextcloud® is a registered trademark of Nextcloud GmbH. GNOME and other names may be trademarks of their respective owners.
 
-PyNextCloud Sync is independent and unofficial. Listing a project here is an attribution and compatibility notice, not a claim of affiliation, sponsorship, certification, or endorsement.
+NextSync is independent and unofficial. Listing a project here is an attribution and compatibility notice, not a claim of affiliation, sponsorship, certification, or endorsement.

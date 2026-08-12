@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 
-from pynextcloud_sync.core.updates import (
+from nextsync.core.updates import (
     MAX_MANIFEST_BYTES,
     RELEASES_URL,
     VERSION_MANIFEST_URL,
@@ -164,10 +164,10 @@ class UpdateCheckerTests(unittest.TestCase):
         checker = UpdateChecker(http=fake)
         checker.check(results.append, current_version="0.1.17")
         self.assertEqual(checker.url, VERSION_MANIFEST_URL)
-        self.assertIn("raw.githubusercontent.com/ehstbr/PyNextCloud-Sync", checker.url)
+        self.assertIn("raw.githubusercontent.com/gnacho/nextsync", checker.url)
         self.assertEqual(
             RELEASES_URL,
-            "https://github.com/ehstbr/PyNextCloud-Sync/releases/latest",
+            "https://github.com/gnacho/nextsync/releases/latest",
         )
         self.assertEqual(fake.headers["Cache-Control"], "no-cache")
         self.assertFalse(results[0].update_available)

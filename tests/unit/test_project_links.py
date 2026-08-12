@@ -7,13 +7,13 @@ from pathlib import Path
 class ProjectLinkTests(unittest.TestCase):
     def test_about_links_use_public_website_and_canonical_repository(self) -> None:
         project_root = Path(__file__).resolve().parents[2]
-        about_source = (project_root / "src/pynextcloud_sync/ui/about.py").read_text(
+        about_source = (project_root / "src/nextsync/ui/about.py").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn('WEBSITE_URL = "https://eduhcommerce.com.br"', about_source)
+        self.assertIn('WEBSITE_URL = "https://github.com/gnacho/nextsync"', about_source)
         self.assertIn(
-            'PROJECT_URL = "https://github.com/ehstbr/PyNextCloud-Sync"',
+            'PROJECT_URL = "https://github.com/gnacho/nextsync"',
             about_source,
         )
         self.assertIn('ISSUES_URL = f"{PROJECT_URL}/issues"', about_source)
@@ -22,7 +22,7 @@ class ProjectLinkTests(unittest.TestCase):
             about_source,
         )
 
-        former_repository = "https://github.com/" + "EduhCommerce/PyNextCloud-Sync"
+        former_repository = "https://github.com/" + "gnacho/NextSync"
         text_suffixes = {
             ".desktop",
             ".in",
@@ -50,14 +50,14 @@ class ProjectLinkTests(unittest.TestCase):
 
     def test_packaging_metadata_uses_the_public_website(self) -> None:
         project_root = Path(__file__).resolve().parents[2]
-        expected = "https://eduhcommerce.com.br"
+        expected = "https://github.com/gnacho/nextsync"
 
         pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
         binary_control = (
             project_root / "packaging/debian/binary-control.in"
         ).read_text(encoding="utf-8")
         metainfo = (
-            project_root / "data/com.eduhcommerce.PyNextCloudSync.metainfo.xml"
+            project_root / "data/io.github.gnacho.nextsync.metainfo.xml"
         ).read_text(encoding="utf-8")
 
         self.assertIn(f'Homepage = "{expected}"', pyproject)

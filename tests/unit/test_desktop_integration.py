@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pynextcloud_sync.core.desktop_integration import (
+from nextsync.core.desktop_integration import (
     FOLDER_ICON_NAME,
     DesktopIntegration,
 )
@@ -83,7 +83,7 @@ class DesktopIntegrationTests(unittest.TestCase):
             collision.write_text("keep", encoding="utf-8")
 
             self.assertTrue(integration.set_desktop_shortcut(True))
-            shortcut = desktop / f"{root.name} (PyNextCloud Sync)"
+            shortcut = desktop / f"{root.name} (NextSync)"
             self.assertTrue(shortcut.is_symlink())
             self.assertEqual(shortcut.resolve(), root)
             self.assertEqual(collision.read_text(encoding="utf-8"), "keep")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.nextcloud.nextcloudcmd_progress import (
+from nextsync.nextcloud.nextcloudcmd_progress import (
     describe_progress,
     parse_progress_line,
 )

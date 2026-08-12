@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pynextcloud_sync.core.delete_guard import (
+from nextsync.core.delete_guard import (
     DeleteAlert,
     DeleteGuard,
     DeleteGuardManifest,
@@ -13,7 +13,7 @@ from pynextcloud_sync.core.delete_guard import (
     is_sync_database_name,
     scan_local_files,
 )
-from pynextcloud_sync.core.exclusions import ExclusionMatcher
+from nextsync.core.exclusions import ExclusionMatcher
 
 
 ACCOUNT = {

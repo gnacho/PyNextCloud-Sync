@@ -1,17 +1,17 @@
 <div align="center">
-  <img src="data/icons/com.eduhcommerce.PyNextCloudSync.svg" width="112" alt="PyNextCloud Sync icon">
-  <h1>PyNextCloud Sync</h1>
+  <img src="data/icons/io.github.gnacho.nextsync.svg" width="112" alt="NextSync icon">
+  <h1>NextSync</h1>
   <p><strong>Your files, local. Your Nextcloud, in sync.</strong></p>
   <p>A lightweight, GNOME-native desktop companion for keeping one complete physical copy of a Nextcloud account on Linux.</p>
   <p>
-    <a href="https://eduhcommerce.com.br">Website</a>
+    <a href="https://github.com/gnacho/nextsync">Website</a>
     ·
-    <a href="https://github.com/ehstbr/PyNextCloud-Sync/releases">Releases</a>
+    <a href="https://github.com/gnacho/nextsync/releases">Releases</a>
     ·
-    <a href="https://github.com/ehstbr/PyNextCloud-Sync/issues">Report an issue</a>
+    <a href="https://github.com/gnacho/nextsync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-3.0.0-6557e8?style=flat-square" alt="Version 3.0.0">
+    <img src="https://img.shields.io/badge/version-0.1.0-6557e8?style=flat-square" alt="Version 0.1.0">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -20,20 +20,26 @@
 </div>
 
 <p align="center">
-  <img src="docs/screenshots/main-window.png" width="820" alt="PyNextCloud Sync main window while synchronizing">
+  <img src="docs/screenshots/main-window.png" width="820" alt="NextSync main window while synchronizing">
 </p>
 
 ## A small app with one clear job
 
-PyNextCloud Sync keeps **one Nextcloud account** mirrored to **one local folder**. It deliberately avoids selective-sync rules, virtual files, multiple account trees, dashboards, and unrelated cloud features.
+NextSync keeps **one Nextcloud account** mirrored to **one local folder**. It deliberately avoids selective-sync rules, virtual files, multiple account trees, dashboards, and unrelated cloud features.
 
-The actual bidirectional reconciliation is performed by the official [`nextcloudcmd`](https://github.com/nextcloud/desktop) engine. PyNextCloud Sync adds the desktop experience around it: secure login, automatic triggers, a compact status window, GNOME integration, logs, and a tray menu.
+The actual bidirectional reconciliation is performed by the official [`nextcloudcmd`](https://github.com/nextcloud/desktop) engine. NextSync adds the desktop experience around it: secure login, automatic triggers, a compact status window, GNOME integration, logs, and a tray menu.
+
+### A fork, with thanks
+
+NextSync is a full fork of [**PyNextCloud-Sync**](https://github.com/ehstbr/PyNextCloud-Sync) by **ehstbr**. The project was renamed, the codebase was refactored into a thin wrapper around `nextcloudcmd` (see below), and versioning restarts at **0.1.0** — each release adds `+0.1`.
+
+A big thank you to ehstbr for the original project and for releasing it under the GPL-3.0-or-later license, which makes this fork possible.
 
 ### Highlights
 
 - **Complete physical mirror:** every eligible file in the account is kept locally.
 - **Multiple accounts:** each account keeps its own synchronization and runtime settings, shown in a dedicated sidebar and per-account tray menu.
-- **Official synchronization engine:** `nextcloudcmd` owns sync, conflict resolution, and safety. PyNextCloud Sync is a thin GNOME companion around it.
+- **Official synchronization engine:** `nextcloudcmd` owns sync, conflict resolution, and safety. NextSync is a thin GNOME companion around it.
 - **GNOME-native interface:** GTK 4 and Libadwaita, with a compact and familiar layout.
 - **Secure sign-in:** Nextcloud Login Flow v2 or manual credentials, stored through Secret Service / GNOME Keyring.
 - **Fast local detection:** recursive Linux `inotify` monitoring with event coalescing.
@@ -66,7 +72,7 @@ The actual bidirectional reconciliation is performed by the official [`nextcloud
 
 <p align="center">
   <strong>Everything important is also available from the tray</strong><br><br>
-  <img src="docs/screenshots/tray-menu.png" width="368" alt="PyNextCloud Sync tray menu">
+  <img src="docs/screenshots/tray-menu.png" width="368" alt="NextSync tray menu">
 </p>
 
 <details>
@@ -109,7 +115,7 @@ flowchart LR
 
 ## Why the thin-wrapper redesign
 
-Version 3.0.0 changes the architecture on purpose. Earlier releases wrapped `nextcloudcmd` in a "protected initialization" layer: a staging folder mirrored the entire remote tree, three separate `nextcloudcmd` runs merged both sides, and the app kept its own safety baseline with SHA-256 hashes and a deletion guard. On a real account that design broke down.
+Version 0.1.0 (the fork release) changes the architecture on purpose. Earlier releases wrapped `nextcloudcmd` in a "protected initialization" layer: a staging folder mirrored the entire remote tree, three separate `nextcloudcmd` runs merged both sides, and the app kept its own safety baseline with SHA-256 hashes and a deletion guard. On a real account that design broke down.
 
 ### What was wrong
 
@@ -122,7 +128,7 @@ Version 3.0.0 changes the architecture on purpose. Earlier releases wrapped `nex
 
 `nextcloudcmd` is the same engine the official Nextcloud desktop client ships. It has a perpetual SQLite journal (`.sync_*.db`), ETag-aware delta sync, an internal conflict policy that preserves both sides as `* (Nextcloud conflicted copy <date>).*`, and it only rewrites files that actually changed. Reimplementing any of that in Python on top of it was scope creep that did the job worse.
 
-One honest caveat drove part of this release: the CLI runs `--non-interactive`, and the mass-deletion confirmation that the GUI client shows is disabled for it. So **the CLI does not ask before propagating a large local deletion to the server.** That is why 3.0.0 ships a small, opt-in deletion guard of its own (see below) instead of relying on the engine for it.
+One honest caveat drove part of this release: the CLI runs `--non-interactive`, and the mass-deletion confirmation that the GUI client shows is disabled for it. So **the CLI does not ask before propagating a large local deletion to the server.** That is why 0.1.0 ships a small, opt-in deletion guard of its own (see below) instead of relying on the engine for it.
 
 ### What changed
 
@@ -146,15 +152,15 @@ One honest caveat drove part of this release: the CLI runs `--non-interactive`, 
 
 ### Debian package — recommended
 
-Download the `.deb` from the [latest release](https://github.com/ehstbr/PyNextCloud-Sync/releases/latest), then install it with APT so the required system packages are resolved automatically:
+Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync/releases/latest), then install it with APT so the required system packages are resolved automatically:
 
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./pynextcloud-sync_3.0.0_all.deb
+sudo apt install ./nextsync_0.1.0_all.deb
 ```
 
-During an interactive upgrade started with `sudo apt install`, the package asks a running PyNextCloud Sync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
+During an interactive upgrade started with `sudo apt install`, the package asks a running NextSync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
 
 The package depends on `nextcloud-desktop-cmd`, Python 3, GTK 4, Libadwaita, PyGObject, libsoup, libsecret, GdkPixbuf, and GNOME Keyring. On GNOME, tray icons normally require an AppIndicator/StatusNotifier extension; synchronization continues even when no tray host is available.
 
@@ -174,8 +180,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip PyNextCloud-Sync-3.0.0.zip
-cd PyNextCloud-Sync-3.0.0
+unzip NextSync-0.1.0.zip
+cd NextSync-0.1.0
 ./run.sh
 ```
 
@@ -184,12 +190,12 @@ cd PyNextCloud-Sync-3.0.0
 ### Arch / CachyOS package
 
 The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
-package locally, copy the `PyNextCloud-Sync-3.0.0.zip` and the `PKGBUILD` into a
+package locally, copy the `NextSync-0.1.0.zip` and the `PKGBUILD` into a
 directory without spaces (makepkg cannot run in paths containing spaces) and run:
 
 ```bash
 makepkg -cf
-sudo pacman -U pynextcloud-sync-3.0.0-1-any.pkg.tar.zst
+sudo pacman -U nextsync-0.1.0-1-any.pkg.tar.zst
 ```
 
 The package installs the application, `.desktop` entry, metainfo, icons, and the
@@ -206,11 +212,11 @@ The package installs the application, `.desktop` entry, metainfo, icons, and the
 
 The first synchronization is a normal `nextcloudcmd` run. No staging copy, no three-step merge, no pre-transfer analysis: the engine's delta detection downloads only what differs, and both sides are reconciled in one pass.
 
-New account setup then enables local filesystem monitoring, a 10-minute remote interval, compatible server push, disposable-file exclusions, and autostart. It also adds the synchronized folder to the Files sidebar, creates a safe symbolic link on the XDG Desktop, and applies the PyNextCloud Sync folder icon. These integrations can be changed independently in **Settings → General → Local Folder**.
+New account setup then enables local filesystem monitoring, a 10-minute remote interval, compatible server push, disposable-file exclusions, and autostart. It also adds the synchronized folder to the Files sidebar, creates a safe symbolic link on the XDG Desktop, and applies the NextSync folder icon. These integrations can be changed independently in **Settings → General → Local Folder**.
 
 ## Update checks
 
-At every application startup, PyNextCloud Sync reads `version.json` from the
+At every application startup, NextSync reads `version.json` from the
 root of the GitHub repository before enabling the synchronization runtime. An
 unreachable GitHub service, HTTP failure, or invalid manifest is logged and
 does not prevent normal startup.
@@ -258,14 +264,14 @@ Patterns containing `/`, `\`, or `..` are rejected. Version 1 does not support f
 
 ## Files, credentials, and privacy
 
-- Configuration: `$XDG_CONFIG_HOME/pynextcloud-sync/settings.json`
-- Generated exclusions: `$XDG_CONFIG_HOME/pynextcloud-sync/excludes-<account>.lst` (one per account)
-- Daily logs: `$XDG_STATE_HOME/pynextcloud-sync/pynextcloud-sync-YYYY-MM-DD.log`
+- Configuration: `$XDG_CONFIG_HOME/nextsync/settings.json`
+- Generated exclusions: `$XDG_CONFIG_HOME/nextsync/excludes-<account>.lst` (one per account)
+- Daily logs: `$XDG_STATE_HOME/nextsync/nextsync-YYYY-MM-DD.log`
 - Account secret: GNOME Keyring or another compatible Secret Service provider
 
 The `<account>` suffix is a short hash of the server URL, login name, local folder, and remote path, so two accounts never share an exclusion file.
 
-Logs remain local, use one file per day, and are retained for 30 days by default. Sensitive values are redacted from application-owned log messages. If biometric desktop login leaves the Login keyring locked, GNOME shows its native unlock prompt before synchronization. The desktop password is handled only by GNOME; PyNextCloud Sync does not receive or store it. Canceling the prompt leaves the app waiting for an explicit **Unlock Password Keyring** request instead of repeatedly prompting or reporting invalid Nextcloud credentials.
+Logs remain local, use one file per day, and are retained for 30 days by default. Sensitive values are redacted from application-owned log messages. If biometric desktop login leaves the Login keyring locked, GNOME shows its native unlock prompt before synchronization. The desktop password is handled only by GNOME; NextSync does not receive or store it. Canceling the prompt leaves the app waiting for an explicit **Unlock Password Keyring** request instead of repeatedly prompting or reporting invalid Nextcloud credentials.
 
 ## Development and tests
 
@@ -288,10 +294,10 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `3.0.0` is a development release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `0.1.0` is the first fork release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 
 <p align="center"><sub>
-Nextcloud® is a registered trademark of Nextcloud GmbH. PyNextCloud Sync is an independent, unofficial project and is not affiliated with, sponsored by, endorsed by, or otherwise connected to Nextcloud GmbH. Use is subject to the <a href="TERMS.md">Terms of Use</a> and the GNU General Public License version 3 or later.
+Nextcloud® is a registered trademark of Nextcloud GmbH. NextSync is an independent, unofficial project and is not affiliated with, sponsored by, endorsed by, or otherwise connected to Nextcloud GmbH. Use is subject to the <a href="TERMS.md">Terms of Use</a> and the GNU General Public License version 3 or later.
 </sub></p>

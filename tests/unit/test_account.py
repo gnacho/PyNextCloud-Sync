@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.account import AccountSession
-from pynextcloud_sync.storage.config import validate_config
+from nextsync.core.account import AccountSession
+from nextsync.storage.config import validate_config
 
 
 def _account_value() -> dict:

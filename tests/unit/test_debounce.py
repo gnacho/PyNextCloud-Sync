@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.debounce import DebounceGate
+from nextsync.core.debounce import DebounceGate
 
 
 class FakeGLib:

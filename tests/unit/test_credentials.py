@@ -165,12 +165,12 @@ def load_credentials_module():
     module_path = (
         Path(__file__).parents[2]
         / "src"
-        / "pynextcloud_sync"
+        / "nextsync"
         / "nextcloud"
         / "credentials.py"
     )
     spec = importlib.util.spec_from_file_location(
-        "pynextcloud_sync_credentials_test", module_path
+        "nextsync_credentials_test", module_path
     )
     module = importlib.util.module_from_spec(spec)
     with patch.dict(

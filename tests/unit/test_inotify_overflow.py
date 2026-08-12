@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-INOTIFY_SOURCE = Path(__file__).parents[2] / "src" / "pynextcloud_sync" / "core" / "inotify.py"
+INOTIFY_SOURCE = Path(__file__).parents[2] / "src" / "nextsync" / "core" / "inotify.py"
 
 
 def load_inotify_module():
@@ -15,7 +15,7 @@ def load_inotify_module():
     fake_repository = types.ModuleType("gi.repository")
     fake_repository.GLib = types.SimpleNamespace()
     spec = importlib.util.spec_from_file_location(
-        "pynextcloud_sync.core.inotify_test_double", INOTIFY_SOURCE
+        "nextsync.core.inotify_test_double", INOTIFY_SOURCE
     )
     module = importlib.util.module_from_spec(spec)
     with patch.dict(sys.modules, {"gi": fake_gi, "gi.repository": fake_repository}):

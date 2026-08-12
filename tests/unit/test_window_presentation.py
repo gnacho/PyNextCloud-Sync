@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.window_presentation import MappedWindowPresenter
+from nextsync.core.window_presentation import MappedWindowPresenter
 
 
 class _Parent:

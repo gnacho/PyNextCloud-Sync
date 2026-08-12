@@ -1,4 +1,25 @@
-pynextcloud-sync (3.0.0) stable; urgency=medium
+nextsync (0.1.0) stable; urgency=medium
+
+  * Fork of PyNextCloud-Sync by ehstbr, renamed to NextSync (application,
+    Python module, binary, app ID io.github.gnacho.nextsync, icons, and
+    packaging). Versioning restarts at 0.1.0; each release adds +0.1.
+  * Thin-wrapper redesign: remove the protected-initialization subsystem
+    (bootstrap staging, safety baseline, run markers, deletion guard) and let
+    nextcloudcmd own synchronization, conflict resolution, and safety.
+  * Bump the config schema from v4 to v5, dropping the safety fields from every
+    account automatically. Leftover staging trees are removed and legacy safety
+    manifests are archived on first run after upgrade.
+  * Add a first-sync confirmation dialog before the initial run when the local
+    folder, the remote folder, or both are empty, probing the remote side with
+    a shallow WebDAV PROPFIND.
+  * Add a conflicted-copy resolver window with Keep Local, Keep Remote, and
+    Open in Files actions.
+  * Surface real nextcloudcmd per-file progress in the account view and tray
+    tooltip during a sync.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Wed, 12 Aug 2026 23:00:00 +0200
+
+nextsync (3.0.0) stable; urgency=medium
 
   * Thin-wrapper redesign: remove the protected-initialization subsystem
     (bootstrap staging, safety baseline, run markers, deletion guard) and let
@@ -14,7 +35,7 @@ pynextcloud-sync (3.0.0) stable; urgency=medium
   * Surface real nextcloudcmd per-file progress in the account view and tray
     tooltip during a sync.
 
-pynextcloud-sync (2.1.0) stable; urgency=medium
+nextsync (2.1.0) stable; urgency=medium
 
   * Add an optional remote folder field so each account can mirror a specific
     Nextcloud folder instead of the account root.
@@ -27,7 +48,7 @@ pynextcloud-sync (2.1.0) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 22:30:00 -0300
 
-pynextcloud-sync (2.0.0) stable; urgency=medium
+nextsync (2.0.0) stable; urgency=medium
 
   * Add support for multiple Nextcloud accounts with independent settings.
   * Migrate existing single-account configurations on first launch.
@@ -37,7 +58,7 @@ pynextcloud-sync (2.0.0) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Tue, 11 Aug 2026 22:00:00 -0300
 
-pynextcloud-sync (0.1.18) stable; urgency=medium
+nextsync (0.1.18) stable; urgency=medium
 
   * Detect and recover from inotify queue overflow before trusting new local events.
   * Rebuild filesystem monitoring and request a protected nextcloudcmd reconciliation.
@@ -46,7 +67,7 @@ pynextcloud-sync (0.1.18) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Mon, 10 Aug 2026 14:20:00 -0300
 
-pynextcloud-sync (0.1.17) stable; urgency=medium
+nextsync (0.1.17) stable; urgency=medium
 
   * Wait for the main window to map before showing the automatic update notice.
   * Create update windows with their transient parent assigned before mapping.
@@ -55,7 +76,7 @@ pynextcloud-sync (0.1.17) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 23:50:25 -0300
 
-pynextcloud-sync (0.1.16) stable; urgency=medium
+nextsync (0.1.16) stable; urgency=medium
 
   * Keep the update notice above the main window across launcher activations.
   * Keep update actions visible above the scrollable release details.
@@ -64,7 +85,7 @@ pynextcloud-sync (0.1.16) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 23:29:46 -0300
 
-pynextcloud-sync (0.1.15) stable; urgency=medium
+nextsync (0.1.15) stable; urgency=medium
 
   * Check the validated GitHub version manifest at every application start and
     expose the same check manually from About.
@@ -75,7 +96,7 @@ pynextcloud-sync (0.1.15) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 22:51:24 -0300
 
-pynextcloud-sync (0.1.14) stable; urgency=medium
+nextsync (0.1.14) stable; urgency=medium
 
   * Add a protected first synchronization with an isolated fresh server
     snapshot, explicit merge review, and preserved conflict copies.
@@ -88,7 +109,7 @@ pynextcloud-sync (0.1.14) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Sat, 08 Aug 2026 10:30:00 -0300
 
-pynextcloud-sync (0.1.13) stable; urgency=medium
+nextsync (0.1.13) stable; urgency=medium
 
   * Resolve and unlock the default GNOME password collection before searching
     for the stored Nextcloud app password after biometric desktop login.
@@ -99,7 +120,7 @@ pynextcloud-sync (0.1.13) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:59:45 -0300
 
-pynextcloud-sync (0.1.12) stable; urgency=medium
+nextsync (0.1.12) stable; urgency=medium
 
   * Detect a running application by querying ownership of its live D-Bus name
     instead of misusing gapplication list-apps as a process list.
@@ -110,7 +131,7 @@ pynextcloud-sync (0.1.12) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:59:30 -0300
 
-pynextcloud-sync (0.1.11) stable; urgency=medium
+nextsync (0.1.11) stable; urgency=medium
 
   * Discover running application instances from the real per-user D-Bus
     sessions instead of relying on SUDO_UID during package upgrades.
@@ -121,7 +142,7 @@ pynextcloud-sync (0.1.11) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:59:00 -0300
 
-pynextcloud-sync (0.1.10) stable; urgency=medium
+nextsync (0.1.10) stable; urgency=medium
 
   * Unlock GNOME Keyring through the native Secret Service prompt after a
     biometric desktop login.
@@ -133,7 +154,7 @@ pynextcloud-sync (0.1.10) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 23:45:00 -0300
 
-pynextcloud-sync (0.1.9) stable; urgency=medium
+nextsync (0.1.9) stable; urgency=medium
 
   * Publish the corrected project, issue, and changelog URLs under the canonical
     ehstbr/PyNextCloud-Sync repository.
@@ -142,7 +163,7 @@ pynextcloud-sync (0.1.9) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 22:30:00 -0300
 
-pynextcloud-sync (0.1.8) stable; urgency=medium
+nextsync (0.1.8) stable; urgency=medium
 
   * Set the public website to eduhcommerce.com.br and point source, issue, and
     documentation links to ehstbr/PyNextCloud-Sync.
@@ -154,14 +175,14 @@ pynextcloud-sync (0.1.8) stable; urgency=medium
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 21:30:00 -0300
 
-pynextcloud-sync (0.1.7) stable; urgency=medium
+nextsync (0.1.7) stable; urgency=medium
 
   * Open Settings from the tray as an independent preferences window.
   * Keep the main interface closed and unallocated while Settings is open.
 
  -- EduhCommerce <eduhcommerce@users.noreply.github.com>  Fri, 07 Aug 2026 20:30:00 -0300
 
-pynextcloud-sync (0.1.6) stable; urgency=medium
+nextsync (0.1.6) stable; urgency=medium
 
   * Fix opening Settings from the tray when the main window is closed.
   * Reduce background and peak memory with lazy UI lifecycle, bounded command

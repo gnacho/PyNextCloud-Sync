@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.storage.log import AppLogger
+from nextsync.storage.log import AppLogger
 
 
 class LogTests(unittest.TestCase):

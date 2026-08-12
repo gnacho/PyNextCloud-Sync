@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.storage.config import (
+from nextsync.storage.config import (
     DEFAULT_CONFIG,
     ConfigStore,
     ConfigurationError,

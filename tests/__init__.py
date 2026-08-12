@@ -1,2 +1,2 @@
-"""PyNextCloud Sync test suite."""
+"""NextSync test suite."""
 

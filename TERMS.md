@@ -2,11 +2,13 @@
 
 Last updated: August 11, 2026
 
-These Terms of Use apply to PyNextCloud Sync (the “Software”). By installing, running, copying, modifying, or distributing the Software, you acknowledge and accept the conditions below together with the [GNU General Public License version 3 or later](LICENSE).
+These Terms of Use apply to NextSync (the “Software”). By installing, running, copying, modifying, or distributing the Software, you acknowledge and accept the conditions below together with the [GNU General Public License version 3 or later](LICENSE).
 
 ## 1. Independent and unofficial project
 
-PyNextCloud Sync is an independent, unofficial third-party project. It is not affiliated with, sponsored by, endorsed by, maintained by, or otherwise connected to Nextcloud GmbH.
+NextSync is an independent, unofficial third-party project. It is not affiliated with, sponsored by, endorsed by, maintained by, or otherwise connected to Nextcloud GmbH.
+
+NextSync is a fork of [PyNextCloud-Sync](https://github.com/ehstbr/PyNextCloud-Sync) by ehstbr, distributed under the GNU General Public License version 3 or later. Credit and thanks go to the original author for the project and its license.
 
 Nextcloud® is a registered trademark of Nextcloud GmbH. All third-party names, trademarks, services, and software remain the property of their respective owners. Their mention identifies compatibility or technical dependencies only.
 
@@ -14,7 +16,7 @@ Nextcloud® is a registered trademark of Nextcloud GmbH. All third-party names, 
 
 The Software performs bidirectional synchronization between a local folder and a configured Nextcloud account. Depending on local and remote state, synchronization may upload, download, rename, replace, merge, conflict, or delete files and folders.
 
-PyNextCloud Sync delegates reconciliation and conflict handling to `nextcloudcmd`. The behavior of that engine, the Nextcloud server, storage, network, authentication providers, reverse proxies, and optional server apps is outside the direct control of this project.
+NextSync delegates reconciliation and conflict handling to `nextcloudcmd`. The behavior of that engine, the Nextcloud server, storage, network, authentication providers, reverse proxies, and optional server apps is outside the direct control of this project.
 
 ## 3. Backups and testing are the user's responsibility
 
@@ -48,13 +50,13 @@ The Software does not include telemetry, analytics, advertising, or remote crash
 
 ## 8. Third-party software and services
 
-PyNextCloud Sync depends on separately maintained third-party software and protocols. Each component remains subject to its own license and terms. See [THIRD-PARTY.md](THIRD-PARTY.md) for the principal projects used or supported.
+NextSync depends on separately maintained third-party software and protocols. Each component remains subject to its own license and terms. See [THIRD-PARTY.md](THIRD-PARTY.md) for the principal projects used or supported.
 
 Use of a Nextcloud server may also be subject to terms, privacy policies, quotas, and operational rules established by the server owner or hosting provider.
 
 ## 9. License
 
-PyNextCloud Sync version `2.0.0` and subsequent releases are distributed under the [GNU General Public License version 3 or later](LICENSE). Its warranty and liability disclaimer remains fully applicable. External dependencies are not relicensed by this project, and earlier PyNextCloud Sync releases remain available under the license distributed with each respective release.
+NextSync version `2.0.0` and subsequent releases are distributed under the [GNU General Public License version 3 or later](LICENSE). Its warranty and liability disclaimer remains fully applicable. External dependencies are not relicensed by this project, and earlier NextSync releases remain available under the license distributed with each respective release.
 
 ## 10. Changes to these terms
 

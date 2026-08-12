@@ -2,7 +2,7 @@
 set -e
 
 runtime_root="/run/user"
-state_dir="/run/pynextcloud-sync-upgrade"
+state_dir="/run/nextsync-upgrade"
 restart_file="$state_dir/restart-uids"
 
 if command -v update-desktop-database >/dev/null 2>&1; then
@@ -37,14 +37,14 @@ while IFS= read -r session_uid; do
         continue
     fi
 
-    echo "Restarting PyNextCloud Sync in user session $session_uid."
+    echo "Restarting NextSync in user session $session_uid."
     runuser -u "$session_user" -- env \
         XDG_RUNTIME_DIR="$runtime_dir" \
         DBUS_SESSION_BUS_ADDRESS="unix:path=$session_bus" \
         systemd-run --user --collect --quiet \
-        --unit="pynextcloud-sync-update-$session_uid-$$" \
-        /usr/bin/pynextcloud-sync --background || \
-        echo "PyNextCloud Sync could not be restarted automatically in user session $session_uid; start it from the application menu." >&2
+        --unit="nextsync-update-$session_uid-$$" \
+        /usr/bin/nextsync --background || \
+        echo "NextSync could not be restarted automatically in user session $session_uid; start it from the application menu." >&2
 done < "$restart_file"
 
 : > "$restart_file"

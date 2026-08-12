@@ -7,12 +7,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.core.triggers import Trigger
+from nextsync.core.state import AppState, StateController
+from nextsync.core.triggers import Trigger
 
 
 SCHEDULER_SOURCE = (
-    Path(__file__).parents[2] / "src" / "pynextcloud_sync" / "core" / "scheduler.py"
+    Path(__file__).parents[2] / "src" / "nextsync" / "core" / "scheduler.py"
 )
 
 
@@ -92,13 +92,13 @@ def load_scheduler_module():
     fake_gi = types.ModuleType("gi")
     fake_repository = types.ModuleType("gi.repository")
     fake_repository.GLib = FakeGLib
-    fake_credentials = types.ModuleType("pynextcloud_sync.nextcloud.credentials")
+    fake_credentials = types.ModuleType("nextsync.nextcloud.credentials")
     fake_credentials.KeyringLockedError = type("KeyringLockedError", (RuntimeError,), {})
-    fake_sync_engine = types.ModuleType("pynextcloud_sync.core.sync_engine")
+    fake_sync_engine = types.ModuleType("nextsync.core.sync_engine")
     fake_sync_engine.SyncEngine = FakeEngine
     fake_sync_engine.SyncResult = object
     spec = importlib.util.spec_from_file_location(
-        "pynextcloud_sync.core.scheduler_test_double", SCHEDULER_SOURCE
+        "nextsync.core.scheduler_test_double", SCHEDULER_SOURCE
     )
     module = importlib.util.module_from_spec(spec)
     with patch.dict(
@@ -106,8 +106,8 @@ def load_scheduler_module():
         {
             "gi": fake_gi,
             "gi.repository": fake_repository,
-            "pynextcloud_sync.nextcloud.credentials": fake_credentials,
-            "pynextcloud_sync.core.sync_engine": fake_sync_engine,
+            "nextsync.nextcloud.credentials": fake_credentials,
+            "nextsync.core.sync_engine": fake_sync_engine,
         },
     ):
         assert spec.loader is not None
@@ -211,7 +211,7 @@ class SchedulerTests(unittest.TestCase):
 
     def test_shared_permit_queues_a_second_account_until_release(self) -> None:
         module = load_scheduler_module()
-        from pynextcloud_sync.core.sync_permit import SyncPermit
+        from nextsync.core.sync_permit import SyncPermit
 
         permit = SyncPermit()
         first_engine = FakeEngine()

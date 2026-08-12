@@ -9,14 +9,14 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest.mock import patch
 
-from pynextcloud_sync.core.state import AppState, StateController
-from pynextcloud_sync.ui.tray_state import presentation_for
+from nextsync.core.state import AppState, StateController
+from nextsync.ui.tray_state import presentation_for
 
 
 TRAY_SOURCE = (
     Path(__file__).parents[2]
     / "src"
-    / "pynextcloud_sync"
+    / "nextsync"
     / "ui"
     / "tray.py"
 )
@@ -76,7 +76,7 @@ def load_tray_module():
     fake_repository.Gio = types.SimpleNamespace()
     fake_repository.GLib = types.SimpleNamespace(Variant=FakeVariant, Error=Exception)
     spec = importlib.util.spec_from_file_location(
-        "pynextcloud_sync_tray_transition_test", TRAY_SOURCE
+        "nextsync_tray_transition_test", TRAY_SOURCE
     )
     module = importlib.util.module_from_spec(spec)
     with patch.dict(
@@ -136,7 +136,7 @@ class TrayContractTests(unittest.TestCase):
                 presentation = presentation_for(state)
                 icon = (
                     icon_directory
-                    / f"pynextcloud-sync-status-{presentation.icon_key}-symbolic.svg"
+                    / f"nextsync-status-{presentation.icon_key}-symbolic.svg"
                 )
                 self.assertTrue(icon.is_file(), icon)
 
@@ -201,7 +201,7 @@ class TrayContractTests(unittest.TestCase):
         paused_properties = paused_change[4].value[1]
         self.assertTrue(
             paused_properties["IconName"].value.endswith(
-                "pynextcloud-sync-status-paused-symbolic.svg"
+                "nextsync-status-paused-symbolic.svg"
             )
         )
         self.assertEqual(paused_properties["Status"].value, "Active")
@@ -217,7 +217,7 @@ class TrayContractTests(unittest.TestCase):
         syncing_properties = syncing_change[4].value[1]
         self.assertTrue(
             syncing_properties["IconName"].value.endswith(
-                "pynextcloud-sync-status-syncing-symbolic.svg"
+                "nextsync-status-syncing-symbolic.svg"
             )
         )
         self.assertNotEqual(

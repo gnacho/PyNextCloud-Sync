@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.core.exclusions import (
+from nextsync.core.exclusions import (
     DEFAULT_PATTERNS,
     ExclusionMatcher,
     InvalidPattern,

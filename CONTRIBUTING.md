@@ -1,6 +1,6 @@
 # Contributing
 
-PyNextCloud Sync is intentionally narrow: one account, one complete local mirror, and the official `nextcloudcmd` engine. Changes should preserve low idle CPU/RAM use and GNOME-native design.
+NextSync is intentionally narrow: one account, one complete local mirror, and the official `nextcloudcmd` engine. Changes should preserve low idle CPU/RAM use and GNOME-native design.
 
 Before submitting a change:
 

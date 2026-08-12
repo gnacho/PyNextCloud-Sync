@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.nextcloud.command import (
+from nextsync.nextcloud.command import (
     BoundedOutputCapture,
     build_command,
     classify_output,

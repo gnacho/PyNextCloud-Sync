@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-from pynextcloud_sync.nextcloud.api import NextcloudApi
+from nextsync.nextcloud.api import NextcloudApi
 
 
 class _FakeHttp:

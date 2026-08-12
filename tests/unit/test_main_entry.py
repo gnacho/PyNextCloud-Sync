@@ -8,7 +8,7 @@ from pathlib import Path
 ENTRYPOINT = (
     Path(__file__).parents[2]
     / "src"
-    / "pynextcloud_sync"
+    / "nextsync"
     / "__main__.py"
 )
 

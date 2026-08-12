@@ -1,2 +1,2 @@
-i18n.gettext('pynextcloud-sync', preset: 'glib')
+i18n.gettext('nextsync', preset: 'glib')
 

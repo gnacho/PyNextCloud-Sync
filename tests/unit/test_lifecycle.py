@@ -21,23 +21,23 @@ def method_source(path: Path, class_name: str, method_name: str) -> str:
 
 class LifecycleContractTests(unittest.TestCase):
     def test_background_activation_keeps_the_main_window_lazy(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "application.py"
-        activate = method_source(path, "PyNextCloudApplication", "do_activate")
+        path = ROOT / "src" / "nextsync" / "application.py"
+        activate = method_source(path, "NextSyncApplication", "do_activate")
         continue_activation = method_source(
-            path, "PyNextCloudApplication", "_continue_activation"
+            path, "NextSyncApplication", "_continue_activation"
         )
         self.assertIn("self._begin_startup_update_check()", activate)
         self.assertIn("self._ensure_tray()", continue_activation)
         self.assertNotIn("self._ensure_main_window()", activate)
 
     def test_update_check_precedes_runtime_and_mandatory_updates_block_it(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "application.py"
-        activate = method_source(path, "PyNextCloudApplication", "do_activate")
+        path = ROOT / "src" / "nextsync" / "application.py"
+        activate = method_source(path, "NextSyncApplication", "do_activate")
         finished = method_source(
-            path, "PyNextCloudApplication", "_startup_update_finished"
+            path, "NextSyncApplication", "_startup_update_finished"
         )
         ensure_runtime = method_source(
-            path, "PyNextCloudApplication", "_ensure_runtime"
+            path, "NextSyncApplication", "_ensure_runtime"
         )
         self.assertIn("if not self._startup_update_complete", activate)
         self.assertIn("result.latest.mandatory", finished)
@@ -46,11 +46,11 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("self._mandatory_update_manifest", ensure_runtime)
 
     def test_about_exposes_the_manual_update_check(self) -> None:
-        about = (ROOT / "src" / "pynextcloud_sync" / "ui" / "about.py").read_text(
+        about = (ROOT / "src" / "nextsync" / "ui" / "about.py").read_text(
             encoding="utf-8"
         )
         main_window = (
-            ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"
+            ROOT / "src" / "nextsync" / "ui" / "main_window.py"
         ).read_text(encoding="utf-8")
         self.assertIn('about.add_link(_("Check for Updates")', about)
         self.assertIn('about.connect("activate-link"', about)
@@ -58,7 +58,7 @@ class LifecycleContractTests(unittest.TestCase):
 
     def test_update_notice_is_a_full_window_with_native_expandable_changelog(self) -> None:
         source = (
-            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+            ROOT / "src" / "nextsync" / "ui" / "update_window.py"
         ).read_text(encoding="utf-8")
         self.assertIn("class UpdateWindow(Adw.ApplicationWindow)", source)
         self.assertIn("Adw.ExpanderRow(", source)
@@ -67,7 +67,7 @@ class LifecycleContractTests(unittest.TestCase):
 
     def test_update_actions_are_fixed_before_the_scrollable_details(self) -> None:
         source = (
-            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+            ROOT / "src" / "nextsync" / "ui" / "update_window.py"
         ).read_text(encoding="utf-8")
         self.assertLess(
             source.index('Gtk.Button(label=_("Download New Version"))'),
@@ -77,19 +77,19 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertNotIn('_("Open Releases Page")', source)
 
     def test_startup_update_waits_for_the_mapped_main_window(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        path = ROOT / "src" / "nextsync" / "application.py"
         startup_finished = method_source(
-            path, "PyNextCloudApplication", "_startup_update_finished"
+            path, "NextSyncApplication", "_startup_update_finished"
         )
         queue_update = method_source(
             path,
-            "PyNextCloudApplication",
+            "NextSyncApplication",
             "_queue_update_window_for_mapped_parent",
         )
-        present_main = method_source(path, "PyNextCloudApplication", "present_main")
+        present_main = method_source(path, "NextSyncApplication", "present_main")
         foreground = method_source(
             path,
-            "PyNextCloudApplication",
+            "NextSyncApplication",
             "_present_update_window_foreground",
         )
         self.assertIn("self._queue_update_window_for_mapped_parent", startup_finished)
@@ -100,7 +100,7 @@ class LifecycleContractTests(unittest.TestCase):
 
     def test_mandatory_notice_uses_urgent_copy_and_replaces_not_now_with_quit(self) -> None:
         source = (
-            ROOT / "src" / "pynextcloud_sync" / "ui" / "update_window.py"
+            ROOT / "src" / "nextsync" / "ui" / "update_window.py"
         ).read_text(encoding="utf-8")
         self.assertIn('"dialog-warning-symbolic"', source)
         self.assertIn('_("Mandatory update available")', source)
@@ -112,11 +112,11 @@ class LifecycleContractTests(unittest.TestCase):
         )
 
     def test_tray_settings_opens_an_independent_preferences_window(self) -> None:
-        application = ROOT / "src" / "pynextcloud_sync" / "application.py"
-        main_window = ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"
-        settings = ROOT / "src" / "pynextcloud_sync" / "ui" / "settings.py"
+        application = ROOT / "src" / "nextsync" / "application.py"
+        main_window = ROOT / "src" / "nextsync" / "ui" / "main_window.py"
+        settings = ROOT / "src" / "nextsync" / "ui" / "settings.py"
         app_settings = method_source(
-            application, "PyNextCloudApplication", "show_settings"
+            application, "NextSyncApplication", "show_settings"
         )
         window_settings = method_source(main_window, "MainWindow", "show_settings")
         settings_source = settings.read_text(encoding="utf-8")
@@ -130,23 +130,23 @@ class LifecycleContractTests(unittest.TestCase):
         )
 
     def test_desktop_integrations_are_initialized_only_after_new_setup(self) -> None:
-        application = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        application = ROOT / "src" / "nextsync" / "application.py"
         setup_complete = method_source(
-            application, "PyNextCloudApplication", "_setup_complete"
+            application, "NextSyncApplication", "_setup_complete"
         )
         ensure_integration = method_source(
-            application, "PyNextCloudApplication", "_ensure_desktop_integration"
+            application, "NextSyncApplication", "_ensure_desktop_integration"
         )
         self.assertIn("initialize_defaults()", setup_complete)
         self.assertNotIn("initialize_defaults()", ensure_integration)
 
     def test_existing_configuration_starts_the_runtime_directly(self) -> None:
-        application = ROOT / "src" / "pynextcloud_sync" / "application.py"
+        application = ROOT / "src" / "nextsync" / "application.py"
         continue_activation = method_source(
-            application, "PyNextCloudApplication", "_continue_activation"
+            application, "NextSyncApplication", "_continue_activation"
         )
         ensure_runtime = method_source(
-            application, "PyNextCloudApplication", "_ensure_runtime"
+            application, "NextSyncApplication", "_ensure_runtime"
         )
         self.assertIn("self._ensure_runtime()", continue_activation)
         self.assertIn("self._ensure_tray()", continue_activation)
@@ -155,7 +155,7 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("self.account_manager.start()", ensure_runtime)
 
     def test_closed_main_window_releases_ui_subscriptions(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "ui" / "main_window.py"
+        path = ROOT / "src" / "nextsync" / "ui" / "main_window.py"
         close_handler = method_source(path, "MainWindow", "_hide_on_close")
         dispose = method_source(path, "MainWindow", "_dispose_ui")
         account_view = method_source(path, "AccountView", "dispose")
@@ -165,24 +165,24 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("self._log_unsubscribe()", account_view)
 
     def test_log_and_sync_output_have_explicit_memory_limits(self) -> None:
-        log_view = (ROOT / "src" / "pynextcloud_sync" / "ui" / "log_view.py").read_text(
+        log_view = (ROOT / "src" / "nextsync" / "ui" / "log_view.py").read_text(
             encoding="utf-8"
         )
         sync_engine = (
-            ROOT / "src" / "pynextcloud_sync" / "core" / "sync_engine.py"
+            ROOT / "src" / "nextsync" / "core" / "sync_engine.py"
         ).read_text(encoding="utf-8")
         self.assertIn("MAX_BUFFER_LINES = 2_000", log_view)
         self.assertIn("BoundedOutputCapture(max_lines=200)", sync_engine)
 
     def test_login_polling_allows_only_one_request_in_flight(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "nextcloud" / "login_flow.py"
+        path = ROOT / "src" / "nextsync" / "nextcloud" / "login_flow.py"
         poll = method_source(path, "LoginFlowV2", "_poll")
         cancel = method_source(path, "LoginFlowV2", "cancel")
         self.assertIn("if self._poll_in_flight", poll)
         self.assertIn("self._poll_cancellable.cancel()", cancel)
 
     def test_manual_keyring_unlock_reconnects_push_and_sync_together(self) -> None:
-        path = ROOT / "src" / "pynextcloud_sync" / "core" / "runtime.py"
+        path = ROOT / "src" / "nextsync" / "core" / "runtime.py"
         sync_now = method_source(path, "RuntimeController", "sync_now")
         self.assertIn("self.scheduler.keyring_locked", sync_now)
         self.assertIn("self.scheduler.request(Trigger.MANUAL)", sync_now)

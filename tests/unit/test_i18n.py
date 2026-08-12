@@ -15,7 +15,7 @@ def _locale_env() -> dict[str, str]:
     environment.update(
         {
             "LANGUAGE": "es",
-            "PYNEXTCLOUD_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
+            "NEXTSYNC_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
             "PYTHONPATH": str(PROJECT_ROOT / "src"),
         }
     )
@@ -29,7 +29,7 @@ class I18nTests(unittest.TestCase):
             / "locale"
             / "es"
             / "LC_MESSAGES"
-            / "pynextcloud-sync.mo"
+            / "nextsync.mo"
         )
         self.assertTrue(catalog.is_file(), catalog)
         environment = os.environ.copy()
@@ -39,7 +39,7 @@ class I18nTests(unittest.TestCase):
                 "LC_ALL": "",
                 "LC_MESSAGES": "",
                 "LANGUAGE": "",
-                "PYNEXTCLOUD_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
+                "NEXTSYNC_LOCALE_DIR": str(PROJECT_ROOT / "locale"),
                 "PYTHONPATH": str(PROJECT_ROOT / "src"),
             }
         )
@@ -47,7 +47,7 @@ class I18nTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "from pynextcloud_sync.util.i18n import _; print(_('Recent Activity'))",
+                "from nextsync.util.i18n import _; print(_('Recent Activity'))",
             ],
             env=environment,
             text=True,
@@ -61,7 +61,7 @@ class I18nTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "from pynextcloud_sync.util.i18n import _; print(_('Sync Now'))",
+                "from nextsync.util.i18n import _; print(_('Sync Now'))",
             ],
             env=environment,
             text=True,
@@ -74,7 +74,7 @@ class I18nTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "from pynextcloud_sync.util.i18n import _; "
+                "from nextsync.util.i18n import _; "
                 "print(_('Show in Files sidebar')); "
                 "print(_('Show on Desktop')); "
                 "print(_('Use special folder icon'))",
@@ -97,7 +97,7 @@ class I18nTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "from pynextcloud_sync.util.i18n import _; "
+                "from nextsync.util.i18n import _; "
                 "print(_('Check for Updates')); "
                 "print(_('Update Available')); "
                 "print(_('Required Update')); "

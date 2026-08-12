@@ -1,6 +1,12 @@
 # Changelog
 
-## 3.0.0 — 2026-08-12
+## 0.1.0 — 2026-08-12
+
+### Fork of PyNextCloud-Sync, renamed to NextSync
+
+- This release is a full fork of [`PyNextCloud-Sync`](https://github.com/ehstbr/PyNextCloud-Sync) by ehstbr, renamed to **NextSync**. The application, the Python module, the binary, the app ID, the icons, and the packaging were renamed accordingly (`pynextcloud_sync` → `nextsync`, app ID `com.eduhcommerce.PyNextCloudSync` → `io.github.gnacho.nextsync`).
+- Thanks to ehstbr for the original project and the permissive GPL-3.0-or-later licensing that makes this fork possible.
+- Versioning restarts at 0.1.0 for the fork; each release adds +0.1.
 
 ### Thin-wrapper redesign
 
@@ -14,7 +20,7 @@
   every account automatically. Accounts that were stuck mid-bootstrap sync
   immediately on upgrade.
 - On first run after upgrade, leftover `protected-*` staging trees under
-  `~/.local/state/pynextcloud-sync/bootstrap/` are removed and legacy safety
+  `~/.local/state/nextsync/bootstrap/` are removed and legacy safety
   manifests are archived under `safety-archives/legacy-<ISO>/`.
 - Remove the `SAFETY_REVIEW` state, the safety review dialog, and the
   "Deletion Safety Guard" settings group.
@@ -81,7 +87,7 @@
 
 ## 0.1.19 — 2026-08-11
 
-- Relicensed PyNextCloud Sync under the GNU General Public License version 3
+- Relicensed NextSync under the GNU General Public License version 3
   or later.
 - Replaced the custom MIT text in About with GTK's native GPLv3 license
   presentation.
@@ -224,7 +230,7 @@
   on `SUDO_UID`, which is not reliably propagated by APT/dpkg and caused the
   running old version to remain in memory during the 0.1.10 upgrade.
 - Upgrades now inspect the real per-user D-Bus sessions under `/run/user`, ask
-  every running PyNextCloud Sync instance to quit normally, wait for any active
+  every running NextSync instance to quit normally, wait for any active
   synchronization to finish, and reopen only the sessions that were running.
 - Added an executable maintainer-script regression test that reproduces an
   upgrade without `SUDO_UID` and verifies both graceful shutdown and restart.
@@ -253,15 +259,15 @@
 - Published the corrected website, source, issue, and changelog links in a new
   package version so systems with `0.1.8` installed apply the update normally.
 - Added artifact-level validation for the canonical
-  `https://github.com/ehstbr/PyNextCloud-Sync` repository and against the former
+  `https://github.com/gnacho/nextsync` repository and against the former
   repository URL.
 
 ## 0.1.8 — 2026-08-07
 
-- Set the public project website to `eduhcommerce.com.br` across application,
+- Set the public project website to `gnacho.com.br` across application,
   AppStream, Python, and Debian metadata.
 - Updated source, issue, and documentation links to the canonical
-  `ehstbr/PyNextCloud-Sync` repository.
+  `gnacho/nextsync` repository.
 - Added complete English GitHub documentation with a
   screenshot gallery, compatibility statement, expanded terms, and third-party
   project/license references.

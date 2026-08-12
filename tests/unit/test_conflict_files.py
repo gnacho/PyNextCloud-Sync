@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pynextcloud_sync.core.conflict_files import (
+from nextsync.core.conflict_files import (
     CONFLICT_RE,
     find_conflicts,
     keep_local,

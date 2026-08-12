@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.triggers import CoalescingQueue, Trigger, manual_only
+from nextsync.core.triggers import CoalescingQueue, Trigger, manual_only
 
 
 class TriggerTests(unittest.TestCase):

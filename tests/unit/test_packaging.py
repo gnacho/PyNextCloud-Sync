@@ -13,12 +13,12 @@ ROOT = Path(__file__).parents[2]
 
 class PackagingTests(unittest.TestCase):
     def test_release_version_is_consistent_across_package_metadata(self) -> None:
-        expected = "3.0.0"
+        expected = "0.1.0"
         for relative_path in (
-            "src/pynextcloud_sync/__init__.py",
+            "src/nextsync/__init__.py",
             "pyproject.toml",
             "meson.build",
-            "data/com.eduhcommerce.PyNextCloudSync.metainfo.xml",
+            "data/io.github.gnacho.nextsync.metainfo.xml",
             "packaging/debian/changelog",
             "CHANGELOG.md",
             "README.md",
@@ -30,7 +30,7 @@ class PackagingTests(unittest.TestCase):
     def test_repository_update_manifest_matches_the_release(self) -> None:
         payload = json.loads((ROOT / "version.json").read_text(encoding="utf-8"))
         self.assertEqual(payload["schema_version"], 1)
-        self.assertEqual(payload["version"], "3.0.0")
+        self.assertEqual(payload["version"], "0.1.0")
         self.assertIs(type(payload["mandatory"]), bool)
         self.assertTrue(payload["summary"].strip())
         self.assertGreater(len(payload["changelog"]), 0)
@@ -65,7 +65,7 @@ class PackagingTests(unittest.TestCase):
         self.assertNotIn("kill -", preinst)
         self.assertIn('done < "$restart_file"', postinst)
         self.assertIn("systemd-run --user", postinst)
-        self.assertIn("pynextcloud-sync --background", postinst)
+        self.assertIn("nextsync --background", postinst)
         self.assertIn('packaging/debian/preinst', build)
         self.assertIn('output_dir="$(cd "$output_dir" && pwd)"', source_build)
 
@@ -73,7 +73,7 @@ class PackagingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary = Path(temporary_directory)
             runtime_root = temporary / "run" / "user"
-            state_dir = temporary / "run" / "pynextcloud-sync-upgrade"
+            state_dir = temporary / "run" / "nextsync-upgrade"
             session_dir = runtime_root / "1000"
             fake_bin = temporary / "bin"
             session_dir.mkdir(parents=True)
@@ -111,7 +111,7 @@ case "$1" in
         exit 0
         ;;
     action)
-        mv "$PYNEXTCLOUD_TEST_APP_STATE" "$PYNEXTCLOUD_TEST_APP_STATE.stopped"
+        mv "$NEXTSYNC_TEST_APP_STATE" "$NEXTSYNC_TEST_APP_STATE.stopped"
         ;;
     *)
         exit 2
@@ -122,7 +122,7 @@ esac
             self._write_executable(
                 fake_bin / "gdbus",
                 """#!/bin/sh
-if [ -f "$PYNEXTCLOUD_TEST_APP_STATE" ]; then
+if [ -f "$NEXTSYNC_TEST_APP_STATE" ]; then
     printf '%s\\n' '(true,)'
 else
     printf '%s\\n' '(false,)'
@@ -132,7 +132,7 @@ fi
             self._write_executable(
                 fake_bin / "systemd-run",
                 """#!/bin/sh
-printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
+printf '%s\\n' "$*" > "$NEXTSYNC_TEST_RESTART_LOG"
 """,
             )
             for command_name in ("update-desktop-database", "gtk-update-icon-cache"):
@@ -147,8 +147,8 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             environment = os.environ.copy()
             environment.pop("SUDO_UID", None)
             environment["PATH"] = f"{fake_bin}:/usr/bin:/bin"
-            environment["PYNEXTCLOUD_TEST_APP_STATE"] = str(app_state)
-            environment["PYNEXTCLOUD_TEST_RESTART_LOG"] = str(restart_log)
+            environment["NEXTSYNC_TEST_APP_STATE"] = str(app_state)
+            environment["NEXTSYNC_TEST_RESTART_LOG"] = str(restart_log)
 
             stopped = subprocess.run(
                 ["/bin/sh", str(preinst), "upgrade", "0.1.16", "0.1.17"],
@@ -168,9 +168,9 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
                 text=True,
                 env=environment,
             )
-            self.assertIn("Restarting PyNextCloud Sync", restarted.stdout)
+            self.assertIn("Restarting NextSync", restarted.stdout)
             restart_arguments = restart_log.read_text(encoding="utf-8")
-            self.assertIn("/usr/bin/pynextcloud-sync --background", restart_arguments)
+            self.assertIn("/usr/bin/nextsync --background", restart_arguments)
             self.assertEqual((state_dir / "restart-uids").read_text(), "")
 
     @staticmethod
@@ -186,7 +186,7 @@ printf '%s\\n' "$*" > "$PYNEXTCLOUD_TEST_RESTART_LOG"
             encoding="utf-8"
         )
         contents = contents.replace('/run/user', str(runtime_root))
-        contents = contents.replace('/run/pynextcloud-sync-upgrade', str(state_dir))
+        contents = contents.replace('/run/nextsync-upgrade', str(state_dir))
         # This execution environment blocks AF_UNIX socket creation. Production
         # still requires a socket; the test substitutes an ordinary fixture file.
         contents = contents.replace('-S "$session_bus"', '-e "$session_bus"')

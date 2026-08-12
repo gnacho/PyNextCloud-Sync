@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from pynextcloud_sync.core.state import (
+from nextsync.core.state import (
     AggregateStateController,
     AppState,
     StateController,
 )
-from pynextcloud_sync.nextcloud.nextcloudcmd_progress import SyncProgress
+from nextsync.nextcloud.nextcloudcmd_progress import SyncProgress
 
 
 class AggregateStateControllerTests(unittest.TestCase):

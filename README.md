@@ -11,7 +11,7 @@
     <a href="https://github.com/gnacho/nextsync/issues">Report an issue</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/version-0.2.0-6557e8?style=flat-square" alt="Version 0.2.0">
+    <img src="https://img.shields.io/badge/version-0.2.1-6557e8?style=flat-square" alt="Version 0.2.1">
     <img src="https://img.shields.io/badge/platform-Linux-f0c674?style=flat-square&logo=linux&logoColor=111" alt="Linux">
     <img src="https://img.shields.io/badge/desktop-GNOME-4a86cf?style=flat-square&logo=gnome&logoColor=white" alt="GNOME">
     <img src="https://img.shields.io/badge/GTK-4-4a86cf?style=flat-square&logo=gtk&logoColor=white" alt="GTK 4">
@@ -157,7 +157,7 @@ Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync
 ```bash
 cd ~/Downloads
 sudo apt update
-sudo apt install ./nextsync_0.2.0_all.deb
+sudo apt install ./nextsync_0.2.1_all.deb
 ```
 
 During an interactive upgrade started with `sudo apt install`, the package asks a running NextSync instance to quit normally, waits for any current synchronization to finish, and restarts the updated application in the same desktop session. It never force-kills the synchronization process. Non-interactive upgrades or installations without an identifiable desktop session leave process control to the user or system administrator.
@@ -180,8 +180,8 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip NextSync-0.2.0.zip
-cd NextSync-0.2.0
+unzip NextSync-0.2.1.zip
+cd NextSync-0.2.1
 ./run.sh
 ```
 
@@ -190,12 +190,12 @@ cd NextSync-0.2.0
 ### Arch / CachyOS package
 
 The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
-package locally, copy the `NextSync-0.2.0.zip` and the `PKGBUILD` into a
+package locally, copy the `NextSync-0.2.1.zip` and the `PKGBUILD` into a
 directory without spaces (makepkg cannot run in paths containing spaces) and run:
 
 ```bash
 makepkg -cf
-sudo pacman -U nextsync-0.2.0-1-any.pkg.tar.zst
+sudo pacman -U nextsync-0.2.1-1-any.pkg.tar.zst
 ```
 
 The package installs the application, `.desktop` entry, metainfo, icons, and the

@@ -373,7 +373,9 @@ class SetupWindow(Adw.ApplicationWindow):
 
     def _choose_folder_for_dialog(self, entry: Adw.EntryRow) -> None:
         dialog = Gtk.FileDialog(title=_("Choose NextCloud Folder"), modal=True)
-        dialog.set_initial_folder(Gio.File.new_for_path(entry.get_text()))
+        initial = Path(entry.get_text()).expanduser()
+        if initial.is_dir():
+            dialog.set_initial_folder(Gio.File.new_for_path(str(initial)))
         dialog.select_folder(self, None, self._dialog_folder_chosen(entry))
 
     def _dialog_folder_chosen(self, entry: Adw.EntryRow) -> Callable[[Gtk.FileDialog, Gio.AsyncResult], None]:

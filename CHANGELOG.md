@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — 2026-08-12
+
+### Fix: folder picker default location
+
+- The folder picker no longer forces a hardcoded initial path (`~/NextCloud`). It opens at the file chooser's default location unless the pre-filled path is an existing directory, matching the file chooser behavior of the official client.
+
 ## 0.2.0 — 2026-08-12
 
 ### Multiple sync folders per account

@@ -46,6 +46,70 @@ POPULATED_PROPFIND = b"""<?xml version="1.0"?>
   </d:response>
 </d:multistatus>"""
 
+COLLECTIONS_PROPFIND = b"""<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/Documents/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/Photos/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/report.pdf</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>"""
+
+SPECIAL_COLLECTIONS_PROPFIND = b"""<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/.hidden/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/files_trashbin/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/alice/Documents/</d:href>
+    <d:propstat>
+      <d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>"""
+
 
 class ProbeRemoteTests(unittest.TestCase):
     def _probe(self, http: _FakeHttp, remote_path: str = "") -> tuple[bool, Exception | None]:
@@ -105,6 +169,59 @@ class ProbeRemoteTests(unittest.TestCase):
         has_children, error = self._probe(_FakeHttp(207, b"not xml"))
         self.assertIsNotNone(error)
         self.assertFalse(has_children)
+
+
+class ListRemoteFoldersTests(unittest.TestCase):
+    def _list(self, http: _FakeHttp) -> tuple[list[str], Exception | None]:
+        api = NextcloudApi(http=http)
+        result: list[tuple[list[str], Exception | None]] = []
+
+        def done(folders: list[str], error: Exception | None) -> None:
+            result.append((folders, error))
+
+        api.list_remote_folders(
+            "https://cloud.example.com",
+            "alice",
+            "secret",
+            done,
+        )
+        self.assertEqual(len(result), 1)
+        return result[0]
+
+    def test_returns_existing_top_level_folders_only(self) -> None:
+        folders, error = self._list(_FakeHttp(207, COLLECTIONS_PROPFIND))
+        self.assertIsNone(error)
+        self.assertEqual(folders, ["/Documents", "/Photos"])
+
+    def test_ignores_hidden_and_trash_collections(self) -> None:
+        folders, error = self._list(_FakeHttp(207, SPECIAL_COLLECTIONS_PROPFIND))
+        self.assertIsNone(error)
+        self.assertEqual(folders, ["/Documents"])
+
+    def test_empty_root_returns_no_folders(self) -> None:
+        folders, error = self._list(_FakeHttp(207, EMPTY_PROPFIND))
+        self.assertIsNone(error)
+        self.assertEqual(folders, [])
+
+    def test_auth_rejection_surfaces_as_permission_error(self) -> None:
+        folders, error = self._list(_FakeHttp(401, b""))
+        self.assertEqual(folders, [])
+        self.assertIsInstance(error, PermissionError)
+
+    def test_malformed_xml_surfaces_as_runtime_error(self) -> None:
+        folders, error = self._list(_FakeHttp(207, b"not xml"))
+        self.assertEqual(folders, [])
+        self.assertIsInstance(error, RuntimeError)
+
+    def test_probes_the_account_root_with_depth_one(self) -> None:
+        http = _FakeHttp(207, COLLECTIONS_PROPFIND)
+        self._list(http)
+        self.assertEqual(len(http.requests), 1)
+        request = http.requests[0]
+        self.assertEqual(request["method"], "PROPFIND")
+        self.assertEqual(request["headers"]["Depth"], "1")
+        self.assertIn("Authorization", request["headers"])
+        self.assertTrue(request["url"].endswith("/remote.php/dav/files/alice/"))
 
 
 if __name__ == "__main__":

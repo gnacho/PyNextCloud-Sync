@@ -106,6 +106,81 @@ class NextcloudApi:
             content_type="application/xml; charset=utf-8",
         )
 
+    def list_remote_folders(
+        self,
+        server: str,
+        username: str,
+        password: str,
+        callback: Callable[[list[str], Exception | None], None],
+    ) -> None:
+        """List the top-level folders that already exist for the account.
+
+        Uses the same shallow WebDAV PROPFIND as :meth:`probe_remote` against
+        the account root and reports the existing subfolders as normalized
+        remote paths (``/Documents``, ``/Photos``). Files and special
+        collections (hidden, trash, versions) are excluded; a root without
+        subfolders yields an empty list.
+        """
+        base = f"{server.rstrip('/')}/remote.php/dav/files/{username}"
+        url = f"{base}/"
+        body = (
+            b'<?xml version="1.0"?>'
+            b'<d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>'
+        )
+        headers = {
+            "Depth": "1",
+            "Content-Type": "application/xml; charset=utf-8",
+            "Authorization": basic_authorization(username, password),
+        }
+
+        def done(status: int, response: bytes, error: Exception | None) -> None:
+            if error:
+                callback([], error)
+                return
+            if status in {401, 403}:
+                callback([], PermissionError("The server rejected these credentials."))
+                return
+            if status < 200 or status >= 300:
+                callback([], RuntimeError(f"Nextcloud returned HTTP {status}."))
+                return
+            try:
+                tree = ET.fromstring(response)
+            except ET.ParseError as exc:
+                callback([], RuntimeError(f"Invalid WebDAV response: {exc}"))
+                return
+            dav = "{DAV:}"
+            root_path = urlsplit(url).path.rstrip("/")
+            folders: list[str] = []
+            for element in tree.findall(f"{dav}response"):
+                href = element.findtext(f"{dav}href", "")
+                href_path = urlsplit(href).path.rstrip("/")
+                if href_path == root_path:
+                    continue
+                resource_type = element.find(f"{dav}propstat/{dav}prop/{dav}resourcetype")
+                if resource_type is None or resource_type.find(f"{dav}collection") is None:
+                    continue
+                segments = href_path.split("/")
+                if any(
+                    segment.startswith(".")
+                    or "trashbin" in segment
+                    or "trash" in segment
+                    or "versions" in segment
+                    for segment in segments
+                ):
+                    continue
+                folders.append("/" + href_path.rsplit("/", 1)[-1])
+            folders.sort()
+            callback(folders, None)
+
+        self.http.request(
+            "PROPFIND",
+            url,
+            done,
+            headers=headers,
+            body=body,
+            content_type="application/xml; charset=utf-8",
+        )
+
     def revoke_app_password(
         self,
         server: str,

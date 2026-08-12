@@ -98,6 +98,20 @@ def normalize_remote_path(value: Any) -> str:
     return "/" + "/".join(segments)
 
 
+def remote_path_for(local_root: str, remote_text: str) -> str:
+    """Choose the remote folder path for the Add Folder dialog.
+
+    A literally empty remote field (whitespace only) maps to a remote folder
+    named after the local folder, e.g. ``/home/user/NextCloud`` becomes
+    ``/NextCloud``. An explicit ``/`` keeps the account-root mapping (``""``);
+    any other value is normalized as typed.
+    """
+    text = str(remote_text or "").strip()
+    if not text:
+        return normalize_remote_path("/" + Path(str(local_root)).expanduser().name)
+    return normalize_remote_path(text)
+
+
 def account_id(server_url: str, login_name: str) -> str:
     """Stable identity of an account, independent of its sync folders."""
     identity = "\n".join(

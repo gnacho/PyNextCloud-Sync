@@ -14,6 +14,7 @@ from nextsync.storage.config import (
     folder_fingerprint,
     normalize_remote_path,
     normalize_server_url,
+    remote_path_for,
     validate_config,
 )
 
@@ -221,6 +222,17 @@ class ConfigTests(unittest.TestCase):
         for bad in ("/../etc", "/Documents/../Secrets", "/a?b", "/x#y", "https://host/nc"):
             with self.assertRaises(ConfigurationError):
                 normalize_remote_path(bad)
+
+    def test_remote_path_for_blank_uses_local_folder_name(self) -> None:
+        self.assertEqual(remote_path_for("/home/user/NextCloud", ""), "/NextCloud")
+        self.assertEqual(remote_path_for("/home/user/NextCloud", "   "), "/NextCloud")
+
+    def test_remote_path_for_explicit_root_keeps_account_root(self) -> None:
+        self.assertEqual(remote_path_for("/home/user/NextCloud", "/"), "")
+
+    def test_remote_path_for_typed_value_is_normalized(self) -> None:
+        self.assertEqual(remote_path_for("/home/user/NextCloud", "Documents"), "/Documents")
+        self.assertEqual(remote_path_for("/home/user/NextCloud", "/Documents/"), "/Documents")
 
     def test_remote_path_persists_through_validate_config(self) -> None:
         account = dict(ACCOUNT)

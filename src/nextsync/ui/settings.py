@@ -11,7 +11,8 @@ from gi.repository import Adw, Gio, GLib, Gtk
 from nextsync.core.autostart import AutostartManager
 from nextsync.core.exclusions import DEFAULT_PATTERNS, InvalidPattern, validate_pattern
 from nextsync.core.triggers import manual_only
-from nextsync.storage.config import ConfigurationError
+from nextsync.nextcloud.api import NextcloudApi
+from nextsync.storage.config import ConfigurationError, remote_path_for
 from nextsync.util.i18n import _
 
 
@@ -247,13 +248,21 @@ class SettingsWindow(Adw.PreferencesWindow):
         choose.connect("clicked", lambda _button: self._choose_folder(local_entry))
         local_entry.add_suffix(choose)
         entry_box.append(local_box)
-        remote_entry = Adw.EntryRow(title=_("Remote folder (optional, default /)"))
-        remote_entry.set_text("/")
+        remote_entry = Adw.EntryRow(title=_("Remote folder"))
+        remote_entry.set_placeholder_text(_("Remote folder (optional, default: local folder name)"))
+        remote_list = Gtk.StringList()
+        remote_picker = Gtk.DropDown(model=remote_list)
+        remote_picker.set_selected(Gtk.INVALID_LIST_POSITION)
+        remote_picker.set_sensitive(False)
+        remote_picker.set_tooltip_text(_("Choose an existing remote folder"))
+        remote_picker.connect("notify::selected", self._remote_picked, remote_entry)
+        remote_entry.add_suffix(remote_picker)
         entry_box.append(remote_entry)
         dialog.set_extra_child(entry_box)
         dialog.add_response("cancel", _("Cancel"))
         dialog.add_response("add", _("Add"))
         dialog.set_response_appearance("add", Adw.ResponseAppearance.SUGGESTED)
+        self._populate_remote_picker(remote_picker, remote_list)
 
         def chosen(source: Adw.AlertDialog, result: Gio.AsyncResult) -> None:
             if source.choose_finish(result) != "add":
@@ -263,9 +272,10 @@ class SettingsWindow(Adw.PreferencesWindow):
                 self._folder_error(_("Choose an absolute local folder."))
                 return
             try:
-                from nextsync.storage.config import normalize_remote_path
-
-                remote = normalize_remote_path(remote_entry.get_text())
+                # An empty remote field creates a remote folder named after the
+                # local folder; only a literally empty field does, an explicit
+                # "/" keeps mapping to the account root.
+                remote = remote_path_for(str(root), remote_entry.get_text())
             except ConfigurationError as exc:
                 self._folder_error(str(exc))
                 return
@@ -277,6 +287,47 @@ class SettingsWindow(Adw.PreferencesWindow):
             self._refresh_folders()
 
         dialog.choose(self, None, chosen)
+
+    def _populate_remote_picker(
+        self, picker: Gtk.DropDown, model: Gtk.StringList
+    ) -> None:
+        """Fill the remote picker with folders that already exist on the server."""
+        session = getattr(self.runtime, "session", None)
+        credentials = getattr(self.runtime, "_credentials", None)
+        if session is None or credentials is None:
+            return
+        api = NextcloudApi()
+        api.http.trust_invalid_certificates = bool(
+            self.config.data["network"].get("trust_invalid_certificates", False)
+        )
+        server = session.server_url
+        username = session.login_name
+
+        def folders_ready(folders: list[str], error: Exception | None) -> None:
+            if error or not folders:
+                return
+            for path in folders:
+                model.append(path)
+            picker.set_sensitive(True)
+
+        def secret_ready(password: str | None, error: Exception | None) -> None:
+            if error or not password:
+                return
+            api.list_remote_folders(server, username, password, folders_ready)
+
+        credentials.lookup(server, username, secret_ready)
+
+    def _remote_picked(
+        self,
+        picker: Gtk.DropDown,
+        _pspec: object,
+        entry: Adw.EntryRow,
+    ) -> None:
+        item = picker.get_selected_item()
+        if item is None:
+            return
+        entry.set_text(item.get_string())
+        picker.set_selected(Gtk.INVALID_LIST_POSITION)
 
     def _choose_folder(self, entry: Adw.EntryRow) -> None:
         dialog = Gtk.FileDialog(title=_("Choose NextCloud Folder"), modal=True)

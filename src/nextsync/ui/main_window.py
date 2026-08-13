@@ -21,23 +21,12 @@ from nextsync.util.i18n import _
 
 from .about import show_about_dialog
 from .activity import ActivityEntry, parse_activity_line
+from .folder_status import (
+    STATE_PRESENTATION,
+    FolderStatusRow,
+    pair_folder_runtimes,
+)
 from .log_view import LogWindow
-
-
-STATE_PRESENTATION = {
-    AppState.UNCONFIGURED: ("dialog-question-symbolic", _("Not Configured")),
-    AppState.IDLE_OK: ("emblem-ok-symbolic", _("Synchronized")),
-    AppState.IDLE_MANUAL_ONLY: ("media-playback-pause-symbolic", _("Automatic Sync Is Off")),
-    AppState.SYNC_QUEUED: ("appointment-soon-symbolic", _("Synchronization Scheduled")),
-    AppState.SYNCING: ("emblem-synchronizing-symbolic", _("Synchronizing…")),
-    AppState.PAUSED_USER: ("media-playback-pause-symbolic", _("Paused")),
-    AppState.PAUSED_BATTERY: ("battery-symbolic", _("Paused on Battery")),
-    AppState.OFFLINE: ("network-offline-symbolic", _("Offline")),
-    AppState.ERROR: ("dialog-error-symbolic", _("Synchronization Error")),
-    AppState.AUTH_REQUIRED: ("dialog-password-symbolic", _("Account Needs Attention")),
-    AppState.KEYRING_LOCKED: ("changes-prevent-symbolic", _("Password Keyring Locked")),
-    AppState.DELETE_REVIEW: ("security-high-symbolic", _("Review Deletions")),
-}
 
 
 def _compact_action_row(**properties: object) -> Adw.ActionRow:
@@ -76,6 +65,7 @@ class AccountView(Gtk.Box):
         self._activity_lock = Lock()
         self._activity_idle_source = 0
         self._disposed = False
+        self._folder_rows: list[FolderStatusRow] = []
 
         self.set_margin_top(16)
         self.set_margin_bottom(16)
@@ -113,6 +103,7 @@ class AccountView(Gtk.Box):
 
         account = self.session.account_dict
         account_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
+        self.account_list = account_list
         account_list.append(
             _compact_action_row(
                 title=account["login_name"],
@@ -121,24 +112,22 @@ class AccountView(Gtk.Box):
             )
         )
         if self.session.folders:
-            for folder in self.session.folders:
-                folder_row = _compact_action_row(
-                    title=_("Local Folder"),
-                    subtitle=folder.local_root,
-                    icon_name="folder-symbolic",
-                    activatable=True,
+            for folder, folder_runtime in pair_folder_runtimes(
+                self.session.folders, self.runtime.folders
+            ):
+                state_controller = (
+                    folder_runtime.state if folder_runtime is not None else None
                 )
-                folder_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-                folder_row.connect("activated", lambda _row, _folder=folder: self.open_folder(_folder))
+                folder_row = FolderStatusRow(
+                    folder,
+                    state_controller,
+                    on_open=lambda _folder=folder: self.open_folder(_folder),
+                    format_last_sync=lambda _runtime=folder_runtime: self._format_folder_last_sync(
+                        _runtime
+                    ),
+                )
+                self._folder_rows.append(folder_row)
                 account_list.append(folder_row)
-                if folder.remote_path:
-                    account_list.append(
-                        _compact_action_row(
-                            title=_("Remote Folder"),
-                            subtitle=folder.remote_path,
-                            icon_name="folder-remote-symbolic",
-                        )
-                    )
         else:
             account_list.append(
                 _compact_action_row(
@@ -268,8 +257,8 @@ class AccountView(Gtk.Box):
         self.status_progress.set_tooltip_text(label)
         self.status_progress.set_visible(True)
 
-    def _format_last_sync(self) -> str:
-        value = self.session.runtime.get("last_successful_sync")
+    @staticmethod
+    def _format_sync_stamp(value: object) -> str:
         if not value:
             return _("Not yet synchronized")
         try:
@@ -277,6 +266,16 @@ class AccountView(Gtk.Box):
             return stamp.strftime("%x %H:%M")
         except (ValueError, TypeError):
             return str(value)
+
+    def _format_last_sync(self) -> str:
+        return self._format_sync_stamp(
+            self.session.runtime.get("last_successful_sync")
+        )
+
+    def _format_folder_last_sync(self, folder_runtime: object | None) -> str:
+        session = getattr(folder_runtime, "session", None)
+        value = session.runtime.get("last_successful_sync") if session else None
+        return self._format_sync_stamp(value)
 
     def _log_line(self, line: str) -> None:
         with self._activity_lock:
@@ -568,6 +567,9 @@ class AccountView(Gtk.Box):
         self._state_unsubscribe()
         self._progress_unsubscribe()
         self._log_unsubscribe()
+        for folder_row in self._folder_rows:
+            folder_row.dispose()
+        self._folder_rows.clear()
         if self._activity_idle_source:
             GLib.source_remove(self._activity_idle_source)
             self._activity_idle_source = 0

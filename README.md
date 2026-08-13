@@ -180,7 +180,7 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip NextSync-0.2.9.zip
+unzip NextSync-0.3.0.zip
 cd NextSync-0.2.5
 ./run.sh
 ```
@@ -190,12 +190,12 @@ cd NextSync-0.2.5
 ### Arch / CachyOS package
 
 The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
-package locally, copy the `NextSync-0.2.9.zip` and the `PKGBUILD` into a
+package locally, copy the `NextSync-0.3.0.zip` and the `PKGBUILD` into a
 directory without spaces (makepkg cannot run in paths containing spaces) and run:
 
 ```bash
 makepkg -cf
-sudo pacman -U nextsync-0.2.9-1-any.pkg.tar.zst
+sudo pacman -U nextsync-0.3.0-1-any.pkg.tar.zst
 ```
 
 The package installs the application, `.desktop` entry, metainfo, icons, and the
@@ -294,7 +294,7 @@ Contributions are welcome when they preserve the project's narrow scope, low idl
 
 ## Project status
 
-Version `0.2.9` is the current release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
+Version `0.3.0` is the current release intended for evaluation. Test it with non-critical data before relying on it for regular synchronization, and always keep independent backups of important files.
 
 ---
 

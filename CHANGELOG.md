@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-08-13
+
+### Per-folder status in the main window, log row fixed, conflicts only when present
+
+- **Per-folder sync status**: the main window lists each sync folder with its own live status (synchronized / syncing with spinner / paused / error / offline) and its last sync time, like the official Nextcloud client. The account-level status header is unchanged.
+- **View Synchronization Log row fixed**: it reliably opens the log window now (it was being re-parented on every activity refresh, which could detach its click handler).
+- **Resolve Conflicts only when present**: the row only appears when the active folder actually has conflicted copies, scanned in a background thread to avoid blocking the UI.
+- **System accent audited**: all primary buttons follow the OS accent color. (A local `~/.config/gtk-4.0/gtk.css` rule forces the accent to blue on this machine; removing it lets buttons follow the GNOME accent setting.)
+
 ## 0.2.9 — 2026-08-13
 
 ### Main window shows new folders immediately

@@ -15,6 +15,16 @@
   <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
   <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
   <releases>
+    <release version="0.3.0" date="2026-08-13">
+      <description>
+        <ul>
+          <li>The main window lists each sync folder with its own live status (synchronized / syncing / paused / error / offline) and its last sync time, like the official client.</li>
+          <li>The View Synchronization Log row reliably opens the log window.</li>
+          <li>The Resolve Conflicts row only appears when the active folder actually has conflicted copies, scanned in a background thread.</li>
+          <li>All primary buttons follow the OS accent color (a local gtk.css rule forcing blue can override it on some machines).</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.9" date="2026-08-13">
       <description>
         <ul>

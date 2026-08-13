@@ -1,6 +1,6 @@
 project(
   'nextsync',
-  version: '0.2.9',
+  version: '0.3.0',
   meson_version: '>= 1.0.0',
 )
 

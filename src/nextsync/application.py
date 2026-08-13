@@ -546,6 +546,8 @@ class NextSyncApplication(Adw.Application):
     def _settings_window_closed(self, window: SettingsWindow) -> bool:
         if self.settings_window is window:
             self.settings_window = None
+        if self.main_window:
+            self.main_window.present_account(self.active_account_id)
         return False
 
     def show_conflicts(self) -> None:

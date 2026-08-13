@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "mandatory": false,
-  "released_at": "2026-08-13T04:00:00Z",
-  "summary": "NextSync 0.3.0: the main window shows each sync folder with its own live status like the official client, the log row works, conflicts only appear when present, and primary buttons follow the system accent.",
+  "released_at": "2026-08-13T09:40:00Z",
+  "summary": "NextSync 0.4.0: the account view focuses on your synchronized folders, like the official client.",
   "changelog": [
-    "The main window now lists each sync folder with its own live synchronization status (synchronized / syncing with spinner / paused / error / offline) and its last sync time, like the official Nextcloud client. The account-level status header is unchanged.",
-    "The View Synchronization Log row now reliably opens the log window.",
-    "The Resolve Conflicts row only appears when the active folder actually has conflicted copies (scanned in a background thread).",
-    "Audited all primary buttons: they follow the OS accent color. Note: a local ~/.config/gtk-4.0/gtk.css rule forces the accent to blue on this machine; removing it lets buttons follow the GNOME accent setting."
+    "The account view now shows only your synchronized folders, each with its own live status (a check when synchronized) and a more (…) menu with: open local folder, edit ignored files, force sync now, pause or resume sync, and remove the folder from synchronization (local files are kept).",
+    "The big status header, the account row, the last-sync row, the recent activity expander and the log/conflicts rows were removed from the account view to keep it focused.",
+    "Account removal moved to Settings > Advanced behind a typed confirmation (it only removes the connection, never local files).",
+    "Primary buttons continue to follow the system GNOME accent color."
   ]
 }

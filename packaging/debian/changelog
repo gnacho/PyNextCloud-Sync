@@ -1,3 +1,13 @@
+nextsync (0.2.8) stable; urgency=medium
+
+  * The Add Folder dialog now opens: it called set_placeholder_text, which
+    Adw.EntryRow does not provide, raising an AttributeError before the dialog
+    was shown. The remote folder field carries an informative title instead.
+  * The Settings and About icons in the app header use a fixed white stroke so
+    they render white on the header bar.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 03:10:00 +0200
+
 nextsync (0.2.7) stable; urgency=medium
 
   * Adding or removing a sync folder in Settings takes effect immediately: the

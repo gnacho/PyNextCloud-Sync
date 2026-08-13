@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.8 — 2026-08-13
+
+### Add Folder dialog opens again, white in-app icons
+
+- **Add Folder now opens**: the dialog called `set_placeholder_text`, which `Adw.EntryRow` does not provide, raising an `AttributeError` before the dialog was shown. The remote folder field now carries an informative title instead.
+- **Settings and About icons in the app header** use a fixed white stroke so they render white on the header bar like the rest.
+
 ## 0.2.7 — 2026-08-13
 
 ### Adding folders now takes effect immediately, white tray Settings icon

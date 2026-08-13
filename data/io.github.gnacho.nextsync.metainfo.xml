@@ -15,6 +15,14 @@
   <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
   <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
   <releases>
+    <release version="0.2.8" date="2026-08-13">
+      <description>
+        <ul>
+          <li>The Add Folder dialog now opens: it called set_placeholder_text, which Adw.EntryRow does not provide, raising an AttributeError before the dialog was shown. The remote folder field carries an informative title instead.</li>
+          <li>The Settings and About icons in the app header use a fixed white stroke so they render white on the header bar.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.7" date="2026-08-13">
       <description>
         <ul>

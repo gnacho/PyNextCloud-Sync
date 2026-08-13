@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "mandatory": false,
-  "released_at": "2026-08-13T02:40:00Z",
-  "summary": "NextSync 0.2.7: adding a sync folder now takes effect immediately (no restart) and the tray Settings icon is white.",
+  "released_at": "2026-08-13T03:10:00Z",
+  "summary": "NextSync 0.2.8: the Add Folder dialog now actually opens (fixed an AttributeError on Adw.EntryRow) and the in-app Settings/About icons render white.",
   "changelog": [
-    "Adding or removing a sync folder in Settings now takes effect immediately: the account runtime subscribes to config changes and starts/stops the folder engine without needing an app restart. Previously the folder was saved but never synchronized until restart.",
-    "The Settings entry in the tray menu now uses a fixed-white icon variant, so it renders white on the panel like the cloud glyph instead of dark."
+    "The Add Folder dialog now opens: it called set_placeholder_text, which Adw.EntryRow does not provide, raising AttributeError before the dialog was shown. The remote folder field now carries an informative title instead.",
+    "The Settings and About icons in the app header now use a fixed white stroke so they render white on the header bar like the rest."
   ]
 }

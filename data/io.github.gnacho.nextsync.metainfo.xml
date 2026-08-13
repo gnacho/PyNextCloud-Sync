@@ -15,6 +15,14 @@
   <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
   <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
   <releases>
+    <release version="0.2.7" date="2026-08-13">
+      <description>
+        <ul>
+          <li>Adding or removing a sync folder in Settings now takes effect immediately: the account runtime subscribes to config changes and starts/stops the folder engine without an app restart.</li>
+          <li>The Settings entry in the tray menu uses a fixed-white icon variant so it renders white on the panel like the cloud glyph.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.6" date="2026-08-13">
       <description>
         <ul>

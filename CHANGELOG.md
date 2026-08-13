@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.7 — 2026-08-13
+
+### Adding folders now takes effect immediately, white tray Settings icon
+
+- **Adding/removing a sync folder takes effect right away**: the account runtime now subscribes to config changes and starts/stops the folder engine without an app restart. Previously a folder added in Settings was saved to config but never synchronized until the app restarted.
+- **Tray Settings icon is white**: the Settings entry in the tray menu uses a fixed-white icon variant so it renders white on the panel like the cloud glyph, instead of dark.
+
 ## 0.2.6 — 2026-08-13
 
 ### White tray glyphs, remote folder picker from the server

@@ -1,3 +1,13 @@
+nextsync (0.2.7) stable; urgency=medium
+
+  * Adding or removing a sync folder in Settings takes effect immediately: the
+    account runtime subscribes to config changes and starts/stops the folder
+    engine without an app restart.
+  * The Settings entry in the tray menu uses a fixed-white icon variant so it
+    renders white on the panel like the cloud glyph.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 02:40:00 +0200
+
 nextsync (0.2.6) stable; urgency=medium
 
   * Tray icon glyphs use a fixed white stroke so the host renders the exact

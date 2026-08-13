@@ -1,12 +1,11 @@
 {
   "schema_version": 1,
-  "version": "0.2.6",
+  "version": "0.2.7",
   "mandatory": false,
-  "released_at": "2026-08-13T02:00:00Z",
-  "summary": "NextSync 0.2.6: white tray glyphs and a remote-folder picker that lists existing server folders (blank field auto-names after the local folder).",
+  "released_at": "2026-08-13T02:40:00Z",
+  "summary": "NextSync 0.2.7: adding a sync folder now takes effect immediately (no restart) and the tray Settings icon is white.",
   "changelog": [
-    "The tray icon glyphs now use a fixed white stroke, so the host renders the exact Lucide cloud/cloud-off design in white on the panel instead of black or a wrong color.",
-    "The Add Folder dialog now lists the remote folders that already exist on the server (WebDAV PROPFIND), so you can pick one instead of typing a path.",
-    "Leaving the remote folder field blank now creates a remote folder with the same name as the local folder (e.g. /home/user/NextCloud -> /NextCloud) instead of mapping to the account root."
+    "Adding or removing a sync folder in Settings now takes effect immediately: the account runtime subscribes to config changes and starts/stops the folder engine without needing an app restart. Previously the folder was saved but never synchronized until restart.",
+    "The Settings entry in the tray menu now uses a fixed-white icon variant, so it renders white on the panel like the cloud glyph instead of dark."
   ]
 }

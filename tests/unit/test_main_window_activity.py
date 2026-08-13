@@ -171,6 +171,7 @@ class AccountViewDisplayTests(unittest.TestCase):
         class FakeRuntime:
             def __init__(self) -> None:
                 self.state = StateController()
+                self.folders = {}
                 self.scheduler = type(
                     "S",
                     (),

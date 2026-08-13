@@ -26,7 +26,9 @@ class ActivityTests(unittest.TestCase):
         self.assertEqual(entry.level, "WARNING")
         self.assertEqual(entry.icon_name, "dialog-warning-symbolic")
 
-    def test_main_window_supports_expand_collapse_and_context_copy(self) -> None:
+    def test_main_window_no_longer_renders_activity_rows(self) -> None:
+        # Issue #34: the account view focuses on synchronized folders; recent
+        # activity, log and conflicts rows were removed from the account view.
         source = (
             Path(__file__).parents[2]
             / "src"
@@ -34,11 +36,9 @@ class ActivityTests(unittest.TestCase):
             / "ui"
             / "main_window.py"
         ).read_text(encoding="utf-8")
-        self.assertIn('primary_click.set_button(Gdk.BUTTON_PRIMARY)', source)
-        self.assertIn('secondary_click.set_button(Gdk.BUTTON_SECONDARY)', source)
-        self.assertIn('label.set_lines(-1 if expanded else 1)', source)
-        self.assertIn('_("Copy Message")', source)
-        self.assertIn('self.get_clipboard().set(message)', source)
+        self.assertNotIn("_activity_row", source)
+        self.assertNotIn('_("Copy Message")', source)
+        self.assertNotIn("self.activity_expander", source)
 
 
 if __name__ == "__main__":

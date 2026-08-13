@@ -3,8 +3,8 @@ from __future__ import annotations
 import datetime as dt
 from collections import deque
 from pathlib import Path
-from threading import Lock
-from typing import Callable
+from threading import Lock, Thread
+from typing import Callable, Sequence
 
 import gi
 
@@ -14,6 +14,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 
 from nextsync import APP_NAME
 from nextsync.core.account import AccountSession
+from nextsync.core.conflict_files import find_conflicts
 from nextsync.core.state import AppState, StateSnapshot
 from nextsync.nextcloud.nextcloudcmd_progress import SyncProgress
 from nextsync.util.i18n import _
@@ -197,6 +198,10 @@ class AccountView(Gtk.Box):
         )
         self.conflicts_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
         self.conflicts_row.connect("activated", lambda _row: self._show_conflicts())
+        self._conflicts_scanning = False
+        self._conflicts_attached = False
+        self.activity_expander.add_row(self.view_log_row)
+        self._activity_listbox = self.view_log_row.get_parent()
         self._refresh_activity()
 
         if hasattr(Adw, "Breakpoint") and hasattr(self, "add_breakpoint"):
@@ -453,11 +458,56 @@ class AccountView(Gtk.Box):
         else:
             self.activity_expander.set_subtitle(_("No activity in this session"))
             rows = [self._empty_activity_row()]
-        rows.append(self.view_log_row)
-        rows.append(self.conflicts_row)
-        for row in rows:
-            self.activity_expander.add_row(row)
+        self._insert_activity_rows(rows)
         self._activity_rows.extend(rows)
+        self._scan_conflicts()
+
+    def _insert_activity_rows(self, rows: list[Gtk.ListBoxRow]) -> None:
+        # Activity rows are recreated on every refresh, so they are inserted
+        # before the static log/conflicts rows instead of being appended after
+        # them; this keeps the visual order without re-parenting the static
+        # rows (which used to be removed and re-added on every refresh).
+        if self._activity_listbox is not None:
+            for index, row in enumerate(rows):
+                self._activity_listbox.insert(row, index)
+        else:
+            for row in rows:
+                self.activity_expander.add_row(row)
+
+    def _scan_conflicts(self) -> None:
+        if self._conflicts_scanning:
+            return
+        folders = list(getattr(self.session, "folders", None) or [])
+        self._conflicts_scanning = True
+
+        # find_conflicts walks the whole folder tree, which can be slow on
+        # large sync roots; run it off the UI thread and only touch the
+        # expander row from the main loop once the scan is done.
+        def _run() -> None:
+            has_conflicts = self._should_show_conflicts(folders)
+            GLib.idle_add(self._conflicts_scan_finished, has_conflicts)
+
+        Thread(target=_run, daemon=True).start()
+
+    @staticmethod
+    def _should_show_conflicts(folders: Sequence[object]) -> bool:
+        for folder in folders:
+            root = getattr(folder, "local_root", None)
+            if not root:
+                continue
+            if find_conflicts(Path(root)):
+                return True
+        return False
+
+    def _conflicts_scan_finished(self, has_conflicts: bool) -> None:
+        self._conflicts_scanning = False
+        if self._disposed or has_conflicts == self._conflicts_attached:
+            return
+        if has_conflicts:
+            self.activity_expander.add_row(self.conflicts_row)
+        else:
+            self.activity_expander.remove(self.conflicts_row)
+        self._conflicts_attached = has_conflicts
 
     def _sync_clicked(self, _button: Gtk.Button) -> None:
         if self.runtime.scheduler.delete_alert:

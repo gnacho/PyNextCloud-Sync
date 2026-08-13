@@ -11,9 +11,9 @@ from nextsync import VERSION
 
 
 VERSION_MANIFEST_URL = (
-    "https://raw.githubusercontent.com/gnacho/nextsync/main/version.json"
+    "https://raw.githubusercontent.com/gnacho/nextsync-py/main/version.json"
 )
-RELEASES_URL = "https://github.com/gnacho/nextsync/releases/latest"
+RELEASES_URL = "https://github.com/gnacho/nextsync-py/releases/latest"
 MAX_MANIFEST_BYTES = 64 * 1024
 MAX_SUMMARY_CHARACTERS = 8_000
 MAX_CHANGELOG_ITEMS = 100

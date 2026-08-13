@@ -4,11 +4,11 @@
   <p><strong>Your files, local. Your Nextcloud, in sync.</strong></p>
   <p>A lightweight, GNOME-native desktop companion for keeping one complete physical copy of a Nextcloud account on Linux.</p>
   <p>
-    <a href="https://github.com/gnacho/nextsync">Website</a>
+    <a href="https://github.com/gnacho/nextsync-py">Website</a>
     ·
-    <a href="https://github.com/gnacho/nextsync/releases">Releases</a>
+    <a href="https://github.com/gnacho/nextsync-py/releases">Releases</a>
     ·
-    <a href="https://github.com/gnacho/nextsync/issues">Report an issue</a>
+    <a href="https://github.com/gnacho/nextsync-py/issues">Report an issue</a>
   </p>
   <p>
     <img src="https://img.shields.io/badge/version-0.2.5-6557e8?style=flat-square" alt="Version 0.2.5">
@@ -152,7 +152,7 @@ One honest caveat drove part of this release: the CLI runs `--non-interactive`, 
 
 ### Debian package — recommended
 
-Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync/releases/latest), then install it with APT so the required system packages are resolved automatically:
+Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync-py/releases/latest), then install it with APT so the required system packages are resolved automatically:
 
 ```bash
 cd ~/Downloads

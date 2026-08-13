@@ -11,9 +11,9 @@
   </description>
   <launchable type="desktop-id">io.github.gnacho.nextsync.desktop</launchable>
   <developer id="io.github.gnacho"><name>gnacho</name></developer>
-  <url type="homepage">https://github.com/gnacho/nextsync</url>
-  <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
-  <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
+  <url type="homepage">https://github.com/gnacho/nextsync-py</url>
+  <url type="bugtracker">https://github.com/gnacho/nextsync-py/issues</url>
+  <url type="vcs-browser">https://github.com/gnacho/nextsync-py</url>
   <releases>
     <release version="0.4.0" date="2026-08-13">
       <description>

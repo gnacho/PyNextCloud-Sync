@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: NextSync
-Source: https://github.com/gnacho/nextsync
+Source: https://github.com/gnacho/nextsync-py
 
 Files: *
 Copyright: 2026 gnacho

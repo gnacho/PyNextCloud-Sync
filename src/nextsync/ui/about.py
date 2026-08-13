@@ -15,8 +15,8 @@ from nextsync.util.i18n import _
 from .about_content import release_notes_markup, terms_text
 
 
-WEBSITE_URL = "https://github.com/gnacho/nextsync"
-PROJECT_URL = "https://github.com/gnacho/nextsync"
+WEBSITE_URL = "https://github.com/gnacho/nextsync-py"
+PROJECT_URL = "https://github.com/gnacho/nextsync-py"
 ISSUES_URL = f"{PROJECT_URL}/issues"
 CHANGELOG_URL = f"{PROJECT_URL}/blob/main/CHANGELOG.md"
 TERMS_URL = f"{PROJECT_URL}/blob/main/TERMS.md"

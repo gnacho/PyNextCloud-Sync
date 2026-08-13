@@ -5,7 +5,7 @@ Priority: optional
 Architecture: all
 Installed-Size: @INSTALLED_SIZE@
 Maintainer: gnacho <gnacho@users.noreply.github.com>
-Homepage: https://github.com/gnacho/nextsync
+Homepage: https://github.com/gnacho/nextsync-py
 Depends: python3 (>= 3.12), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-gdkpixbuf-2.0, gir1.2-soup-3.0, gir1.2-secret-1, gnome-keyring, libglib2.0-bin, systemd, util-linux, nextcloud-desktop-cmd
 Recommends: gnome-shell-extension-appindicator
 Description: Lightweight GTK Nextcloud synchronization client

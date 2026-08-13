@@ -23,10 +23,10 @@ classifiers = [
 nextsync = "nextsync.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/gnacho/nextsync"
-Repository = "https://github.com/gnacho/nextsync"
-Issues = "https://github.com/gnacho/nextsync/issues"
-Changelog = "https://github.com/gnacho/nextsync/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/gnacho/nextsync-py"
+Repository = "https://github.com/gnacho/nextsync-py"
+Issues = "https://github.com/gnacho/nextsync-py/issues"
+Changelog = "https://github.com/gnacho/nextsync-py/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

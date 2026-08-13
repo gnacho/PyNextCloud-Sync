@@ -11,9 +11,9 @@ class ProjectLinkTests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn('WEBSITE_URL = "https://github.com/gnacho/nextsync"', about_source)
+        self.assertIn('WEBSITE_URL = "https://github.com/gnacho/nextsync-py"', about_source)
         self.assertIn(
-            'PROJECT_URL = "https://github.com/gnacho/nextsync"',
+            'PROJECT_URL = "https://github.com/gnacho/nextsync-py"',
             about_source,
         )
         self.assertIn('ISSUES_URL = f"{PROJECT_URL}/issues"', about_source)
@@ -50,7 +50,7 @@ class ProjectLinkTests(unittest.TestCase):
 
     def test_packaging_metadata_uses_the_public_website(self) -> None:
         project_root = Path(__file__).resolve().parents[2]
-        expected = "https://github.com/gnacho/nextsync"
+        expected = "https://github.com/gnacho/nextsync-py"
 
         pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
         binary_control = (

@@ -13,7 +13,7 @@ ROOT = Path(__file__).parents[2]
 
 class PackagingTests(unittest.TestCase):
     def test_release_version_is_consistent_across_package_metadata(self) -> None:
-        expected = "0.2.8"
+        expected = "0.2.9"
         for relative_path in (
             "src/nextsync/__init__.py",
             "pyproject.toml",
@@ -30,7 +30,7 @@ class PackagingTests(unittest.TestCase):
     def test_repository_update_manifest_matches_the_release(self) -> None:
         payload = json.loads((ROOT / "version.json").read_text(encoding="utf-8"))
         self.assertEqual(payload["schema_version"], 1)
-        self.assertEqual(payload["version"], "0.2.8")
+        self.assertEqual(payload["version"], "0.2.9")
         self.assertIs(type(payload["mandatory"]), bool)
         self.assertTrue(payload["summary"].strip())
         self.assertGreater(len(payload["changelog"]), 0)

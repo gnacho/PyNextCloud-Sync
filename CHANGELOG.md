@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.9 — 2026-08-13
+
+### Main window shows new folders immediately
+
+- The main window refreshes the active account when the Settings window closes, so a sync folder added in Settings appears right away instead of after an app restart.
+
 ## 0.2.8 — 2026-08-13
 
 ### Add Folder dialog opens again, white in-app icons

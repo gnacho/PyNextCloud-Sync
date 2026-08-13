@@ -1,3 +1,11 @@
+nextsync (0.2.9) stable; urgency=medium
+
+  * The main window refreshes the active account when the Settings window
+    closes, so a sync folder added in Settings appears right away instead of
+    after an app restart.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 03:35:00 +0200
+
 nextsync (0.2.8) stable; urgency=medium
 
   * The Add Folder dialog now opens: it called set_placeholder_text, which

@@ -132,6 +132,41 @@ class AccountManagerTests(unittest.TestCase):
                 )
             runtime.reconfigure()
 
+    def test_adding_a_folder_after_start_updates_the_runtime(self) -> None:
+        """A folder added through the config must create its runtime without a
+        restart: AccountManager subscribes to config changes and re-syncs the
+        account's folder runtimes (issue #26)."""
+        store = _store_with([{**ACCOUNT_A, "folders": []}])
+        with patch(
+            "nextsync.core.account_manager.RuntimeController",
+            FakeRuntimeController,
+        ):
+            manager = AccountManager(store, None, None)
+            manager.start()
+            runtime = next(iter(manager.runtimes.values()))
+            self.assertEqual(runtime.folders, {})
+            store.add_folder(
+                store.accounts[0]["id"], {"local_root": "/tmp/NextCloud"}
+            )
+            self.assertEqual(len(runtime.folders), 1)
+            self.assertEqual(len(runtime.session.folders), 1)
+            manager.stop()
+
+    def test_removing_a_folder_after_start_stops_its_runtime(self) -> None:
+        store = _store_with([ACCOUNT_A])
+        with patch(
+            "nextsync.core.account_manager.RuntimeController",
+            FakeRuntimeController,
+        ):
+            manager = AccountManager(store, None, None)
+            manager.start()
+            runtime = next(iter(manager.runtimes.values()))
+            self.assertEqual(len(runtime.folders), 1)
+            folder_id = store.accounts[0]["folders"][0]["id"]
+            store.remove_folder(store.accounts[0]["id"], folder_id)
+            self.assertEqual(runtime.folders, {})
+            manager.stop()
+
     def test_manager_starts_one_runtime_per_account_and_folder(self) -> None:
         store = _store_with(
             [

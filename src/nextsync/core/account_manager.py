@@ -308,6 +308,24 @@ class AccountRuntime:
         self._folders[folder.folder_id] = folder_runtime
         self._aggregate.add(folder_runtime.state)
 
+    def sync_folders(self, session: AccountSession) -> None:
+        """Reconcile this account's folder runtimes with a fresh session.
+
+        Called when the config changes (folder added or removed) so the
+        runtime picks up new folders without a restart. Folder runtimes that
+        disappeared are stopped; new ones are started; existing ones are kept.
+        """
+        self.session = session
+        desired = {folder.folder_id: folder for folder in session.folders}
+        for folder_id in tuple(self._folders):
+            if folder_id in desired:
+                continue
+            folder_runtime = self._folders.pop(folder_id)
+            self._aggregate.remove(folder_runtime.state)
+            folder_runtime.stop()
+        for folder in session.folders:
+            self._ensure_folder(folder)
+
     def start(self) -> None:
         if not self.session.folders:
             idle = StateController(AppState.IDLE_OK)
@@ -345,6 +363,15 @@ class AccountManager:
         self._aggregate = AggregateStateController()
         self.sync_permit = SyncPermit()
         self._refresh_sessions()
+        self._config_unsubscribe = config.subscribe(self._on_config_changed)
+
+    def _on_config_changed(self, _data: dict[str, Any]) -> None:
+        """Refresh folder runtimes when the config changes."""
+        self._refresh_sessions()
+        for account_id, session in self._session_cache.items():
+            runtime = self._runtimes.get(account_id)
+            if runtime is not None:
+                runtime.sync_folders(session)
 
     @property
     def runtimes(self) -> dict[str, AccountRuntime]:
@@ -400,6 +427,9 @@ class AccountManager:
             self._ensure_runtime(account_id, session)
 
     def stop(self) -> None:
+        if self._config_unsubscribe:
+            self._config_unsubscribe()
+            self._config_unsubscribe = None
         for runtime in tuple(self._runtimes.values()):
             runtime.stop()
         self._runtimes.clear()

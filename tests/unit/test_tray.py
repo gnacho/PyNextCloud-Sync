@@ -278,7 +278,7 @@ class TrayContractTests(unittest.TestCase):
         self.assertEqual(children, [1, 7, 8])
         expected = {
             1: ("Open NextSync", "window-new-symbolic"),
-            7: ("Settings", "nextsync-settings-2-symbolic"),
+            7: ("Settings", "nextsync-tray-settings"),
             8: ("Quit", "application-exit-symbolic"),
         }
         for item_id in children:

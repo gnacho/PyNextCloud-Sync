@@ -355,7 +355,7 @@ class StatusNotifier:
         }
         icon_names = {
             1: "window-new-symbolic",
-            7: "nextsync-settings-2-symbolic",
+            7: "nextsync-tray-settings",
             8: "application-exit-symbolic",
         }
         if item_id in icon_names:

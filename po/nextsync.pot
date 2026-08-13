@@ -1,3 +1,23 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#: src/nextsync/ui/settings.py:366
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-13 09:35+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
 #: src/nextsync/application.py:172
 msgid "Checking for Updates"
 msgstr ""
@@ -28,237 +48,66 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: src/nextsync/application.py:580
+#: src/nextsync/application.py:582
 msgid "Nextcloud account needs attention"
 msgstr ""
 
-#: src/nextsync/application.py:582
+#: src/nextsync/application.py:584
 #, python-brace-format
 msgid "{account}: open NextSync to check the account credential."
 msgstr ""
 
-#: src/nextsync/application.py:589
+#: src/nextsync/application.py:591
 msgid "Synchronization failed"
 msgstr ""
 
-#: src/nextsync/application.py:592
+#: src/nextsync/application.py:594
 #, python-brace-format
 msgid ""
 "{account}: synchronization failed after {retries} retries. Open the log for "
 "details."
 msgstr ""
 
-#: src/nextsync/application.py:600
+#: src/nextsync/application.py:602
 msgid "Many local files disappeared"
 msgstr ""
 
-#: src/nextsync/application.py:604
+#: src/nextsync/application.py:606
 #, python-brace-format
 msgid ""
 "{account}: {count} local files disappeared. Synchronization was blocked "
 "before Nextcloud could be changed."
 msgstr ""
 
-#: src/nextsync/application.py:609
+#: src/nextsync/application.py:611
 #, python-brace-format
 msgid ""
 "{account}: the local synchronization folder changed unexpectedly. "
 "Synchronization was blocked."
 msgstr ""
 
-#: src/nextsync/application.py:625
+#: src/nextsync/application.py:627
 msgid "Synchronization blocked"
 msgstr ""
 
-#: src/nextsync/application.py:628
+#: src/nextsync/application.py:630
 msgid "Keep Paused"
 msgstr ""
 
-#: src/nextsync/application.py:630
+#: src/nextsync/application.py:632
 msgid "Restore from Nextcloud"
 msgstr ""
 
-#: src/nextsync/application.py:632
+#: src/nextsync/application.py:634
 msgid "Approve These Deletions Once"
 msgstr ""
 
-#: src/nextsync/application.py:654
+#: src/nextsync/application.py:656
 msgid "Finishing synchronization"
 msgstr ""
 
-#: src/nextsync/application.py:656
+#: src/nextsync/application.py:658
 msgid "NextSync will quit when the current synchronization finishes."
-msgstr ""
-
-#: src/nextsync/core/account_manager.py:255
-msgid "Connected. Add folders from Settings."
-msgstr ""
-
-#: src/nextsync/core/delete_guard.py:180
-msgid "The local synchronization folder is missing or unavailable."
-msgstr ""
-
-#: src/nextsync/core/delete_guard.py:192
-msgid "A previously populated synchronization folder is now empty."
-msgstr ""
-
-#: src/nextsync/core/delete_guard.py:204
-msgid ""
-"An unusual number of local files disappeared and could be deleted from "
-"Nextcloud."
-msgstr ""
-
-#: src/nextsync/core/runtime.py:185 src/nextsync/core/scheduler.py:157
-msgid "Synchronization scheduled"
-msgstr ""
-
-#: src/nextsync/core/runtime.py:196
-msgid "Filesystem watch limit reached; using a local interval for this session"
-msgstr ""
-
-#: src/nextsync/core/runtime.py:235
-msgid "Unlock the password keyring to connect push notifications."
-msgstr ""
-
-#: src/nextsync/core/runtime.py:273
-msgid ""
-"Automatic remote detection is unavailable; use Sync Now or enable the remote "
-"interval."
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:121 src/nextsync/core/scheduler.py:391
-#: src/nextsync/core/scheduler.py:406
-msgid "Waiting for a network connection"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:126 src/nextsync/core/scheduler.py:244
-msgid "Password keyring is locked"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:143
-msgid "Waiting for local changes to settle"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:178
-msgid "Checking the local folder…"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:233
-msgid "Synchronizing files…"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:247
-msgid "Could not read the account credential"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:252
-msgid "No stored credential was found"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:285
-msgid "Waiting for another account to finish…"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:311
-msgid "Synchronized with conflicts — review the log"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:316
-msgid "Your Nextcloud account needs attention"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:319
-msgid "Synchronization failed — view the log"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:364 src/nextsync/core/scheduler.py:402
-msgid "Synchronization is paused"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:377 src/nextsync/core/scheduler.py:404
-msgid "Paused on battery"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:377
-msgid "Will pause after the current synchronization"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:408
-msgid "Automatic synchronization is off"
-msgstr ""
-
-#: src/nextsync/core/scheduler.py:410 src/nextsync/ui/main_window.py:28
-#: src/nextsync/ui/main_window.py:253
-msgid "Synchronized"
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:60
-msgid "Push notifications are disabled."
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:77
-msgid "Discovering server push support…"
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:92 src/nextsync/nextcloud/push.py:198
-msgid "Push authentication failed."
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:100
-msgid "This server does not offer notify_push."
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:192
-msgid "Connected"
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:234
-#, python-brace-format
-msgid "Reconnecting in {seconds} seconds"
-msgstr ""
-
-#: src/nextsync/nextcloud/push.py:266
-msgid "Disconnected"
-msgstr ""
-
-#: src/nextsync/ui/about.py:36
-msgid "A lightweight Nextcloud synchronization client for Linux."
-msgstr ""
-
-#: src/nextsync/ui/about.py:46
-msgid "Source code on GitHub"
-msgstr ""
-
-#: src/nextsync/ui/about.py:48
-msgid "Check for Updates"
-msgstr ""
-
-#: src/nextsync/ui/about.py:58
-msgid "Report a problem"
-msgstr ""
-
-#: src/nextsync/ui/about.py:59
-msgid "Complete changelog"
-msgstr ""
-
-#: src/nextsync/ui/about.py:60 src/nextsync/ui/about.py:72
-msgid "Terms of Use"
-msgstr ""
-
-#: src/nextsync/ui/about.py:61
-msgid "Third-party projects and licenses"
-msgstr ""
-
-#: src/nextsync/ui/about.py:63
-msgid "Synchronization Engine"
-msgstr ""
-
-#: src/nextsync/ui/about.py:66
-msgid "Desktop Technologies"
-msgstr ""
-
-#: src/nextsync/ui/about.py:69
-msgid "Languages"
 msgstr ""
 
 #: src/nextsync/ui/about_content.py:10
@@ -825,6 +674,46 @@ msgid ""
 "integration."
 msgstr ""
 
+#: src/nextsync/ui/about.py:36
+msgid "A lightweight Nextcloud synchronization client for Linux."
+msgstr ""
+
+#: src/nextsync/ui/about.py:46
+msgid "Source code on GitHub"
+msgstr ""
+
+#: src/nextsync/ui/about.py:48
+msgid "Check for Updates"
+msgstr ""
+
+#: src/nextsync/ui/about.py:58
+msgid "Report a problem"
+msgstr ""
+
+#: src/nextsync/ui/about.py:59
+msgid "Complete changelog"
+msgstr ""
+
+#: src/nextsync/ui/about.py:60 src/nextsync/ui/about.py:72
+msgid "Terms of Use"
+msgstr ""
+
+#: src/nextsync/ui/about.py:61
+msgid "Third-party projects and licenses"
+msgstr ""
+
+#: src/nextsync/ui/about.py:63
+msgid "Synchronization Engine"
+msgstr ""
+
+#: src/nextsync/ui/about.py:66
+msgid "Desktop Technologies"
+msgstr ""
+
+#: src/nextsync/ui/about.py:69
+msgid "Languages"
+msgstr ""
+
 #: src/nextsync/ui/conflict_resolver.py:41
 msgid "Sync Activity and Conflicts"
 msgstr ""
@@ -894,6 +783,87 @@ msgstr ""
 msgid "Kept remote version of {name}"
 msgstr ""
 
+#: src/nextsync/ui/folder_status.py:18
+msgid "Not Configured"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:19
+msgid "Synchronized"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:20
+msgid "Automatic Sync Is Off"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:21
+msgid "Synchronization Scheduled"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:22
+msgid "Synchronizing…"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:23
+msgid "Paused"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:24
+msgid "Paused on Battery"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:25
+msgid "Offline"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:26
+msgid "Synchronization Error"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:27
+msgid "Account Needs Attention"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:28
+msgid "Password Keyring Locked"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:29 src/nextsync/ui/main_window.py:148
+msgid "Review Deletions"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:97
+msgid "Folder options"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:138
+msgid "Open local folder"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:140
+msgid "Edit ignored files"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:142
+msgid "Force sync now"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:146
+msgid "Resume sync"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:146
+msgid "Pause sync"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:153
+msgid "Remove synchronization"
+msgstr ""
+
+#: src/nextsync/ui/folder_status.py:173
+#, python-brace-format
+msgid "Remote: {path}"
+msgstr ""
+
 #: src/nextsync/ui/log_view.py:17
 msgid "Synchronization Log"
 msgstr ""
@@ -910,581 +880,463 @@ msgstr ""
 msgid "Open Log Folder"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:27
-msgid "Not Configured"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:29
-msgid "Automatic Sync Is Off"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:30
-msgid "Synchronization Scheduled"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:31
-msgid "Synchronizing…"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:32
-msgid "Paused"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:33
-msgid "Paused on Battery"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:34
-msgid "Offline"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:35
-msgid "Synchronization Error"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:36
-msgid "Account Needs Attention"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:37
-msgid "Password Keyring Locked"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:38 src/nextsync/ui/main_window.py:230
-msgid "Review Deletions"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:125 src/nextsync/ui/setup.py:421
-msgid "Local Folder"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:136 src/nextsync/ui/setup.py:428
-msgid "Remote Folder"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:144
+#: src/nextsync/ui/main_window.py:109
 msgid "No Synchronization Folders"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:145
+#: src/nextsync/ui/main_window.py:110
 msgid "Add folders from Settings"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:150
-msgid "Last Successful Sync"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:159 src/nextsync/ui/main_window.py:239
-#: src/nextsync/ui/tray.py:346 src/nextsync/ui/tray.py:389
+#: src/nextsync/ui/main_window.py:118 src/nextsync/ui/main_window.py:157
 msgid "Sync Now"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:165 src/nextsync/ui/main_window.py:225
-#: src/nextsync/ui/tray.py:347 src/nextsync/ui/tray.py:391
+#: src/nextsync/ui/main_window.py:124 src/nextsync/ui/main_window.py:143
 msgid "Pause Sync"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:173
-msgid "Recent Activity"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:174 src/nextsync/ui/main_window.py:434
-#: src/nextsync/ui/main_window.py:454
-msgid "No activity in this session"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:187
-msgid "View Synchronization Log"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:194
-msgid "Resolve Conflicts"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:220
-msgid "Your files are ready."
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:225 src/nextsync/ui/tray.py:347
+#: src/nextsync/ui/main_window.py:143
 msgid "Resume Sync"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:233
+#: src/nextsync/ui/main_window.py:151
 msgid "Unlock Password Keyring"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:237 src/nextsync/ui/main_window.py:474
-#: src/nextsync/ui/tray.py:346
+#: src/nextsync/ui/main_window.py:155 src/nextsync/ui/main_window.py:237
 msgid "Sync Once"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:249
-msgid "Downloading"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:250
-msgid "Uploading"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:251
-msgid "Deleting"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:252
-msgid "Conflict"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:254
-msgid "Skipped"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:255
-msgid "Synchronizing"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:257
-#, python-brace-format
-msgid "{action}: {path} ({count})"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:261
-#, python-brace-format
-msgid "{action}: {path}"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:269
+#: src/nextsync/ui/main_window.py:164
 msgid "Not yet synchronized"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:336
-msgid "Debug"
+#: src/nextsync/ui/main_window.py:197
+msgid "Remove this folder from synchronization?"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:337 src/nextsync/ui/main_window.py:341
-#: src/nextsync/ui/main_window.py:433
-msgid "Information"
+#: src/nextsync/ui/main_window.py:198
+msgid "The local folder and all files inside it will remain untouched."
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:338
-msgid "Warning"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:339
-msgid "Error"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:340
-msgid "Critical"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:386
-msgid "Copy Message"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:416
-msgid "Message copied"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:447
-msgid "1 event in this session"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:449
-#, python-brace-format
-msgid "{count} events in this session"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:470
-msgid "Synchronization is paused on battery"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:471
-msgid "Run one synchronization without changing the power preference?"
-msgstr ""
-
-#: src/nextsync/ui/main_window.py:473 src/nextsync/ui/settings.py:218
-#: src/nextsync/ui/settings.py:644 src/nextsync/ui/setup.py:162
+#: src/nextsync/ui/main_window.py:200 src/nextsync/ui/main_window.py:236
+#: src/nextsync/ui/settings.py:263 src/nextsync/ui/settings.py:711
+#: src/nextsync/ui/settings.py:731 src/nextsync/ui/setup.py:162
 #: src/nextsync/ui/setup.py:331
 msgid "Cancel"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:556
+#: src/nextsync/ui/main_window.py:201
+msgid "Remove Synchronization"
+msgstr ""
+
+#: src/nextsync/ui/main_window.py:214
+msgid "Could not remove the folder"
+msgstr ""
+
+#: src/nextsync/ui/main_window.py:233
+msgid "Synchronization is paused on battery"
+msgstr ""
+
+#: src/nextsync/ui/main_window.py:234
+msgid "Run one synchronization without changing the power preference?"
+msgstr ""
+
+#: src/nextsync/ui/main_window.py:310
 msgid "Nextcloud file synchronization"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:558 src/nextsync/ui/settings.py:122
-#: src/nextsync/ui/tray.py:351
+#: src/nextsync/ui/main_window.py:312 src/nextsync/ui/settings.py:123
+#: src/nextsync/ui/tray.py:346
 msgid "Settings"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:563
+#: src/nextsync/ui/main_window.py:317
 msgid "About"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:596 src/nextsync/ui/tray.py:330
+#: src/nextsync/ui/main_window.py:337 src/nextsync/ui/main_window.py:351
 msgid "Accounts"
 msgstr ""
 
-#: src/nextsync/ui/main_window.py:608
+#: src/nextsync/ui/main_window.py:363
 msgid "Add Account"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:25 src/nextsync/ui/settings.py:416
+#: src/nextsync/ui/settings.py:26 src/nextsync/ui/settings.py:476
 msgid "Excluded Files"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:31
+#: src/nextsync/ui/settings.py:32
 msgid "Done"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:41
+#: src/nextsync/ui/settings.py:42
 msgid ""
 "Only file names, extensions, and wildcard patterns are allowed. Folders and "
 "paths cannot be excluded."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:50
+#: src/nextsync/ui/settings.py:51
 msgid "Example: *.swp"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:53
+#: src/nextsync/ui/settings.py:54
 msgid "Add Pattern"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:59
+#: src/nextsync/ui/settings.py:60
 msgid "Restore Defaults"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:77
+#: src/nextsync/ui/settings.py:78
 msgid "Remove pattern"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:140
+#: src/nextsync/ui/settings.py:143
 msgid "General"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:141
+#: src/nextsync/ui/settings.py:144
 msgid "Startup"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:143
+#: src/nextsync/ui/settings.py:146
 msgid "Start NextSync when I sign in"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:149
+#: src/nextsync/ui/settings.py:152
 msgid "Power"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:151
+#: src/nextsync/ui/settings.py:154
 msgid "Pause synchronization while on battery"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:152
+#: src/nextsync/ui/settings.py:155
 msgid "A running synchronization is allowed to finish."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:158 src/nextsync/ui/setup.py:188
+#: src/nextsync/ui/settings.py:161 src/nextsync/ui/setup.py:188
 msgid "Synchronization Folders"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:163 src/nextsync/ui/settings.py:200
+#: src/nextsync/ui/settings.py:166 src/nextsync/ui/settings.py:237
 #: src/nextsync/ui/setup.py:203 src/nextsync/ui/setup.py:315
 msgid "Add Folder"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:164 src/nextsync/ui/setup.py:204
+#: src/nextsync/ui/settings.py:167 src/nextsync/ui/setup.py:204
 msgid "Mirror another local folder from this account"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:181 src/nextsync/ui/setup.py:362
+#: src/nextsync/ui/settings.py:183
+msgid "Show in Files sidebar"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:184
+msgid "Adds the synchronized folder to the file manager sidebar."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:192
+msgid "Show on Desktop"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:193
+msgid "Creates a link to the synchronized folder on the desktop."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:201
+msgid "Use special folder icon"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:202
+msgid "Identifies the synchronized folder and its shortcuts in Files."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:218 src/nextsync/ui/setup.py:362
 #, python-brace-format
 msgid "Remote: {remote}"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:187
+#: src/nextsync/ui/settings.py:224
 msgid "Remove folder"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:201 src/nextsync/ui/setup.py:316
+#: src/nextsync/ui/settings.py:238 src/nextsync/ui/setup.py:316
 msgid ""
 "Choose a local folder and an optional remote folder to mirror from this "
 "account."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:205 src/nextsync/ui/setup.py:320
+#: src/nextsync/ui/settings.py:242 src/nextsync/ui/setup.py:320
 msgid "Local folder"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:214 src/nextsync/ui/setup.py:327
-msgid "Remote folder (optional, default /)"
+#: src/nextsync/ui/settings.py:252
+msgid "Remote folder (empty: use the local folder name)"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:219 src/nextsync/ui/setup.py:332
+#: src/nextsync/ui/settings.py:258
+msgid "Choose an existing remote folder"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:264 src/nextsync/ui/setup.py:332
 msgid "Add"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:227 src/nextsync/ui/setup.py:344
+#: src/nextsync/ui/settings.py:273 src/nextsync/ui/setup.py:344
 msgid "Choose an absolute local folder."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:246 src/nextsync/ui/setup.py:377
+#: src/nextsync/ui/settings.py:334 src/nextsync/ui/setup.py:377
 msgid "Choose NextCloud Folder"
 msgstr ""
 
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-#: src/nextsync/ui/settings.py:278
-#, fuzzy
-msgid ""
-msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 23:45+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-
-#: src/nextsync/ui/settings.py:289
-msgid "Show in Files sidebar"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:290
-msgid "Adds the synchronized folder to the file manager sidebar."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:298
-msgid "Show on Desktop"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:299
-msgid "Creates a link to the synchronized folder on the desktop."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:307
-msgid "Use special folder icon"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:308
-msgid "Identifies the synchronized folder and its shortcuts in Files."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:359
+#: src/nextsync/ui/settings.py:419
 msgid "Synchronization"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:362
+#: src/nextsync/ui/settings.py:422
 msgid "Automatic synchronization is off. Files synchronize only with Sync Now."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:368
+#: src/nextsync/ui/settings.py:428
 msgid "Local Changes"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:370
+#: src/nextsync/ui/settings.py:430
 msgid "Monitor filesystem changes"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:371
+#: src/nextsync/ui/settings.py:431
 msgid "Synchronizes shortly after a local file changes."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:375
+#: src/nextsync/ui/settings.py:435
 msgid "Run a local interval"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:378
+#: src/nextsync/ui/settings.py:438
 msgid "Local interval (minutes)"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:389
+#: src/nextsync/ui/settings.py:449
 msgid "Remote Changes"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:391
+#: src/nextsync/ui/settings.py:451
 msgid "Use server push notifications"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:392
+#: src/nextsync/ui/settings.py:452
 msgid "Near-real-time detection when notify_push is supported."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:396
+#: src/nextsync/ui/settings.py:456
 msgid "Run a remote interval"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:397
+#: src/nextsync/ui/settings.py:457
 msgid "Recommended because push delivery is best effort."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:401
+#: src/nextsync/ui/settings.py:461
 msgid "Remote interval (minutes)"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:411
-msgid "Not connected"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:411
+#: src/nextsync/ui/settings.py:471
 msgid "Push connection"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:418
-msgid "Exclude disposable files"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:419
-msgid "Hidden files remain synchronized unless a rule matches."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:425
-msgid "File patterns"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:426
-msgid "Names, extensions, and wildcard patterns"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:434
-msgid "Reliability"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:435
-msgid "Maximum sync retries"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:442
-msgid "Network"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:443 src/nextsync/ui/setup.py:398
-msgid "Server"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:447 src/nextsync/ui/settings.py:645
-msgid "Remove Account"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:448
-msgid "Local files will not be deleted."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:455
-msgid "Proxy"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:456 src/nextsync/ui/settings.py:628
-msgid "Custom HTTP proxy"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:462
-msgid "TLS"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:464 src/nextsync/ui/setup.py:122
-msgid "Allow invalid or self-signed certificates"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:465 src/nextsync/ui/setup.py:123
-msgid "This weakens connection security. Enable only for a server you trust."
-msgstr ""
-
-#: src/nextsync/ui/settings.py:474
-msgid "Advanced"
-msgstr ""
-
-#: src/nextsync/ui/settings.py:475
-msgid "Logging"
+#: src/nextsync/ui/settings.py:471
+msgid "Not connected"
 msgstr ""
 
 #: src/nextsync/ui/settings.py:478
-msgid "Save log files"
+msgid "Exclude disposable files"
 msgstr ""
 
 #: src/nextsync/ui/settings.py:479
-msgid "Live activity remains available when file logging is off."
+msgid "Hidden files remain synchronized unless a rule matches."
 msgstr ""
 
 #: src/nextsync/ui/settings.py:485
-msgid "Keep daily logs (days)"
+msgid "File patterns"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:491
-msgid "Log folder"
+#: src/nextsync/ui/settings.py:486
+msgid "Names, extensions, and wildcard patterns"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:501
-msgid "Daily file naming"
+#: src/nextsync/ui/settings.py:494
+msgid "Reliability"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:495
+msgid "Maximum sync retries"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:502
+msgid "Network"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:503 src/nextsync/ui/setup.py:398
+msgid "Server"
 msgstr ""
 
 #: src/nextsync/ui/settings.py:507
+msgid "Proxy"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:508 src/nextsync/ui/settings.py:695
+msgid "Custom HTTP proxy"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:514
+msgid "TLS"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:516 src/nextsync/ui/setup.py:122
+msgid "Allow invalid or self-signed certificates"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:517 src/nextsync/ui/setup.py:123
+msgid "This weakens connection security. Enable only for a server you trust."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:526
+msgid "Advanced"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:527
+msgid "Logging"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:530
+msgid "Save log files"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:531
+msgid "Live activity remains available when file logging is off."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:537
+msgid "Keep daily logs (days)"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:543
+msgid "Log folder"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:553
+msgid "Daily file naming"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:559
 msgid "Detailed synchronization output"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:515
+#: src/nextsync/ui/settings.py:567
 msgid "Deletion Guard"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:517
+#: src/nextsync/ui/settings.py:569
 msgid ""
 "Blocks synchronization before nextcloudcmd starts when too many previously "
 "synchronized local files disappear."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:521
+#: src/nextsync/ui/settings.py:573
 msgid "Protect against mass local deletion"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:522
+#: src/nextsync/ui/settings.py:574
 msgid "Recommended. Stops sync when the local folder loses many files at once."
 msgstr ""
 
-#: src/nextsync/ui/settings.py:528
+#: src/nextsync/ui/settings.py:580
 msgid "Review after this many missing files"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:534
+#: src/nextsync/ui/settings.py:586
 msgid "Review after this percentage is missing"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:544
+#: src/nextsync/ui/settings.py:596
 msgid "Diagnostics"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:547
+#: src/nextsync/ui/settings.py:599
 msgid "inotify watches"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:551
+#: src/nextsync/ui/settings.py:603
 msgid "notify_push"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:555
+#: src/nextsync/ui/settings.py:607
 msgid "Last exit code"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:555
+#: src/nextsync/ui/settings.py:607
 msgid "None"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:632
+#: src/nextsync/ui/settings.py:611 src/nextsync/ui/setup.py:399
+msgid "Account"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:613
+msgid ""
+"Removing the account only removes the connection; your local folders and "
+"files are never touched."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:617 src/nextsync/ui/settings.py:732
+msgid "Remove Account"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:618
+msgid "Rarely needed. Keeps all local files."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:699
 msgid "Invalid HTTP proxy URL"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:641
+#: src/nextsync/ui/settings.py:708
 msgid "Remove Nextcloud Account?"
 msgstr ""
 
-#: src/nextsync/ui/settings.py:642
+#: src/nextsync/ui/settings.py:709
 msgid ""
 "The account credential will be removed from the password keyring. Your local "
 "NextCloud folder and all files inside it will remain untouched."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:712 src/nextsync/ui/setup.py:133
+msgid "Continue"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:722
+#, python-brace-format
+msgid "Remove {name}?"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:725
+msgid ""
+"Type “remove” to confirm. This cannot be undone and stops synchronization "
+"immediately."
+msgstr ""
+
+#: src/nextsync/ui/settings.py:727
+msgid "Type “remove”"
+msgstr ""
+
+#: src/nextsync/ui/settings.py:746
+msgid "Type “remove” to confirm account removal."
 msgstr ""
 
 #: src/nextsync/ui/setup.py:34
@@ -1526,10 +1378,6 @@ msgstr ""
 #: src/nextsync/ui/setup.py:130 src/nextsync/ui/setup.py:177
 #: src/nextsync/ui/setup.py:213 src/nextsync/ui/setup.py:235
 msgid "Back"
-msgstr ""
-
-#: src/nextsync/ui/setup.py:133
-msgid "Continue"
 msgstr ""
 
 #: src/nextsync/ui/setup.py:141
@@ -1616,12 +1464,12 @@ msgstr ""
 msgid "Could not store the account password."
 msgstr ""
 
-#: src/nextsync/ui/setup.py:353
-msgid "This local folder is already added."
+#: src/nextsync/ui/setup.py:327
+msgid "Remote folder (optional, default /)"
 msgstr ""
 
-#: src/nextsync/ui/setup.py:399
-msgid "Account"
+#: src/nextsync/ui/setup.py:353
+msgid "This local folder is already added."
 msgstr ""
 
 #: src/nextsync/ui/setup.py:403
@@ -1643,12 +1491,20 @@ msgid ""
 "folders later from Settings."
 msgstr ""
 
-#: src/nextsync/ui/setup.py:433
-msgid "Filesystem monitor"
+#: src/nextsync/ui/setup.py:421
+msgid "Local Folder"
+msgstr ""
+
+#: src/nextsync/ui/setup.py:428
+msgid "Remote Folder"
 msgstr ""
 
 #: src/nextsync/ui/setup.py:433
 msgid "Local Detection"
+msgstr ""
+
+#: src/nextsync/ui/setup.py:433
+msgid "Filesystem monitor"
 msgstr ""
 
 #: src/nextsync/ui/setup.py:434
@@ -1700,12 +1556,12 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: src/nextsync/ui/tray.py:238
+#: src/nextsync/ui/tray.py:266
 #, python-brace-format
 msgid "NextSync — {state}"
 msgstr ""
 
-#: src/nextsync/ui/tray.py:242
+#: src/nextsync/ui/tray.py:270
 msgid "Syncing"
 msgstr ""
 
@@ -1713,24 +1569,8 @@ msgstr ""
 msgid "Open NextSync"
 msgstr ""
 
-#: src/nextsync/ui/tray.py:348
-msgid "Open NextCloud Folder"
-msgstr ""
-
-#: src/nextsync/ui/tray.py:349
-msgid "View Sync Log"
-msgstr ""
-
-#: src/nextsync/ui/tray.py:352
+#: src/nextsync/ui/tray.py:347
 msgid "Quit"
-msgstr ""
-
-#: src/nextsync/ui/tray.py:353
-msgid "Conflicts…"
-msgstr ""
-
-#: src/nextsync/ui/tray.py:390
-msgid "Open Folder"
 msgstr ""
 
 #: src/nextsync/ui/update_window.py:29

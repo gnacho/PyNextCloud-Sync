@@ -47,12 +47,12 @@ class I18nTests(unittest.TestCase):
             [
                 sys.executable,
                 "-c",
-                "from nextsync.util.i18n import _; print(_('Recent Activity'))",
+                "from nextsync.util.i18n import _; print(_('Remove synchronization'))",
             ],
             env=environment,
             text=True,
         ).strip()
-        self.assertEqual(translated, "Actividad reciente")
+        self.assertEqual(translated, "Eliminar sincronización")
 
     def test_hyphenated_language_name_is_normalized(self) -> None:
         environment = _locale_env()

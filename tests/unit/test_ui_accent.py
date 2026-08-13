@@ -36,6 +36,17 @@ DIALOG_SUGGESTED_FRAGMENTS: dict[str, list[str]] = {
 # is out of scope for the accent fix: it is an image, not a styled button.
 BRAND_BLUE = "#0082C8"
 
+# Controls added after the #16 contract was locked. None of them is a primary
+# action button: the desktop-integration rows are switches and the remote
+# folder picker is a Gtk.DropDown inside the "Add Folder" dialog. The exact
+# constructor fragments also lock that they carry no css_classes override.
+POST_16_SETTINGS_CONTROLS: dict[str, str] = {
+    "nautilus_bookmark": "self.nautilus_bookmark = Adw.SwitchRow(",
+    "desktop_shortcut": "self.desktop_shortcut = Adw.SwitchRow(",
+    "special_folder_icon": "self.special_folder_icon = Adw.SwitchRow(",
+    "remote_picker": "Gtk.DropDown(model=remote_list)",
+}
+
 
 class UiAccentContractTests(unittest.TestCase):
     def test_application_is_an_adwaita_application(self) -> None:
@@ -97,6 +108,24 @@ class UiAccentContractTests(unittest.TestCase):
                     f"{filename} primary dialog responses must be SUGGESTED "
                     f"(missing: {fragment})",
                 )
+
+    def test_post_16_settings_controls_stay_neutral_to_accent(self) -> None:
+        source = (ROOT / "src" / "nextsync" / "ui" / "settings.py").read_text(
+            encoding="utf-8"
+        )
+        for name, fragment in POST_16_SETTINGS_CONTROLS.items():
+            self.assertIn(
+                fragment,
+                source,
+                f"post-#16 settings control {name} is missing ({fragment})",
+            )
+        # The Add Folder dialog grew the remote picker; its confirm action must
+        # remain the accent-colored primary response.
+        self.assertIn(
+            'dialog.set_response_appearance("add", Adw.ResponseAppearance.SUGGESTED)',
+            source,
+            "Add Folder dialog confirm response must stay SUGGESTED",
+        )
 
 
 if __name__ == "__main__":

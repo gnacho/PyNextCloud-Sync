@@ -248,8 +248,9 @@ class SettingsWindow(Adw.PreferencesWindow):
         choose.connect("clicked", lambda _button: self._choose_folder(local_entry))
         local_entry.add_suffix(choose)
         entry_box.append(local_box)
-        remote_entry = Adw.EntryRow(title=_("Remote folder"))
-        remote_entry.set_placeholder_text(_("Remote folder (optional, default: local folder name)"))
+        remote_entry = Adw.EntryRow(
+            title=_("Remote folder (empty: use the local folder name)")
+        )
         remote_list = Gtk.StringList()
         remote_picker = Gtk.DropDown(model=remote_list)
         remote_picker.set_selected(Gtk.INVALID_LIST_POSITION)

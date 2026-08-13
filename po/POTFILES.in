@@ -9,6 +9,7 @@ src/nextsync/ui/about.py
 src/nextsync/ui/about_content.py
 src/nextsync/ui/activity.py
 src/nextsync/ui/conflict_resolver.py
+src/nextsync/ui/folder_status.py
 src/nextsync/ui/log_view.py
 src/nextsync/ui/main_window.py
 src/nextsync/ui/settings.py

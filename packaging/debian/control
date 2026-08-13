@@ -5,7 +5,7 @@ Maintainer: gnacho <gnacho@users.noreply.github.com>
 Build-Depends: debhelper-compat (= 13), dh-sequence-python3, meson, python3-all, gettext
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
-Homepage: https://github.com/gnacho/nextsync
+Homepage: https://github.com/gnacho/nextsync-py
 
 Package: nextsync
 Architecture: all

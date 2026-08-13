@@ -7,7 +7,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, Gio, Gtk
 
 from nextsync.core.account import FolderSession
 from nextsync.core.state import AppState, StateController, StateSnapshot
@@ -48,7 +48,12 @@ def pair_folder_runtimes(
 
 
 class FolderStatusRow(Adw.ActionRow):
-    """One synchronized folder rendered with its own live sync status."""
+    """One synchronized folder rendered with its own live sync status.
+
+    The row shows a status glyph (a check when synchronized), the folder
+    name, and a more (…) menu button with a small set of per-folder actions,
+    mirroring the official / OpenCloud desktop clients.
+    """
 
     def __init__(
         self,
@@ -57,11 +62,17 @@ class FolderStatusRow(Adw.ActionRow):
         *,
         on_open: Callable[[], None],
         format_last_sync: Callable[[], str],
+        on_edit_ignored: Callable[[], None] | None = None,
+        on_force_sync: Callable[[], None] | None = None,
+        on_toggle_pause: Callable[[], None] | None = None,
+        on_remove: Callable[[], None] | None = None,
+        is_paused: Callable[[], bool] | None = None,
     ) -> None:
         super().__init__(activatable=True, selectable=False)
         self._folder = folder
         self._on_open = on_open
         self._format_last_sync = format_last_sync
+        self._is_paused = is_paused
         self._disposed = False
         self._unsubscribe: Callable[[], None] | None = None
 
@@ -79,10 +90,33 @@ class FolderStatusRow(Adw.ActionRow):
         self._spinner.set_visible(False)
         self.add_suffix(self._spinner)
 
-        open_button = Gtk.Button(icon_name="folder-open-symbolic")
-        open_button.set_valign(Gtk.Align.CENTER)
-        open_button.connect("clicked", lambda _button: on_open())
-        self.add_suffix(open_button)
+        self._menu_button = Gtk.MenuButton(
+            icon_name="view-more-symbolic",
+            css_classes=["flat"],
+            valign=Gtk.Align.CENTER,
+            tooltip_text=_("Folder options"),
+        )
+        self._menu_actions = Gio.SimpleActionGroup()
+        self.insert_action_group("folder", self._menu_actions)
+        self._popover = Gtk.PopoverMenu()
+        self._popover.connect("show", self._rebuild_menu)
+        self._menu_button.set_popover(self._popover)
+        self.add_suffix(self._menu_button)
+
+        self._actions: dict[str, Gio.SimpleAction] = {}
+        for name, callback in (
+            ("open", on_open),
+            ("edit-ignored", on_edit_ignored),
+            ("force-sync", on_force_sync),
+            ("toggle-pause", on_toggle_pause),
+            ("remove", on_remove),
+        ):
+            if callback is None:
+                continue
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda _a, _p, _cb=callback: _cb())
+            self._menu_actions.add_action(action)
+            self._actions[name] = action
 
         self.connect("activated", lambda _row: on_open())
 
@@ -90,6 +124,35 @@ class FolderStatusRow(Adw.ActionRow):
             self._unsubscribe = state_controller.subscribe(self._state_changed)
         else:
             self._render(StateSnapshot(AppState.UNCONFIGURED))
+
+    def _rebuild_menu(self, popover: Gtk.PopoverMenu) -> None:
+        """Build the folder menu from the configured actions before showing."""
+        menu = Gio.Menu()
+
+        def _item(label: str, action: str, icon: str) -> None:
+            item = Gio.MenuItem.new(label, f"folder.{action}")
+            item.set_icon(Gio.ThemedIcon.new(icon))
+            menu.append_item(item)
+
+        if "open" in self._actions:
+            _item(_("Open local folder"), "open", "folder-open-symbolic")
+        if "edit-ignored" in self._actions:
+            _item(_("Edit ignored files"), "edit-ignored", "text-x-generic-symbolic")
+        if "force-sync" in self._actions:
+            _item(_("Force sync now"), "force-sync", "emblem-synchronizing-symbolic")
+        if "toggle-pause" in self._actions:
+            paused = bool(self._is_paused()) if self._is_paused else False
+            _item(
+                _("Resume sync") if paused else _("Pause sync"),
+                "toggle-pause",
+                "media-playback-start-symbolic"
+                if paused
+                else "media-playback-pause-symbolic",
+            )
+        if "remove" in self._actions:
+            _item(_("Remove synchronization"), "remove", "user-trash-symbolic")
+
+        popover.set_menu_model(menu)
 
     def _state_changed(self, snapshot: StateSnapshot) -> None:
         if self._disposed:
@@ -124,3 +187,6 @@ class FolderStatusRow(Adw.ActionRow):
             self._unsubscribe = None
         if hasattr(self, "_spinner"):
             self._spinner.stop()
+        popover = self._menu_button.get_popover()
+        if popover is not None:
+            popover.unparent()

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-08-13
+
+### Account view focuses on the synchronized folders (like the official client)
+
+- The account view shows only the synchronized folders. Each folder row has its own live status (a check when synchronized) and a more (…) menu with a small, useful set of actions: open local folder, edit ignored files, force sync now, pause or resume sync, and remove the folder from synchronization (local files are kept).
+- The big status header, the account row, the last-sync row, the recent activity expander and the log/conflicts rows were removed from the account view to keep it focused on the folders.
+- Account removal moved to Settings > Advanced behind a typed confirmation ("remove"). Removing an account only removes the connection; local folders and files are never touched.
+- Primary buttons keep following the system GNOME accent color.
+
 ## 0.3.0 — 2026-08-13
 
 ### Per-folder status in the main window, log row fixed, conflicts only when present

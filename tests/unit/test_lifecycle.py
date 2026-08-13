@@ -162,7 +162,6 @@ class LifecycleContractTests(unittest.TestCase):
         self.assertIn("self._dispose_ui()", close_handler)
         self.assertIn("self.account_view.dispose()", dispose)
         self.assertIn("self._state_unsubscribe()", account_view)
-        self.assertIn("self._log_unsubscribe()", account_view)
 
     def test_log_and_sync_output_have_explicit_memory_limits(self) -> None:
         log_view = (ROOT / "src" / "nextsync" / "ui" / "log_view.py").read_text(

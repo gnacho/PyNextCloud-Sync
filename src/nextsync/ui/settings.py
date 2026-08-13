@@ -503,14 +503,6 @@ class SettingsWindow(Adw.PreferencesWindow):
         server = Adw.PreferencesGroup(title=_("Server"))
         account = self.config.data["account"]
         server.add(Adw.ActionRow(title=account["server_url"], subtitle=account["login_name"]))
-        remove = Adw.ActionRow(
-            title=_("Remove Account"),
-            subtitle=_("Local files will not be deleted."),
-            activatable=True,
-        )
-        remove.add_css_class("error")
-        remove.connect("activated", lambda _row: self._confirm_remove_account())
-        server.add(remove)
         page.add(server)
         proxy = Adw.PreferencesGroup(title=_("Proxy"))
         self.proxy = Adw.EntryRow(title=_("Custom HTTP proxy"))
@@ -615,6 +607,21 @@ class SettingsWindow(Adw.PreferencesWindow):
             Adw.ActionRow(title=_("Last exit code"), subtitle=str(last_code) if last_code is not None else _("None"))
         )
         page.add(diagnostics)
+        account_group = Adw.PreferencesGroup(
+            title=_("Account"),
+            description=_(
+                "Removing the account only removes the connection; your local folders and files are never touched."
+            ),
+        )
+        remove = Adw.ActionRow(
+            title=_("Remove Account"),
+            subtitle=_("Rarely needed. Keeps all local files."),
+            activatable=True,
+        )
+        remove.add_css_class("error")
+        remove.connect("activated", lambda _row: self._confirm_remove_account())
+        account_group.add(remove)
+        page.add(account_group)
         self.add(page)
 
     def _save_general(self, *_args: object) -> None:
@@ -702,12 +709,40 @@ class SettingsWindow(Adw.PreferencesWindow):
             body=_("The account credential will be removed from the password keyring. Your local NextCloud folder and all files inside it will remain untouched."),
         )
         dialog.add_response("cancel", _("Cancel"))
-        dialog.add_response("remove", _("Remove Account"))
+        dialog.add_response("remove", _("Continue"))
         dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
-        dialog.choose(self, None, self._remove_account_choice)
+        dialog.choose(self, None, self._remove_account_step_two)
 
-    def _remove_account_choice(
+    def _remove_account_step_two(
         self, dialog: Adw.AlertDialog, result: Gio.AsyncResult
     ) -> None:
-        if dialog.choose_finish(result) == "remove":
-            self.on_remove_account()
+        if dialog.choose_finish(result) != "remove":
+            return
+        confirm = Adw.AlertDialog(
+            heading=_("Remove {name}?").format(
+                name=self.config.data["account"].get("login_name", "")
+            ),
+            body=_("Type “remove” to confirm. This cannot be undone and stops synchronization immediately."),
+        )
+        entry = Gtk.Entry(placeholder_text=_("Type “remove”"))
+        entry_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        entry_box.append(entry)
+        confirm.set_extra_child(entry_box)
+        confirm.add_response("cancel", _("Cancel"))
+        confirm.add_response("remove", _("Remove Account"))
+        confirm.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        confirm.set_default_response("cancel")
+        confirm.choose(self, None, self._remove_account_choice, entry)
+
+    def _remove_account_choice(
+        self,
+        dialog: Adw.AlertDialog,
+        result: Gio.AsyncResult,
+        entry: Gtk.Entry,
+    ) -> None:
+        if dialog.choose_finish(result) != "remove":
+            return
+        if entry.get_text().strip().lower() != "remove":
+            self._folder_error(_("Type “remove” to confirm account removal."))
+            return
+        self.on_remove_account()

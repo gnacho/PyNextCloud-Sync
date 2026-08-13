@@ -11,10 +11,20 @@
   </description>
   <launchable type="desktop-id">io.github.gnacho.nextsync.desktop</launchable>
   <developer id="io.github.gnacho"><name>gnacho</name></developer>
-  <url type="homepage">https://github.com/gnacho/nextsync</url>
-  <url type="bugtracker">https://github.com/gnacho/nextsync/issues</url>
-  <url type="vcs-browser">https://github.com/gnacho/nextsync</url>
+  <url type="homepage">https://github.com/gnacho/nextsync-py</url>
+  <url type="bugtracker">https://github.com/gnacho/nextsync-py/issues</url>
+  <url type="vcs-browser">https://github.com/gnacho/nextsync-py</url>
   <releases>
+    <release version="0.4.0" date="2026-08-13">
+      <description>
+        <ul>
+          <li>The account view focuses on the synchronized folders, like the official client: each folder shows its live status (a check when synchronized) and a more (…) menu with open local folder, edit ignored files, force sync now, pause or resume sync, and remove the folder from synchronization (local files are kept).</li>
+          <li>The status header, account row, last-sync row, activity expander and log/conflicts rows were removed from the account view.</li>
+          <li>Account removal moved to Settings &gt; Advanced behind a typed confirmation; it never touches local files.</li>
+          <li>Primary buttons follow the system GNOME accent.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-08-13">
       <description>
         <ul>

@@ -164,10 +164,10 @@ class UpdateCheckerTests(unittest.TestCase):
         checker = UpdateChecker(http=fake)
         checker.check(results.append, current_version="0.1.17")
         self.assertEqual(checker.url, VERSION_MANIFEST_URL)
-        self.assertIn("raw.githubusercontent.com/gnacho/nextsync", checker.url)
+        self.assertIn("raw.githubusercontent.com/gnacho/nextsync-py", checker.url)
         self.assertEqual(
             RELEASES_URL,
-            "https://github.com/gnacho/nextsync/releases/latest",
+            "https://github.com/gnacho/nextsync-py/releases/latest",
         )
         self.assertEqual(fake.headers["Cache-Control"], "no-cache")
         self.assertFalse(results[0].update_available)

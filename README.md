@@ -4,11 +4,11 @@
   <p><strong>Your files, local. Your Nextcloud, in sync.</strong></p>
   <p>A lightweight, GNOME-native desktop companion for keeping one complete physical copy of a Nextcloud account on Linux.</p>
   <p>
-    <a href="https://github.com/gnacho/nextsync">Website</a>
+    <a href="https://github.com/gnacho/nextsync-py">Website</a>
     ·
-    <a href="https://github.com/gnacho/nextsync/releases">Releases</a>
+    <a href="https://github.com/gnacho/nextsync-py/releases">Releases</a>
     ·
-    <a href="https://github.com/gnacho/nextsync/issues">Report an issue</a>
+    <a href="https://github.com/gnacho/nextsync-py/issues">Report an issue</a>
   </p>
   <p>
     <img src="https://img.shields.io/badge/version-0.2.5-6557e8?style=flat-square" alt="Version 0.2.5">
@@ -152,7 +152,7 @@ One honest caveat drove part of this release: the CLI runs `--non-interactive`, 
 
 ### Debian package — recommended
 
-Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync/releases/latest), then install it with APT so the required system packages are resolved automatically:
+Download the `.deb` from the [latest release](https://github.com/gnacho/nextsync-py/releases/latest), then install it with APT so the required system packages are resolved automatically:
 
 ```bash
 cd ~/Downloads
@@ -180,7 +180,7 @@ sudo apt install \
 Then extract and run:
 
 ```bash
-unzip NextSync-0.3.0.zip
+unzip NextSync-0.4.0.zip
 cd NextSync-0.2.5
 ./run.sh
 ```
@@ -190,12 +190,12 @@ cd NextSync-0.2.5
 ### Arch / CachyOS package
 
 The fork ships a buildable `PKGBUILD` (not published to the AUR). To build the
-package locally, copy the `NextSync-0.3.0.zip` and the `PKGBUILD` into a
+package locally, copy the `NextSync-0.4.0.zip` and the `PKGBUILD` into a
 directory without spaces (makepkg cannot run in paths containing spaces) and run:
 
 ```bash
 makepkg -cf
-sudo pacman -U nextsync-0.3.0-1-any.pkg.tar.zst
+sudo pacman -U nextsync-0.4.0-1-any.pkg.tar.zst
 ```
 
 The package installs the application, `.desktop` entry, metainfo, icons, and the

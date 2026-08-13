@@ -1,3 +1,18 @@
+nextsync (0.4.0) stable; urgency=medium
+
+  * The account view focuses on the synchronized folders, like the official
+    client: each folder shows its live status (a check when synchronized) and
+    a more (…) menu with open local folder, edit ignored files, force sync now,
+    pause or resume sync, and remove the folder from synchronization (local
+    files are kept).
+  * The status header, account row, last-sync row, activity expander and
+    log/conflicts rows were removed from the account view.
+  * Account removal moved to Settings > Advanced behind a typed confirmation;
+    it never touches local files.
+  * Primary buttons follow the system GNOME accent.
+
+ -- gnacho <gnacho@users.noreply.github.com>  Thu, 13 Aug 2026 09:40:00 +0200
+
 nextsync (0.3.0) stable; urgency=medium
 
   * The main window lists each sync folder with its own live status

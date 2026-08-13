@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from collections import deque
 from pathlib import Path
-from threading import Lock, Thread
 from typing import Callable, Sequence
 
 import gi
@@ -14,19 +12,16 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 
 from nextsync import APP_NAME
 from nextsync.core.account import AccountSession
-from nextsync.core.conflict_files import find_conflicts
 from nextsync.core.state import AppState, StateSnapshot
-from nextsync.nextcloud.nextcloudcmd_progress import SyncProgress
 from nextsync.util.i18n import _
 
 from .about import show_about_dialog
-from .activity import ActivityEntry, parse_activity_line
 from .folder_status import (
-    STATE_PRESENTATION,
     FolderStatusRow,
     pair_folder_runtimes,
 )
 from .log_view import LogWindow
+from .settings import ExclusionsDialog
 
 
 def _compact_action_row(**properties: object) -> Adw.ActionRow:
@@ -39,7 +34,13 @@ def _compact_action_row(**properties: object) -> Adw.ActionRow:
 
 
 class AccountView(Gtk.Box):
-    """The synchronization panel for one account."""
+    """The synchronization panel for one account.
+
+    Focused on the synchronized folders, like the official / OpenCloud desktop
+    clients: one row per folder with its own live status (a check when
+    synchronized) and a more (…) menu, plus the global Sync Now / Pause
+    buttons. Account management lives in Settings.
+    """
 
     def __init__(
         self,
@@ -56,14 +57,6 @@ class AccountView(Gtk.Box):
         self.runtime = runtime
         self.logger = logger
         self.log_window: LogWindow | None = None
-        self._recent_entries: list[ActivityEntry] = [
-            parse_activity_line(line) for line in logger.recent_lines(5)
-        ]
-        self._activity_rows: list[Gtk.ListBoxRow] = []
-        self._expanded_activity_entries: set[int] = set()
-        self._pending_activity_lines: deque[str] = deque(maxlen=5)
-        self._activity_lock = Lock()
-        self._activity_idle_source = 0
         self._disposed = False
         self._folder_rows: list[FolderStatusRow] = []
 
@@ -72,45 +65,8 @@ class AccountView(Gtk.Box):
         self.set_margin_start(18)
         self.set_margin_end(18)
 
-        status_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
-        status_row = Gtk.ListBoxRow(activatable=False, selectable=False)
-        status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
-        status_box.set_margin_top(14)
-        status_box.set_margin_bottom(14)
-        status_box.set_margin_start(16)
-        status_box.set_margin_end(16)
-        self.status_icon = Gtk.Image(icon_name="emblem-ok-symbolic", pixel_size=48)
-        self.status_icon.set_valign(Gtk.Align.CENTER)
-        status_box.append(self.status_icon)
-        status_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, valign=Gtk.Align.CENTER)
-        self.status_title = Gtk.Label(xalign=0, css_classes=["title-3"])
-        self.status_title.set_ellipsize(Pango.EllipsizeMode.END)
-        self.status_title.set_single_line_mode(True)
-        self.status_description = Gtk.Label(xalign=0, css_classes=["dim-label"])
-        self.status_description.set_ellipsize(Pango.EllipsizeMode.END)
-        self.status_description.set_single_line_mode(True)
-        self.status_progress = Gtk.Label(xalign=0, css_classes=["dim-label"])
-        self.status_progress.set_ellipsize(Pango.EllipsizeMode.END)
-        self.status_progress.set_single_line_mode(True)
-        self.status_progress.set_visible(False)
-        status_text.append(self.status_title)
-        status_text.append(self.status_description)
-        status_text.append(self.status_progress)
-        status_box.append(status_text)
-        status_row.set_child(status_box)
-        status_list.append(status_row)
-        self.append(status_list)
-
-        account = self.session.account_dict
         account_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
         self.account_list = account_list
-        account_list.append(
-            _compact_action_row(
-                title=account["login_name"],
-                subtitle=account["server_url"],
-                icon_name="avatar-default-symbolic",
-            )
-        )
         if self.session.folders:
             for folder, folder_runtime in pair_folder_runtimes(
                 self.session.folders, self.runtime.folders
@@ -125,6 +81,25 @@ class AccountView(Gtk.Box):
                     format_last_sync=lambda _runtime=folder_runtime: self._format_folder_last_sync(
                         _runtime
                     ),
+                    on_edit_ignored=self._edit_ignored,
+                    on_force_sync=(
+                        lambda _fr=folder_runtime: self._force_folder_sync(_fr)
+                    ),
+                    on_toggle_pause=(
+                        lambda _fr=folder_runtime: self._toggle_folder_pause(_fr)
+                    ),
+                    on_remove=(
+                        lambda _folder=folder, _fr=folder_runtime: self._remove_folder(
+                            _folder, _fr
+                        )
+                    ),
+                    is_paused=(
+                        lambda _fr=folder_runtime: bool(
+                            _fr.runtime.scheduler.user_paused
+                        )
+                        if _fr is not None
+                        else False
+                    ),
                 )
                 self._folder_rows.append(folder_row)
                 account_list.append(folder_row)
@@ -136,12 +111,6 @@ class AccountView(Gtk.Box):
                     icon_name="folder-symbolic",
                 )
             )
-        self.last_row = _compact_action_row(
-            title=_("Last Successful Sync"),
-            subtitle=self._format_last_sync(),
-            icon_name="document-open-recent-symbolic",
-        )
-        account_list.append(self.last_row)
         self.append(account_list)
 
         self.buttons = Gtk.Box(spacing=12, homogeneous=True)
@@ -159,40 +128,6 @@ class AccountView(Gtk.Box):
         self.buttons.append(self.pause_button)
         self.append(self.buttons)
 
-        self.activity_expander = Adw.ExpanderRow(
-            title=_("Recent Activity"),
-            subtitle=_("No activity in this session"),
-            icon_name="document-open-recent-symbolic",
-            expanded=False,
-        )
-        if hasattr(self.activity_expander, "set_title_lines"):
-            self.activity_expander.set_title_lines(1)
-        if hasattr(self.activity_expander, "set_subtitle_lines"):
-            self.activity_expander.set_subtitle_lines(1)
-        activity_list = Gtk.ListBox(css_classes=["boxed-list"], selection_mode=Gtk.SelectionMode.NONE)
-        activity_list.append(self.activity_expander)
-        self.append(activity_list)
-
-        self.view_log_row = _compact_action_row(
-            title=_("View Synchronization Log"),
-            icon_name="text-x-generic-symbolic",
-            activatable=True,
-        )
-        self.view_log_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-        self.view_log_row.connect("activated", lambda _row: self.show_log())
-        self.conflicts_row = _compact_action_row(
-            title=_("Resolve Conflicts"),
-            icon_name="dialog-warning-symbolic",
-            activatable=True,
-        )
-        self.conflicts_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-        self.conflicts_row.connect("activated", lambda _row: self._show_conflicts())
-        self._conflicts_scanning = False
-        self._conflicts_attached = False
-        self.activity_expander.add_row(self.view_log_row)
-        self._activity_listbox = self.view_log_row.get_parent()
-        self._refresh_activity()
-
         if hasattr(Adw, "Breakpoint") and hasattr(self, "add_breakpoint"):
             condition = Adw.BreakpointCondition.parse("max-width: 520px")
             breakpoint = Adw.Breakpoint.new(condition)
@@ -202,19 +137,8 @@ class AccountView(Gtk.Box):
             self.add_breakpoint(breakpoint)
 
         self._state_unsubscribe = self.runtime.state.subscribe(self._state_changed)
-        self._progress_unsubscribe = self.runtime.state.subscribe_progress(
-            self._progress_changed
-        )
-        self._log_unsubscribe = self.logger.subscribe(self._log_line)
 
     def _state_changed(self, snapshot: StateSnapshot) -> None:
-        icon, title = STATE_PRESENTATION[snapshot.state]
-        self.status_icon.set_from_icon_name(icon)
-        self.status_title.set_text(title)
-        description = _(snapshot.message) if snapshot.message else _("Your files are ready.")
-        self.status_description.set_text(description)
-        self.status_description.set_tooltip_text(description)
-        self.status_progress.set_visible(snapshot.state == AppState.SYNCING)
         paused = snapshot.state == AppState.PAUSED_USER
         self.pause_content.set_label(_("Resume Sync") if paused else _("Pause Sync"))
         self.pause_content.set_icon_name(
@@ -233,29 +157,6 @@ class AccountView(Gtk.Box):
                 else _("Sync Now")
             )
             self.sync_content.set_icon_name("emblem-synchronizing-symbolic")
-        self.last_row.set_subtitle(self._format_last_sync())
-
-    def _progress_changed(self, progress: SyncProgress | None) -> None:
-        if progress is None or progress.path is None:
-            self.status_progress.set_visible(False)
-            return
-        action = {
-            "download": _("Downloading"),
-            "upload": _("Uploading"),
-            "delete": _("Deleting"),
-            "conflict": _("Conflict"),
-            "synced": _("Synchronized"),
-            "skipped": _("Skipped"),
-        }.get(progress.action, _("Synchronizing"))
-        if progress.processed > 0:
-            label = _("{action}: {path} ({count})").format(
-                action=action, path=progress.path, count=progress.processed
-            )
-        else:
-            label = _("{action}: {path}").format(action=action, path=progress.path)
-        self.status_progress.set_text(label)
-        self.status_progress.set_tooltip_text(label)
-        self.status_progress.set_visible(True)
 
     @staticmethod
     def _format_sync_stamp(value: object) -> str:
@@ -267,246 +168,59 @@ class AccountView(Gtk.Box):
         except (ValueError, TypeError):
             return str(value)
 
-    def _format_last_sync(self) -> str:
-        return self._format_sync_stamp(
-            self.session.runtime.get("last_successful_sync")
-        )
-
     def _format_folder_last_sync(self, folder_runtime: object | None) -> str:
         session = getattr(folder_runtime, "session", None)
         value = session.runtime.get("last_successful_sync") if session else None
         return self._format_sync_stamp(value)
 
-    def _log_line(self, line: str) -> None:
-        with self._activity_lock:
-            self._pending_activity_lines.append(line)
-            if self._activity_idle_source:
-                return
-            self._activity_idle_source = GLib.idle_add(self._drain_activity)
+    def _edit_ignored(self) -> None:
+        dialog = ExclusionsDialog(self.config, self.runtime.reconfigure)
+        dialog.present(self.get_root() or self)
 
-    def _drain_activity(self) -> bool:
-        with self._activity_lock:
-            lines = tuple(self._pending_activity_lines)
-            self._pending_activity_lines.clear()
-            self._activity_idle_source = 0
-        if self._disposed:
-            return GLib.SOURCE_REMOVE
-        self._recent_entries.extend(parse_activity_line(line) for line in lines)
-        self._recent_entries = self._recent_entries[-5:]
-        self._expanded_activity_entries.intersection_update(
-            id(entry) for entry in self._recent_entries
-        )
-        self._refresh_activity()
-        return GLib.SOURCE_REMOVE
-
-    def _activity_row(self, entry: ActivityEntry) -> Gtk.ListBoxRow:
-        row = Gtk.ListBoxRow(activatable=True, selectable=False)
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        box.set_margin_top(7)
-        box.set_margin_bottom(7)
-        box.set_margin_start(12)
-        box.set_margin_end(12)
-        icon = Gtk.Image(icon_name=entry.icon_name, pixel_size=16)
-        icon.set_tooltip_text(self._activity_level_name(entry.level))
-        box.append(icon)
-        label = Gtk.Label(label=entry.message, xalign=0, hexpand=True)
-        label.set_use_markup(False)
-        label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
-        entry_key = id(entry)
-        self._set_activity_label_expanded(
-            label, entry_key in self._expanded_activity_entries
-        )
-        box.append(label)
-        row.set_child(box)
-
-        primary_click = Gtk.GestureClick.new()
-        primary_click.set_button(Gdk.BUTTON_PRIMARY)
-        primary_click.connect(
-            "released", self._activity_primary_clicked, label, entry_key
-        )
-        row.add_controller(primary_click)
-
-        secondary_click = Gtk.GestureClick.new()
-        secondary_click.set_button(Gdk.BUTTON_SECONDARY)
-        secondary_click.connect(
-            "pressed", self._activity_secondary_clicked, row, entry.message
-        )
-        row.add_controller(secondary_click)
-        return row
-
-    @staticmethod
-    def _activity_level_name(level: str) -> str:
-        return {
-            "DEBUG": _("Debug"),
-            "INFO": _("Information"),
-            "WARNING": _("Warning"),
-            "ERROR": _("Error"),
-            "CRITICAL": _("Critical"),
-        }.get(level, _("Information"))
-
-    @staticmethod
-    def _set_activity_label_expanded(label: Gtk.Label, expanded: bool) -> None:
-        label.set_single_line_mode(not expanded)
-        label.set_lines(-1 if expanded else 1)
-        label.set_ellipsize(
-            Pango.EllipsizeMode.NONE if expanded else Pango.EllipsizeMode.END
-        )
-        label.set_wrap(expanded)
-        label.set_tooltip_text(None if expanded else label.get_text())
-
-    def _activity_primary_clicked(
-        self,
-        gesture: Gtk.GestureClick,
-        press_count: int,
-        _x: float,
-        _y: float,
-        label: Gtk.Label,
-        entry_key: int,
-    ) -> None:
-        if press_count != 1:
+    def _force_folder_sync(self, folder_runtime: object | None) -> None:
+        if folder_runtime is None:
             return
-        expanded = entry_key not in self._expanded_activity_entries
-        if expanded:
-            self._expanded_activity_entries.add(entry_key)
-        else:
-            self._expanded_activity_entries.discard(entry_key)
-        self._set_activity_label_expanded(label, expanded)
-        gesture.set_state(Gtk.EventSequenceState.CLAIMED)
+        folder_runtime.runtime.sync_now()
 
-    def _activity_secondary_clicked(
-        self,
-        gesture: Gtk.GestureClick,
-        press_count: int,
-        x: float,
-        y: float,
-        row: Gtk.ListBoxRow,
-        message: str,
-    ) -> None:
-        if press_count != 1:
+    def _toggle_folder_pause(self, folder_runtime: object | None) -> None:
+        if folder_runtime is None:
             return
-        gesture.set_state(Gtk.EventSequenceState.CLAIMED)
-
-        menu = Gio.Menu()
-        menu.append(_("Copy Message"), "activity.copy")
-        actions = Gio.SimpleActionGroup()
-        copy_action = Gio.SimpleAction.new("copy", None)
-        actions.add_action(copy_action)
-        row.insert_action_group("activity", actions)
-
-        popover = Gtk.PopoverMenu.new_from_model(menu)
-        popover.set_has_arrow(True)
-        popover.set_parent(row)
-        target = Gdk.Rectangle()
-        target.x = int(x)
-        target.y = int(y)
-        target.width = 1
-        target.height = 1
-        popover.set_pointing_to(target)
-        copy_action.connect(
-            "activate", self._copy_activity_message, message, popover
+        folder_runtime.runtime.set_paused(
+            not folder_runtime.runtime.scheduler.user_paused
         )
-        popover.connect("closed", self._activity_menu_closed, row)
-        popover.popup()
 
-    def _copy_activity_message(
-        self,
-        _action: Gio.SimpleAction,
-        _parameter: GLib.Variant | None,
-        message: str,
-        popover: Gtk.PopoverMenu,
+    def _remove_folder(self, folder: object, folder_runtime: object | None) -> None:
+        folder_id = getattr(folder, "folder_id", None)
+        if not folder_id:
+            return
+        dialog = Adw.AlertDialog(
+            heading=_("Remove this folder from synchronization?"),
+            body=_("The local folder and all files inside it will remain untouched."),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("remove", _("Remove Synchronization"))
+        dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.choose(self, None, self._remove_folder_choice, folder_id)
+
+    def _remove_folder_choice(
+        self, dialog: Adw.AlertDialog, result: Gio.AsyncResult, folder_id: str
     ) -> None:
-        self.get_clipboard().set(message)
-        popover.popdown()
-        self._show_toast(_("Message copied"))
+        if dialog.choose_finish(result) != "remove":
+            return
+        account_id = self.session.account_id
+        try:
+            self.config.remove_folder(account_id, folder_id)
+        except Exception:
+            self._show_toast(_("Could not remove the folder"))
+            return
+        application = self.application
+        if application and hasattr(application, "present_main"):
+            application.present_main()
 
     def _show_toast(self, title: str) -> None:
         overlay = self.get_ancestor(Adw.ToastOverlay)
         if overlay:
             overlay.add_toast(Adw.Toast(title=title))
-
-    @staticmethod
-    def _activity_menu_closed(
-        popover: Gtk.PopoverMenu, row: Gtk.ListBoxRow
-    ) -> None:
-        row.insert_action_group("activity", None)
-        popover.unparent()
-
-    def _empty_activity_row(self) -> Gtk.ListBoxRow:
-        return self._activity_row(
-            ActivityEntry(
-                level=_("Information"),
-                message=_("No activity in this session"),
-                icon_name="dialog-information-symbolic",
-            )
-        )
-
-    def _refresh_activity(self) -> None:
-        for row in self._activity_rows:
-            self.activity_expander.remove(row)
-        self._activity_rows.clear()
-        entries = list(reversed(self._recent_entries))
-        if entries:
-            count = len(entries)
-            subtitle = (
-                _("1 event in this session")
-                if count == 1
-                else _("{count} events in this session").format(count=count)
-            )
-            self.activity_expander.set_subtitle(subtitle)
-            rows = [self._activity_row(entry) for entry in entries]
-        else:
-            self.activity_expander.set_subtitle(_("No activity in this session"))
-            rows = [self._empty_activity_row()]
-        self._insert_activity_rows(rows)
-        self._activity_rows.extend(rows)
-        self._scan_conflicts()
-
-    def _insert_activity_rows(self, rows: list[Gtk.ListBoxRow]) -> None:
-        # Activity rows are recreated on every refresh, so they are inserted
-        # before the static log/conflicts rows instead of being appended after
-        # them; this keeps the visual order without re-parenting the static
-        # rows (which used to be removed and re-added on every refresh).
-        if self._activity_listbox is not None:
-            for index, row in enumerate(rows):
-                self._activity_listbox.insert(row, index)
-        else:
-            for row in rows:
-                self.activity_expander.add_row(row)
-
-    def _scan_conflicts(self) -> None:
-        if self._conflicts_scanning:
-            return
-        folders = list(getattr(self.session, "folders", None) or [])
-        self._conflicts_scanning = True
-
-        # find_conflicts walks the whole folder tree, which can be slow on
-        # large sync roots; run it off the UI thread and only touch the
-        # expander row from the main loop once the scan is done.
-        def _run() -> None:
-            has_conflicts = self._should_show_conflicts(folders)
-            GLib.idle_add(self._conflicts_scan_finished, has_conflicts)
-
-        Thread(target=_run, daemon=True).start()
-
-    @staticmethod
-    def _should_show_conflicts(folders: Sequence[object]) -> bool:
-        for folder in folders:
-            root = getattr(folder, "local_root", None)
-            if not root:
-                continue
-            if find_conflicts(Path(root)):
-                return True
-        return False
-
-    def _conflicts_scan_finished(self, has_conflicts: bool) -> None:
-        self._conflicts_scanning = False
-        if self._disposed or has_conflicts == self._conflicts_attached:
-            return
-        if has_conflicts:
-            self.activity_expander.add_row(self.conflicts_row)
-        else:
-            self.activity_expander.remove(self.conflicts_row)
-        self._conflicts_attached = has_conflicts
 
     def _sync_clicked(self, _button: Gtk.Button) -> None:
         if self.runtime.scheduler.delete_alert:
@@ -547,14 +261,9 @@ class AccountView(Gtk.Box):
         if self._disposed:
             return
         if not self.log_window:
-            self.log_window = LogWindow(self, self.logger)
+            self.log_window = LogWindow(self.get_root() or self, self.logger)
             self.log_window.connect("close-request", self._log_closed)
         self.log_window.present()
-
-    def _show_conflicts(self) -> None:
-        application = self.application
-        if application and hasattr(application, "show_conflicts"):
-            application.show_conflicts()
 
     def _log_closed(self, _window: Gtk.Window) -> bool:
         self.log_window = None
@@ -565,16 +274,9 @@ class AccountView(Gtk.Box):
             return
         self._disposed = True
         self._state_unsubscribe()
-        self._progress_unsubscribe()
-        self._log_unsubscribe()
         for folder_row in self._folder_rows:
             folder_row.dispose()
         self._folder_rows.clear()
-        if self._activity_idle_source:
-            GLib.source_remove(self._activity_idle_source)
-            self._activity_idle_source = 0
-        with self._activity_lock:
-            self._pending_activity_lines.clear()
         if self.log_window:
             self.log_window.close()
             self.log_window = None

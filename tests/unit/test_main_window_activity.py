@@ -2,18 +2,21 @@ from __future__ import annotations
 
 import ast
 import os
-import time
 import unittest
 from pathlib import Path
-from unittest.mock import patch
-
-from nextsync.core.conflict_files import ConflictFile
 
 MAIN_WINDOW = Path(__file__).parents[2] / "src" / "nextsync" / "ui" / "main_window.py"
+FOLDER_STATUS = (
+    Path(__file__).parents[2] / "src" / "nextsync" / "ui" / "folder_status.py"
+)
 
 
-def method_source(class_name: str, method_name: str) -> str:
-    source = MAIN_WINDOW.read_text(encoding="utf-8")
+def file_source(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def method_source(class_name: str, method_name: str, path: Path = MAIN_WINDOW) -> str:
+    source = path.read_text(encoding="utf-8")
     tree = ast.parse(source)
     for node in tree.body:
         if isinstance(node, ast.ClassDef) and node.name == class_name:
@@ -27,116 +30,74 @@ def _has_display() -> bool:
     return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
 
 
-def _conflict(name: str = "x.txt") -> ConflictFile:
-    return ConflictFile(
-        path=Path("/tmp/x (Nextcloud conflicted copy 2026-08-01 12:00:00).txt"),
-        original_name=name,
-        original_path=Path("/tmp/x.txt"),
-        conflict_date="2026-08-01 12:00:00",
-        size=1,
-        modified=0.0,
-    )
+class AccountViewFocusContractTests(unittest.TestCase):
+    """Issue #34: the account view focuses on synchronized folders."""
 
+    def test_account_view_has_no_activity_expander(self) -> None:
+        source = method_source("AccountView", "__init__")
+        self.assertNotIn("activity_expander", source)
+        self.assertNotIn("Recent Activity", source)
 
-class StaticRowsContractTests(unittest.TestCase):
-    """Issue #30: the log/conflicts rows must not be re-parented on refresh."""
+    def test_account_view_has_no_log_or_conflicts_rows(self) -> None:
+        source = method_source("AccountView", "__init__")
+        self.assertNotIn("view_log_row", source)
+        self.assertNotIn("conflicts_row", source)
 
-    def test_refresh_activity_does_not_reparent_the_static_rows(self) -> None:
-        source = method_source("AccountView", "_refresh_activity")
-        self.assertNotIn("self.view_log_row", source)
-        self.assertNotIn("self.conflicts_row", source)
+    def test_account_view_has_no_activity_or_conflict_scanning(self) -> None:
+        full = file_source(MAIN_WINDOW)
+        self.assertNotIn("def _refresh_activity", full)
+        self.assertNotIn("def _scan_conflicts", full)
+        self.assertNotIn("def _should_show_conflicts", full)
+        self.assertNotIn("_activity_rows", full)
 
-    def test_activity_rows_only_holds_activity_rows(self) -> None:
-        source = method_source("AccountView", "_refresh_activity")
-        self.assertIn("self._activity_rows.extend(rows)", source)
-        self.assertNotIn(
-            "rows.append(self.view_log_row)", source
-        )
-        self.assertNotIn(
-            "rows.append(self.conflicts_row)", source
-        )
+    def test_account_view_keeps_only_folder_list_and_buttons(self) -> None:
+        source = method_source("AccountView", "__init__")
+        self.assertIn("FolderStatusRow(", source)
+        self.assertIn("self.sync_button", source)
+        self.assertIn("self.pause_button", source)
+        self.assertNotIn("self.last_row", source)
+        self.assertNotIn('avatar-default-symbolic"', source)
 
-    def test_log_row_is_attached_once_outside_the_refresh(self) -> None:
-        init_source = method_source("AccountView", "__init__")
-        refresh_source = method_source("AccountView", "_refresh_activity")
-        self.assertIn("self.activity_expander.add_row(self.view_log_row)", init_source)
-        self.assertNotIn("self.activity_expander.add_row(self.view_log_row)", refresh_source)
-
-    def test_conflicts_row_visibility_is_decision_flagged_in_state(self) -> None:
-        init_source = method_source("AccountView", "__init__")
-        self.assertIn("self._conflicts_scanning = False", init_source)
-        self.assertIn("self._conflicts_attached = False", init_source)
-
-
-class ConflictScanContractTests(unittest.TestCase):
-    """Issue #31: conflicts are scanned off the UI thread and the row toggles."""
-
-    def test_conflict_scan_runs_off_the_ui_thread(self) -> None:
-        source = method_source("AccountView", "_scan_conflicts")
-        self.assertIn("Thread(target=_run, daemon=True).start()", source)
-        self.assertIn("GLib.idle_add(self._conflicts_scan_finished, has_conflicts)", source)
-
-    def test_refresh_activity_starts_the_conflict_scan(self) -> None:
-        source = method_source("AccountView", "_refresh_activity")
-        self.assertIn("self._scan_conflicts()", source)
-
-    def test_should_show_conflicts_is_true_when_find_conflicts_finds_one(self) -> None:
-        from nextsync.ui.main_window import AccountView
-
-        with patch(
-            "nextsync.ui.main_window.find_conflicts", return_value=[_conflict()]
+    def test_every_folder_row_wires_the_folder_menu_actions(self) -> None:
+        source = method_source("AccountView", "__init__")
+        for fragment in (
+            "on_edit_ignored",
+            "on_force_sync",
+            "on_toggle_pause",
+            "on_remove",
+            "is_paused",
         ):
-            self.assertTrue(
-                AccountView._should_show_conflicts(
-                    [type("F", (), {"local_root": "/tmp/x"})()]
-                )
-            )
+            self.assertIn(fragment, source)
 
-    def test_should_show_conflicts_is_false_without_conflicts(self) -> None:
-        from nextsync.ui.main_window import AccountView
 
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            self.assertFalse(
-                AccountView._should_show_conflicts(
-                    [type("F", (), {"local_root": "/tmp/x"})()]
-                )
-            )
+class FolderMenuContractTests(unittest.TestCase):
+    """Issue #34: the folder row exposes the per-folder actions."""
 
-    def test_should_show_conflicts_is_false_without_folders(self) -> None:
-        from nextsync.ui.main_window import AccountView
+    def test_folder_row_has_a_more_menu_button(self) -> None:
+        source = method_source(
+            "FolderStatusRow", "__init__", path=FOLDER_STATUS
+        )
+        self.assertIn("Gtk.MenuButton(", source)
+        self.assertIn("view-more-symbolic", source)
 
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            self.assertFalse(AccountView._should_show_conflicts([]))
-
-    def test_should_show_conflicts_skips_folders_without_local_root(self) -> None:
-        from nextsync.ui.main_window import AccountView
-
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            self.assertFalse(
-                AccountView._should_show_conflicts([type("F", (), {})()])
-            )
-
-    def test_should_show_conflicts_returns_early_on_first_match(self) -> None:
-        from nextsync.ui.main_window import AccountView
-
-        roots: list[str] = []
-
-        def tracking_find(root: Path):
-            roots.append(str(root))
-            return [_conflict()] if len(roots) == 1 else []
-
-        with patch(
-            "nextsync.ui.main_window.find_conflicts", side_effect=tracking_find
+    def test_menu_builds_open_edit_force_pause_remove_items(self) -> None:
+        source = method_source(
+            "FolderStatusRow", "_rebuild_menu", path=FOLDER_STATUS
+        )
+        for fragment in (
+            'Open local folder"',
+            'Edit ignored files"',
+            'Force sync now"',
+            "Pause sync",
+            "Remove synchronization",
         ):
-            self.assertTrue(
-                AccountView._should_show_conflicts(
-                    [
-                        type("F", (), {"local_root": "/tmp/a"})(),
-                        type("F", (), {"local_root": "/tmp/b"})(),
-                    ]
-                )
-            )
-        self.assertEqual(roots, ["/tmp/a"])
+            self.assertIn(fragment, source)
+
+    def test_actions_are_registered_once_in_the_constructor(self) -> None:
+        source = method_source(
+            "FolderStatusRow", "__init__", path=FOLDER_STATUS
+        )
+        self.assertIn('self._actions: dict[str, Gio.SimpleAction] = {}', source)
 
 
 @unittest.skipUnless(_has_display(), "requires a GTK display")
@@ -182,6 +143,12 @@ class AccountViewDisplayTests(unittest.TestCase):
                     },
                 )()
 
+            def set_paused(self, paused: bool) -> None:
+                pass
+
+            def sync_now(self) -> None:
+                pass
+
         view = AccountView(
             application=None,
             config=type("C", (), {"accounts": []})(),
@@ -200,49 +167,38 @@ class AccountViewDisplayTests(unittest.TestCase):
             while glib.MainContext.default().pending():
                 glib.MainContext.default().iteration(False)
 
-    def _wait_scan(self, view, glib) -> None:
-        deadline = time.time() + 5
-        while view._conflicts_scanning and time.time() < deadline:
-            self._pump(glib, 2)
-            time.sleep(0.01)
-        self._pump(glib, 10)
-
-    def test_log_row_survives_two_refreshes_and_still_activates(self) -> None:
+    def test_folder_rows_render_one_row_per_folder(self) -> None:
         view, glib = self._make_view()
-        calls: dict[str, int] = {"show_log": 0}
-        view.show_log = lambda *args, **kwargs: calls.__setitem__(
-            "show_log", calls["show_log"] + 1
-        )
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            view._refresh_activity()
-            view._refresh_activity()
-        self.assertIsNotNone(view.view_log_row.get_parent())
-        self.assertNotIn(view.view_log_row, view._activity_rows)
-        self.assertNotIn(view.conflicts_row, view._activity_rows)
-        before = calls["show_log"]
-        view.view_log_row.activate()
-        self._pump(glib)
-        self.assertEqual(calls["show_log"] - before, 1)
+        folder_rows = 0
+        child = view.account_list.get_first_child()
+        while child is not None:
+            target = (
+                child
+                if hasattr(child, "_menu_button")
+                else (child.get_child() if hasattr(child, "get_child") else child)
+            )
+            if hasattr(target, "_menu_button"):
+                folder_rows += 1
+            child = child.get_next_sibling()
+        self.assertEqual(folder_rows, 1)
         view.dispose()
 
-    def test_conflicts_row_appears_only_when_conflicts_exist(self) -> None:
+    def test_remove_folder_dialog_can_be_opened(self) -> None:
         view, glib = self._make_view()
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            view._refresh_activity()
-            self._wait_scan(view, glib)
-        self.assertIsNone(view.conflicts_row.get_parent())
-
-        with patch(
-            "nextsync.ui.main_window.find_conflicts", return_value=[_conflict()]
-        ):
-            view._refresh_activity()
-            self._wait_scan(view, glib)
-        self.assertIsNotNone(view.conflicts_row.get_parent())
-
-        with patch("nextsync.ui.main_window.find_conflicts", return_value=[]):
-            view._refresh_activity()
-            self._wait_scan(view, glib)
-        self.assertIsNone(view.conflicts_row.get_parent())
+        target = None
+        child = view.account_list.get_first_child()
+        while child is not None:
+            cand = (
+                child
+                if hasattr(child, "_menu_button")
+                else (child.get_child() if hasattr(child, "get_child") else child)
+            )
+            if hasattr(cand, "_menu_button"):
+                target = cand
+                break
+            child = child.get_next_sibling()
+        self.assertIsNotNone(target)
+        self.assertIsNotNone(target._menu_button)
         view.dispose()
 
 

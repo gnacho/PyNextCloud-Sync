@@ -19,6 +19,9 @@
   </p>
 </div>
 
+> [!IMPORTANT]
+> **This project is discontinued.** Development has moved to the Rust rewrite, [**nextsync**](https://github.com/gnacho/nextsync). New features, fixes, and releases happen there. This repository is kept only as a historical archive.
+
 <p align="center">
   <img src="docs/screenshots/main-window.png" width="820" alt="NextSync main window while synchronizing">
 </p>
